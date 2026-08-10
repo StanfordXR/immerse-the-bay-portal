@@ -11,6 +11,25 @@ function required(name: string): string {
   return value;
 }
 
+/**
+ * A social provider is included only when its credential pair exists, so a
+ * missing provider degrades to "button errors when clicked" instead of
+ * "the whole build fails". `next build` evaluates this module while collecting
+ * page data — a throw here takes down every route.
+ */
+function socialProvider(idVar: string, secretVar: string) {
+  const clientId = process.env[idVar];
+  const clientSecret = process.env[secretVar];
+  if (!clientId || !clientSecret) {
+    console.warn(`[auth] ${idVar}/${secretVar} unset — provider disabled`);
+    return null;
+  }
+  return { clientId, clientSecret };
+}
+
+const google = socialProvider("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET");
+const github = socialProvider("GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET");
+
 export const auth = betterAuth({
   appName: "Immerse the Bay",
   baseURL: process.env.BETTER_AUTH_URL,
@@ -31,14 +50,8 @@ export const auth = betterAuth({
   },
 
   socialProviders: {
-    google: {
-      clientId: required("GOOGLE_CLIENT_ID"),
-      clientSecret: required("GOOGLE_CLIENT_SECRET"),
-    },
-    github: {
-      clientId: required("GITHUB_CLIENT_ID"),
-      clientSecret: required("GITHUB_CLIENT_SECRET"),
-    },
+    ...(google ? { google } : {}),
+    ...(github ? { github } : {}),
   },
 
   account: {
