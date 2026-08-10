@@ -3,7 +3,7 @@ import { Brand } from "@/components/brand";
 import type { Metadata } from "next";
 import { desc, isNotNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { application } from "@/lib/db/schema";
+import { application, feedback, user } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/dal";
 
 export const metadata: Metadata = { title: "Admin" };
@@ -44,6 +44,22 @@ export default async function AdminPage() {
     .where(isNotNull(application.submittedAt))
     .orderBy(desc(application.submittedAt))
     .limit(100);
+
+  const feedbackRows = await db
+    .select({
+      createdAt: feedback.createdAt,
+      email: user.email,
+      deviceMethod: feedback.deviceMethod,
+      broke: feedback.broke,
+      friction: feedback.friction,
+      formNotes: feedback.formNotes,
+      duration: feedback.duration,
+      mobileNotes: feedback.mobileNotes,
+    })
+    .from(feedback)
+    .leftJoin(user, sql`${user.id} = ${feedback.userId}`)
+    .orderBy(desc(feedback.createdAt))
+    .limit(50);
 
   const drafts = counts.total - counts.submitted;
   const completion =
@@ -197,6 +213,57 @@ export default async function AdminPage() {
               </tbody>
             </table>
           </div>
+        </section>
+
+        {/* stress-test feedback */}
+        <section>
+          <h2 className="font-display mb-3 text-lg font-semibold">
+            Feedback ({feedbackRows.length})
+          </h2>
+          {feedbackRows.length === 0 ? (
+            <p className="card p-5 text-[14px] text-faint">
+              Nothing yet. Responses from portal.immersethebay.org/feedback land
+              here.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {feedbackRows.map((f, i) => (
+                <div key={i} className="card p-5 text-[14px]">
+                  <p className="mb-2 font-mono text-[12px] text-faint">
+                    {f.email ?? "unknown"} ·{" "}
+                    {f.createdAt.toLocaleString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      timeZone: "America/Los_Angeles",
+                    })}
+                    {f.deviceMethod ? ` · ${f.deviceMethod}` : ""}
+                    {f.duration ? ` · took ${f.duration}` : ""}
+                  </p>
+                  <dl className="grid gap-x-6 gap-y-1.5 sm:grid-cols-[9rem_1fr]">
+                    {(
+                      [
+                        ["Broke", f.broke],
+                        ["Friction", f.friction],
+                        ["Form notes", f.formNotes],
+                        ["Mobile", f.mobileNotes],
+                      ] as const
+                    )
+                      .filter(([, v]) => v)
+                      .map(([label, value]) => (
+                        <div key={label} className="contents">
+                          <dt className="text-faint">{label}</dt>
+                          <dd className="whitespace-pre-wrap text-moonlit/90">
+                            {value}
+                          </dd>
+                        </div>
+                      ))}
+                  </dl>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <p className="text-[13px] text-faint">

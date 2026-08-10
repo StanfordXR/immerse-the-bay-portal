@@ -202,6 +202,21 @@ export const linkClick = pgTable(
   (t) => [index("link_click_code_idx").on(t.code, t.at)],
 );
 
+/** Stress-test and general feedback, written from /feedback. */
+export const feedback = pgTable("feedback", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  deviceMethod: text("device_method"),
+  broke: text("broke"),
+  friction: text("friction"),
+  formNotes: text("form_notes"),
+  duration: text("duration"),
+  mobileNotes: text("mobile_notes"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 /**
  * Append-only audit trail. Backs the "admins can monitor every account"
  * requirement, and records PII reveals during non-blind round-two review.
