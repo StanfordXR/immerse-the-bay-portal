@@ -218,6 +218,44 @@ export const feedback = pgTable("feedback", {
 });
 
 /**
+ * Admin-defined tags, applied to applications from the admin console.
+ * Archived tags keep their assignments (history stays intact) but stop
+ * appearing in pickers.
+ */
+export const tag = pgTable("tag", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(),
+  archived: boolean("archived").notNull().default(false),
+  createdBy: text("created_by").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const applicationTag = pgTable(
+  "application_tag",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    applicationId: uuid("application_id")
+      .notNull()
+      .references(() => application.id, { onDelete: "cascade" }),
+    tagId: uuid("tag_id")
+      .notNull()
+      .references(() => tag.id, { onDelete: "cascade" }),
+    addedBy: text("added_by").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("application_tag_unique").on(t.applicationId, t.tagId),
+    index("application_tag_tag_idx").on(t.tagId),
+  ],
+);
+
+/**
  * Append-only audit trail. Backs the "admins can monitor every account"
  * requirement, and records PII reveals during non-blind round-two review.
  */

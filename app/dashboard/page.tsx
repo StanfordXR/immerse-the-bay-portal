@@ -32,12 +32,16 @@ export default async function DashboardPage({
     .where(eq(application.userId, user.id))
     .limit(1);
 
+  const isStaff = role === "admin" || role === "reviewer";
+
   // Referral machinery exists only after submission. ensureReferralCode also
   // lazily backfills applications submitted before the feature shipped.
   const referralCode = row?.submittedAt
     ? await ensureReferralCode(user.id)
     : null;
-  const leaderboard = referralCode ? await getLeaderboard(referralCode) : null;
+  // Applicants see the leaderboard once submitted; staff see it always.
+  const leaderboard =
+    referralCode || isStaff ? await getLeaderboard(referralCode) : null;
   const portalBase =
     process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org";
 
@@ -54,11 +58,13 @@ export default async function DashboardPage({
         <Brand />
         <div className="flex items-center gap-2">
           {(role === "admin" || role === "reviewer") && (
-            <Link
-              href={role === "admin" ? "/admin" : "/review"}
-              className="btn-ghost !py-2 text-[14px]"
-            >
-              {role === "admin" ? "Admin" : "Review"}
+            <Link href="/review" className="btn-ghost !py-2 text-[14px]">
+              Review
+            </Link>
+          )}
+          {role === "admin" && (
+            <Link href="/admin" className="btn-ghost !py-2 text-[14px]">
+              Admin
             </Link>
           )}
           <form
@@ -86,7 +92,9 @@ export default async function DashboardPage({
           </h1>
         </div>
 
-        {row?.submittedAt ? (
+        {/* staff dashboards drop the application card entirely */}
+        {!isStaff &&
+          (row?.submittedAt ? (
           <section className="card overflow-hidden">
             <div
               className="flex items-start gap-4 border-b border-line p-6 sm:p-8"
@@ -244,9 +252,9 @@ export default async function DashboardPage({
               </div>
             )}
           </section>
-        )}
+        ))}
 
-        {referralCode && leaderboard && (
+        {leaderboard && (
           <ReferralCard
             code={referralCode}
             anonymous={row?.referralAnonymous ?? false}

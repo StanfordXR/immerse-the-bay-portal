@@ -6,7 +6,9 @@ import type { LeaderboardRow } from "@/lib/referral";
 
 /**
  * Post-submit referral panel: personal link, anonymity toggle, leaderboard.
- * Only rendered for applicants who have completed their own application.
+ * Rendered for applicants who have completed their own application, and for
+ * reviewers/admins in leaderboard-only mode (code is null: no personal link,
+ * no anonymity toggle, just the standings).
  */
 export function ReferralCard({
   code,
@@ -15,13 +17,13 @@ export function ReferralCard({
   you,
   baseUrl,
 }: {
-  code: string;
+  code: string | null;
   anonymous: boolean;
   top: LeaderboardRow[];
   you: LeaderboardRow | null;
   baseUrl: string;
 }) {
-  const link = `${baseUrl}/r/${code}`;
+  const link = `${baseUrl}/r/${code ?? ""}`;
   const [copied, setCopied] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(anonymous);
   const [pending, startTransition] = useTransition();
@@ -48,6 +50,7 @@ export function ReferralCard({
 
   return (
     <section className="card overflow-hidden">
+      {code && (
       <div className="border-b border-line p-6 sm:p-7">
         <h2 className="font-display text-xl font-semibold">
           Bring your friends
@@ -77,6 +80,7 @@ export function ReferralCard({
           Show me as &ldquo;Anonymous&rdquo; on the leaderboard
         </label>
       </div>
+      )}
 
       <div className="p-6 sm:p-7">
         <div className="mb-3 flex items-baseline justify-between">

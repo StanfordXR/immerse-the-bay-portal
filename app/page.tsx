@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Link from "next/link";
 import { Brand } from "@/components/brand";
+import { HeaderAuthLink } from "@/components/header-auth-link";
 import { HeroCta } from "@/components/hero-cta";
 import {
   closeDateLabel,
@@ -77,9 +77,7 @@ export default function LandingPage() {
               >
                 ← Back to main site
               </a>
-              <Link href="/sign-in" className="btn-ghost !py-2 text-[15px]">
-                Sign in
-              </Link>
+              <HeaderAuthLink />
             </nav>
           </header>
 

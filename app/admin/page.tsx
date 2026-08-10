@@ -69,9 +69,15 @@ export default async function AdminPage() {
     <main className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 sm:px-6">
       <header className="flex items-center justify-between py-6">
         <Brand suffix="/ ADMIN" />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/admin/applications" className="btn-ghost !py-2 text-[14px]">
+            Applications
+          </Link>
           <Link href="/admin/users" className="btn-ghost !py-2 text-[14px]">
             Users
+          </Link>
+          <Link href="/admin/tags" className="btn-ghost !py-2 text-[14px]">
+            Tags
           </Link>
           <Link href="/review" className="btn-ghost !py-2 text-[14px]">
             Review
