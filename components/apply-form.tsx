@@ -29,7 +29,7 @@ import {
 } from "@/lib/form-schema";
 import { saveDraft, submitApplication } from "@/lib/actions/application";
 import { Stepper } from "@/components/stepper";
-import { CharCount, ChipGroup, Field } from "@/components/fields";
+import { ChipGroup, Field, WordCount } from "@/components/fields";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -135,7 +135,7 @@ export function ApplyForm({
         if (firstBad >= 0) goTo(firstBad as StepIndex);
       }
     } catch {
-      setSubmitError("Something went wrong — your draft is saved. Try again.");
+      setSubmitError("Something went wrong. Your draft is saved, try again.");
     } finally {
       setSubmitting(false);
     }
@@ -159,7 +159,7 @@ export function ApplyForm({
       });
       set({ resumeUrl: blob.url });
     } catch {
-      setUploadError("Upload failed — you can also submit without a resume.");
+      setUploadError("Upload failed. You can also submit without a resume.");
     } finally {
       setUploading(false);
     }
@@ -255,7 +255,7 @@ export function ApplyForm({
 
             <Field
               label="Date of birth"
-              hint="Attendees must be 18+ on November 13, 2026. We check this at acceptance — it won't stop you from applying."
+              hint="Attendees must be 18+ on November 13, 2026. We check this at acceptance. It won't stop you from applying."
               error={errors.dateOfBirth}
             >
               {({ id, describedBy, invalid }) => (
@@ -412,7 +412,7 @@ export function ApplyForm({
             <Field
               label="Skills"
               optional
-              hint="Tap everything that applies — reviewers use these to balance teams of builders, artists, and designers."
+              hint="Tap everything that applies. Reviewers use these to balance teams of builders, artists, and designers."
             >
               {() => (
                 <ChipGroup
@@ -438,8 +438,9 @@ export function ApplyForm({
                 )}
               </Field>
               <Field
-                label="LinkedIn / portfolio / GitHub"
+                label="Links: LinkedIn, GitHub, portfolio"
                 optional
+                hint="Multiple links welcome, separated by commas."
                 error={errors.portfolioUrl}
               >
                 {({ id, describedBy, invalid }) => (
@@ -447,7 +448,7 @@ export function ApplyForm({
                     id={id}
                     className="field"
                     inputMode="url"
-                    placeholder="linkedin.com/in/you"
+                    placeholder="linkedin.com/in/you, github.com/you"
                     value={a.portfolioUrl ?? ""}
                     aria-describedby={describedBy}
                     aria-invalid={invalid || undefined}
@@ -463,7 +464,7 @@ export function ApplyForm({
           <div className="flex flex-col gap-6">
             <Field
               label="Why do you want to be at Immerse the Bay, and what do you hope to get out of it?"
-              hint="A short paragraph is perfect. Specific beats polished — tell us what you actually want to build or learn."
+              hint="A short paragraph is perfect. Specific beats polished: tell us what you actually want to build or learn."
               error={errors.whyParticipate}
             >
               {({ id, describedBy, invalid }) => (
@@ -471,14 +472,13 @@ export function ApplyForm({
                   <textarea
                     id={id}
                     className="field min-h-40 resize-y"
-                    maxLength={ESSAY_LIMITS.whyParticipate.max}
                     value={a.whyParticipate ?? ""}
                     aria-describedby={describedBy}
                     aria-invalid={invalid || undefined}
                     onChange={(e) => set({ whyParticipate: e.target.value })}
                   />
                   <div className="flex justify-end">
-                    <CharCount
+                    <WordCount
                       value={a.whyParticipate ?? ""}
                       min={ESSAY_LIMITS.whyParticipate.min}
                       max={ESSAY_LIMITS.whyParticipate.max}
@@ -497,14 +497,13 @@ export function ApplyForm({
                   <textarea
                     id={id}
                     className="field min-h-24 resize-y"
-                    maxLength={ESSAY_LIMITS.ceoQuestion.max}
                     value={a.ceoQuestion ?? ""}
                     aria-describedby={describedBy}
                     aria-invalid={invalid || undefined}
                     onChange={(e) => set({ ceoQuestion: e.target.value })}
                   />
                   <div className="flex justify-end">
-                    <CharCount
+                    <WordCount
                       value={a.ceoQuestion ?? ""}
                       min={ESSAY_LIMITS.ceoQuestion.min}
                       max={ESSAY_LIMITS.ceoQuestion.max}
@@ -564,49 +563,6 @@ export function ApplyForm({
               </Field>
             </div>
 
-            <Field
-              label="Resume"
-              optional
-              hint="PDF, up to 5 MB."
-              error={uploadError ?? undefined}
-            >
-              {({ id, describedBy }) => (
-                <div className="flex flex-wrap items-center gap-3">
-                  <input
-                    id={id}
-                    type="file"
-                    accept="application/pdf"
-                    className="sr-only"
-                    aria-describedby={describedBy}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) void handleResume(file);
-                      e.target.value = "";
-                    }}
-                  />
-                  <label htmlFor={id} className="btn-ghost cursor-pointer">
-                    {uploading
-                      ? "Uploading…"
-                      : a.resumeUrl
-                        ? "Replace PDF"
-                        : "Upload PDF"}
-                  </label>
-                  {a.resumeUrl && !uploading && (
-                    <span className="flex items-center gap-2 text-[13.5px] text-ok">
-                      Attached ✓
-                      <button
-                        type="button"
-                        className="text-muted underline underline-offset-2 hover:text-moonlit"
-                        onClick={() => set({ resumeUrl: "" })}
-                      >
-                        remove
-                      </button>
-                    </span>
-                  )}
-                </div>
-              )}
-            </Field>
-
             <Field label="How did you hear about us?" error={errors.heardAboutUs}>
               {({ id, describedBy, invalid }) => (
                 <select
@@ -631,21 +587,67 @@ export function ApplyForm({
               )}
             </Field>
 
-            <label className="mt-1 flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-abyss/60 p-4">
-              <input
-                type="checkbox"
-                className="mt-0.5 size-4 accent-[--color-cyan-2]"
-                checked={a.sponsorShareOk ?? false}
-                onChange={(e) => set({ sponsorShareOk: e.target.checked })}
-              />
-              <span className="text-[14px] leading-relaxed text-muted">
-                Share my resume and contact info with event sponsors for
-                recruiting.{" "}
-                <span className="text-faint">
-                  Entirely optional — it has no effect on your application.
+            {/* resume + its sharing consent live together */}
+            <div className="flex flex-col gap-4 rounded-xl border border-line bg-abyss/40 p-4 sm:p-5">
+              <Field
+                label="Resume"
+                optional
+                hint="PDF, up to 5 MB."
+                error={uploadError ?? undefined}
+              >
+                {({ id, describedBy }) => (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <input
+                      id={id}
+                      type="file"
+                      accept="application/pdf"
+                      className="sr-only"
+                      aria-describedby={describedBy}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) void handleResume(file);
+                        e.target.value = "";
+                      }}
+                    />
+                    <label htmlFor={id} className="btn-ghost cursor-pointer">
+                      {uploading
+                        ? "Uploading…"
+                        : a.resumeUrl
+                          ? "Replace PDF"
+                          : "Upload PDF"}
+                    </label>
+                    {a.resumeUrl && !uploading && (
+                      <span className="flex items-center gap-2 text-[13.5px] text-ok">
+                        Attached ✓
+                        <button
+                          type="button"
+                          className="text-muted underline underline-offset-2 hover:text-moonlit"
+                          onClick={() => set({ resumeUrl: "" })}
+                        >
+                          remove
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                )}
+              </Field>
+
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 size-4 accent-[--color-cyan-2]"
+                  checked={a.sponsorShareOk ?? false}
+                  onChange={(e) => set({ sponsorShareOk: e.target.checked })}
+                />
+                <span className="text-[14px] leading-relaxed text-muted">
+                  Share my resume and contact info with event sponsors for
+                  recruiting.{" "}
+                  <span className="text-faint">
+                    Entirely optional. It has no effect on your application.
+                  </span>
                 </span>
-              </span>
-            </label>
+              </label>
+            </div>
           </div>
         )}
 

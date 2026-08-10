@@ -264,17 +264,17 @@ export default async function DashboardPage({
             </dd>
             <dt className="text-faint">Priority deadline</dt>
             <dd className="text-moonlit/90">
-              {priorityDeadlineLabel()} — decisions by {priorityDecisionsLabel()}
+              {priorityDeadlineLabel()}, decisions by {priorityDecisionsLabel()}
             </dd>
             <dt className="text-faint">Final deadline</dt>
             <dd className="text-moonlit/90">
-              {closeDateLabel()} — decisions by {finalDecisionsLabel()}
+              {closeDateLabel()}, decisions by {finalDecisionsLabel()}
             </dd>
             <dt className="text-faint">Decisions sent from</dt>
             <dd className="text-moonlit/90">
-              apply@immersethebay.org —{" "}
+              apply@immersethebay.org{" "}
               <span className="text-muted">
-                add it to your contacts so nothing lands in spam
+                (add it to your contacts so nothing lands in spam)
               </span>
             </dd>
             <dt className="text-faint">Questions</dt>

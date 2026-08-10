@@ -53,7 +53,7 @@ export function ReferralCard({
           Bring your friends
         </h2>
         <p className="mt-1 text-[14px] leading-relaxed text-muted">
-          Share your link — every friend who <em>completes</em> an application
+          Share your link. Every friend who <em>completes</em> an application
           counts. Top referrers get shoutouts at the opening ceremony.
         </p>
 
@@ -93,7 +93,7 @@ export function ReferralCard({
 
         {top.length === 0 ? (
           <p className="rounded-xl border border-dashed border-line-2 bg-abyss/40 p-5 text-center text-[14px] text-faint">
-            No referrals yet — share your link and claim the top spot. 🏆
+            No referrals yet. Share your link and claim the top spot. 🏆
           </p>
         ) : (
           <ol className="flex flex-col">

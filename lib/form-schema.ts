@@ -60,21 +60,30 @@ export const SKILL_CHIPS = [
   "Unity",
   "Unreal",
   "WebXR / three.js",
+  "visionOS / Swift",
   "C#",
   "C++",
   "Python",
   "JS / TS",
   "3D modeling",
+  "Blender",
   "Technical art",
+  "Shaders / graphics",
   "UI/UX design",
   "Spatial design",
+  "Animation",
   "Audio",
+  "Music / sound design",
   "Hardware",
+  "Electronics",
   "AI / ML",
+  "Computer vision",
   "Backend",
+  "Networking / multiplayer",
   "Game design",
   "Product",
   "Storytelling",
+  "Video / media",
 ] as const;
 
 export const TSHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
@@ -201,14 +210,20 @@ export const UNIVERSITY_SUGGESTIONS = [
 
 // ── validation ───────────────────────────────────────────────────────────────
 
-const ESSAY_WHY_MIN = 100;
-const ESSAY_WHY_MAX = 2000;
-const ESSAY_CEO_MIN = 10;
-const ESSAY_CEO_MAX = 600;
+// Word-based limits: "300 words" reads achievable where "2000 characters"
+// reads like homework, and words are the unit applicants think in.
+export function wordCount(value: string): number {
+  return value.trim().split(/\s+/).filter(Boolean).length;
+}
+
+const WHY_MIN_WORDS = 20;
+const WHY_MAX_WORDS = 300;
+const CEO_MIN_WORDS = 3;
+const CEO_MAX_WORDS = 50;
 
 export const ESSAY_LIMITS = {
-  whyParticipate: { min: ESSAY_WHY_MIN, max: ESSAY_WHY_MAX },
-  ceoQuestion: { min: ESSAY_CEO_MIN, max: ESSAY_CEO_MAX },
+  whyParticipate: { min: WHY_MIN_WORDS, max: WHY_MAX_WORDS },
+  ceoQuestion: { min: CEO_MIN_WORDS, max: CEO_MAX_WORDS },
 } as const;
 
 function isPlausibleDob(value: string): boolean {
@@ -239,12 +254,12 @@ const baseSchema = z.object({
   gradYear: z.enum(GRAD_YEARS, { message: "Required" }),
   hackathonsBucket: z.enum(HACKATHON_BUCKETS, { message: "Required" }),
   primarySkill: z.enum(PRIMARY_SKILLS, { message: "Required" }),
-  skills: z.array(z.string().max(40)).max(24).optional().default([]),
+  skills: z.array(z.string().max(40)).max(32).optional().default([]),
   skillsOther: z.string().trim().max(300).optional().default(""),
   portfolioUrl: z
     .string()
     .trim()
-    .max(300)
+    .max(600)
     .refine(looksLikeLink, "That doesn't look like a link")
     .optional()
     .default(""),
@@ -253,13 +268,15 @@ const baseSchema = z.object({
   whyParticipate: z
     .string()
     .trim()
-    .min(ESSAY_WHY_MIN, `Tell us a bit more — at least ${ESSAY_WHY_MIN} characters`)
-    .max(ESSAY_WHY_MAX),
+    .max(3000)
+    .refine((v) => wordCount(v) >= WHY_MIN_WORDS, `Tell us a bit more, at least ${WHY_MIN_WORDS} words`)
+    .refine((v) => wordCount(v) <= WHY_MAX_WORDS, `Keep it under ${WHY_MAX_WORDS} words`),
   ceoQuestion: z
     .string()
     .trim()
-    .min(ESSAY_CEO_MIN, "Give us a real question")
-    .max(ESSAY_CEO_MAX),
+    .max(800)
+    .refine((v) => wordCount(v) >= CEO_MIN_WORDS, "Give us a real question")
+    .refine((v) => wordCount(v) <= CEO_MAX_WORDS, `Keep it under ${CEO_MAX_WORDS} words`),
 
   // stage 4 — logistics
   tshirtSize: z.enum(TSHIRT_SIZES, { message: "Required" }),

@@ -88,18 +88,18 @@ export function ChipGroup({
   );
 }
 
-export function CharCount({ value, min, max }: { value: string; min?: number; max: number }) {
-  const len = value.length;
-  const under = min !== undefined && len > 0 && len < min;
+export function WordCount({ value, min, max }: { value: string; min?: number; max: number }) {
+  const words = value.trim().split(/\s+/).filter(Boolean).length;
+  const under = min !== undefined && words > 0 && words < min;
   return (
     <span
       className={`font-mono text-[11.5px] tabular-nums ${
-        len > max ? "text-danger" : under ? "text-faint" : "text-faint"
+        words > max ? "text-danger" : "text-faint"
       }`}
       aria-hidden
     >
-      {len.toLocaleString()}/{max.toLocaleString()}
-      {under ? ` · ${min - len} more to go` : ""}
+      {words}/{max} words
+      {under ? ` · ${min - words} more to go` : ""}
     </span>
   );
 }

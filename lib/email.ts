@@ -66,7 +66,7 @@ export async function sendSubmissionConfirmation(
       "",
       "What happens next:",
       "  1. Applications close, and our review team reads every application.",
-      `  2. Decisions go out by email — priority round by ${priorityDecisionsLabel()}, final round by ${finalDecisionsLabel()}.`,
+      `  2. Decisions go out by email: priority round by ${priorityDecisionsLabel()}, final round by ${finalDecisionsLabel()}.`,
       "  3. The hackathon runs November 13–15 at Stanford.",
       "",
       "Add this address to your contacts so your decision doesn't land in spam.",
