@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application } from "@/lib/db/schema";
 import { getRole, requireUser } from "@/lib/dal";
-import { closeDateLabel, finalDecisionsLabel } from "@/lib/config";
+import { closeDateLabel, finalDecisionsLabel, priorityDeadlineLabel, priorityDecisionsLabel } from "@/lib/config";
 import { draftSchema, STEPS, stepStatus } from "@/lib/form-schema";
 import { ensureReferralCode, getLeaderboard } from "@/lib/referral";
 import { ReferralCard } from "@/components/referral-card";
@@ -254,20 +254,39 @@ export default async function DashboardPage({
         )}
 
         <section className="card p-6">
-          <h3 className="font-display text-[15px] font-semibold">
-            The event
+          <h3 className="font-display mb-3 text-[15px] font-semibold">
+            Details
           </h3>
-          <p className="mt-1.5 text-[14px] leading-relaxed text-muted">
-            November 13–15, 2026 at Stanford. 36 hours, XR hardware for every
-            team, workshops, mentors, and ~$30k in prizes. Questions? Write to{" "}
-            <a
-              href="mailto:admin@stanfordxr.org"
-              className="text-cyan underline-offset-2 hover:underline"
-            >
-              admin@stanfordxr.org
-            </a>
-            .
-          </p>
+          <dl className="grid gap-x-6 gap-y-2 text-[14px] sm:grid-cols-[11rem_1fr]">
+            <dt className="text-faint">Event</dt>
+            <dd className="text-moonlit/90">
+              November 13–15, 2026 · Stanford University
+            </dd>
+            <dt className="text-faint">Priority deadline</dt>
+            <dd className="text-moonlit/90">
+              {priorityDeadlineLabel()} — decisions by {priorityDecisionsLabel()}
+            </dd>
+            <dt className="text-faint">Final deadline</dt>
+            <dd className="text-moonlit/90">
+              {closeDateLabel()} — decisions by {finalDecisionsLabel()}
+            </dd>
+            <dt className="text-faint">Decisions sent from</dt>
+            <dd className="text-moonlit/90">
+              apply@immersethebay.org —{" "}
+              <span className="text-muted">
+                add it to your contacts so nothing lands in spam
+              </span>
+            </dd>
+            <dt className="text-faint">Questions</dt>
+            <dd>
+              <a
+                href="mailto:admin@stanfordxr.org"
+                className="text-cyan underline-offset-2 hover:underline"
+              >
+                admin@stanfordxr.org
+              </a>
+            </dd>
+          </dl>
         </section>
       </div>
     </main>
