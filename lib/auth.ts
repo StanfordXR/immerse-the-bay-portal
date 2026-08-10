@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin as adminPlugin } from "better-auth/plugins";
 import { db } from "@/lib/db";
@@ -84,6 +85,34 @@ export const auth = betterAuth({
     // compromised reviewer or admin takes effect on their next request. Enabling
     // the cookie cache would turn "revoke now" into "revoke in a few minutes" —
     // a bad trade when these accounts can read every applicant's PII.
+  },
+
+  hooks: {
+    // Set the "last used method" hint ONLY after a session was actually
+    // created — never on a mere attempt. Server-set, so it also survives
+    // Safari's 7-day cap on JS-written cookies. Read by the sign-in card
+    // (badge) and the proxy (returning-user detection); pure UX hint.
+    after: createAuthMiddleware(async (ctx) => {
+      if (!ctx.context.newSession) return;
+      let method: string | null = null;
+      if (ctx.path.startsWith("/callback/")) {
+        method = ctx.path.split("/")[2] ?? null; // "google" | "github"
+      } else if (
+        ctx.path === "/sign-in/email" ||
+        ctx.path === "/sign-up/email"
+      ) {
+        method = "email";
+      }
+      if (method === "google" || method === "github" || method === "email") {
+        ctx.setCookie("itb_auth_hint", method, {
+          path: "/",
+          maxAge: 60 * 60 * 24 * 365,
+          sameSite: "lax",
+          httpOnly: false, // the badge reads it client-side
+          secure: process.env.NODE_ENV === "production",
+        });
+      }
+    }),
   },
 
   plugins: [

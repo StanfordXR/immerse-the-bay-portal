@@ -9,13 +9,6 @@ type Method = "google" | "github" | "email";
 
 const HINT_COOKIE = "itb_auth_hint";
 
-/** Remember which method this browser last authenticated with — a UX hint
- *  only (js-readable, non-sensitive), used for the "Last used" badge and to
- *  default returning browsers to sign-in mode. */
-function rememberMethod(method: Method) {
-  document.cookie = `${HINT_COOKIE}=${method}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
-}
-
 function readMethod(): Method | null {
   const match = document.cookie.match(new RegExp(`${HINT_COOKIE}=(google|github|email)`));
   return (match?.[1] as Method) ?? null;
@@ -74,7 +67,6 @@ export function SignInCard() {
   async function social(provider: "google" | "github") {
     setBusy(provider);
     setError(null);
-    rememberMethod(provider);
     try {
       await authClient.signIn.social({ provider, callbackURL: next });
       // browser navigates away; nothing after this runs on success
@@ -102,7 +94,6 @@ export function SignInCard() {
       setBusy(null);
       return;
     }
-    rememberMethod("email");
     router.push(next);
   }
 
