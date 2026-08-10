@@ -246,7 +246,7 @@ export default async function AdminPage() {
                       [
                         ["Broke", f.broke],
                         ["Friction", f.friction],
-                        ["Form notes", f.formNotes],
+                        ["Other", f.formNotes],
                         ["Mobile", f.mobileNotes],
                       ] as const
                     )

@@ -6,8 +6,8 @@ import { submitFeedback } from "@/lib/actions/feedback";
 const FIELDS = [
   {
     key: "deviceMethod",
-    label: "Device, browser, and sign-in method you used",
-    placeholder: "e.g. iPhone 15 Safari, signed in with GitHub",
+    label: "Device, browser, and sign-in method(s) you used",
+    placeholder: "e.g. iPhone 15 Safari, signed in with GitHub and Google",
     rows: 1,
   },
   {
@@ -24,21 +24,9 @@ const FIELDS = [
   },
   {
     key: "formNotes",
-    label: "Any application question that felt unnecessary, unclear, or missing?",
-    placeholder: "",
-    rows: 2,
-  },
-  {
-    key: "duration",
-    label: "How long did the application take you?",
-    placeholder: "e.g. 7 minutes",
-    rows: 1,
-  },
-  {
-    key: "mobileNotes",
-    label: "On your phone: anything cramped, cut off, or hard to tap?",
-    placeholder: "",
-    rows: 2,
+    label: "Any other feedback?",
+    placeholder: "Confusing questions, how long it took, mobile layout, anything else.",
+    rows: 3,
   },
 ] as const;
 

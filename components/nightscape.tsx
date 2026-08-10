@@ -1,7 +1,9 @@
 /**
- * Fixed atmospheric background: nebula glows, a static starfield, and slowly
- * drifting particles (matching the main event site's ambient motion).
+ * Fixed atmospheric background: nebula glows, a static starfield, and
+ * pixelated cyberpunk cubes drifting slowly downward (echoing the voxel
+ * blocks on the main event site, immersethebay.org).
  *
+ * Stars never move; only the cubes do, so the two read as different layers.
  * All positions and timings are literals so server and client HTML match.
  * Animations are transform/opacity only (compositor-friendly) and are
  * disabled globally under prefers-reduced-motion.
@@ -17,24 +19,38 @@ const STARS: ReadonlyArray<readonly [number, number, number, number]> = [
   [57, 39, 0.9, 0.5], [69, 42, 0.6, 0.3], [81, 36, 1.1, 0.6], [93, 43, 0.7, 0.4],
   [13, 58, 0.7, 0.3], [27, 63, 0.9, 0.4], [49, 57, 0.6, 0.28], [66, 61, 0.8, 0.35],
   [86, 59, 0.7, 0.3], [37, 72, 0.6, 0.22], [74, 76, 0.7, 0.25], [92, 71, 0.6, 0.22],
+  [21, 11, 1.2, 0.65], [62, 8, 1.1, 0.6], [83, 24, 1.0, 0.5], [9, 47, 1.0, 0.4],
+  [45, 30, 1.2, 0.55], [71, 52, 1.0, 0.4], [33, 66, 0.9, 0.3], [90, 44, 1.1, 0.45],
 ];
 
-// Twinkling stars: a subset pulses gently on long offsets.
-const TWINKLES: ReadonlyArray<readonly [number, number, number, number, number]> = [
-  // [x%, y%, radius, duration s, delay s]
-  [21, 11, 1.2, 5.5, 0], [62, 8, 1.1, 7, 1.6], [83, 24, 1.0, 6, 3.1],
-  [9, 47, 1.0, 8, 0.9], [45, 30, 1.2, 6.5, 2.4], [71, 52, 1.0, 7.5, 4.2],
-  [33, 66, 0.9, 9, 1.2], [90, 44, 1.1, 6.8, 5.0],
-];
-
-// Drifting particles: rise slowly and loop, like dust in the city lights.
-const PARTICLES: ReadonlyArray<readonly [number, number, number, number, string]> = [
+// Small pixel squares: distant debris, falling slowly. Sharp corners on
+// purpose; round dots would read as loose stars.
+const PIXELS: ReadonlyArray<readonly [number, number, number, number, string]> = [
   // [x%, size px, duration s, delay s, color]
-  [8, 3, 68, 0, "#6ee8f7"], [16, 2, 84, 12, "#a99ce0"], [24, 2.5, 76, 31, "#e263f0"],
-  [33, 2, 92, 7, "#6ee8f7"], [41, 3, 71, 22, "#a99ce0"], [52, 2, 88, 40, "#6ee8f7"],
-  [60, 2.5, 79, 15, "#e263f0"], [68, 2, 95, 3, "#a99ce0"], [77, 3, 66, 27, "#6ee8f7"],
-  [85, 2, 82, 36, "#a99ce0"], [93, 2.5, 74, 9, "#e263f0"], [47, 2, 100, 50, "#a99ce0"],
+  [6, 3, 74, 0, "#6ee8f7"], [14, 2, 96, 18, "#a99ce0"], [22, 2.5, 84, 39, "#e263f0"],
+  [30, 2, 104, 9, "#6ee8f7"], [38, 3, 78, 27, "#a99ce0"], [46, 2, 112, 51, "#6ee8f7"],
+  [54, 2.5, 88, 14, "#e263f0"], [62, 2, 100, 44, "#a99ce0"], [70, 3, 72, 31, "#6ee8f7"],
+  [78, 2, 92, 5, "#a99ce0"], [86, 2.5, 82, 58, "#e263f0"], [94, 2, 108, 22, "#a99ce0"],
 ];
+
+// Larger voxel outlines: nearer, so bigger and slightly faster, tumbling as
+// they fall. [x%, size px, tilt deg, spin deg, duration s, delay s, hue]
+const VOXELS: ReadonlyArray<
+  readonly [number, number, number, number, number, number, "cyan" | "violet" | "magenta"]
+> = [
+  [10, 22, 12, 100, 84, 0, "cyan"],
+  [26, 14, 33, -80, 102, 37, "violet"],
+  [43, 28, 8, 70, 76, 62, "magenta"],
+  [58, 12, 41, 120, 110, 18, "cyan"],
+  [73, 18, 21, -95, 90, 80, "violet"],
+  [90, 24, 15, 85, 96, 48, "cyan"],
+];
+
+const VOXEL_HUES = {
+  cyan: { border: "rgba(110, 232, 247, 0.4)", fill: "rgba(110, 232, 247, 0.07)", glow: "rgba(110, 232, 247, 0.18)" },
+  violet: { border: "rgba(169, 156, 224, 0.4)", fill: "rgba(139, 92, 246, 0.08)", glow: "rgba(139, 92, 246, 0.16)" },
+  magenta: { border: "rgba(226, 99, 240, 0.35)", fill: "rgba(226, 99, 240, 0.06)", glow: "rgba(226, 99, 240, 0.15)" },
+} as const;
 
 export function Nightscape() {
   return (
@@ -62,41 +78,49 @@ export function Nightscape() {
         ))}
       </svg>
 
-      {/* twinkling stars */}
-      {TWINKLES.map(([x, y, r, dur, delay], i) => (
-        <span
-          key={`t${i}`}
-          className="nightscape-twinkle absolute rounded-full"
-          style={{
-            left: `${x}%`,
-            top: `${y}%`,
-            width: r * 2.4,
-            height: r * 2.4,
-            background: "#ece7fb",
-            boxShadow: "0 0 6px rgba(236, 231, 251, 0.8)",
-            animationDuration: `${dur}s`,
-            animationDelay: `${delay}s`,
-          }}
-        />
-      ))}
-
-      {/* drifting particles */}
-      {PARTICLES.map(([x, size, dur, delay, color], i) => (
+      {/* falling pixel squares */}
+      {PIXELS.map(([x, size, dur, delay, color], i) => (
         <span
           key={`p${i}`}
-          className="nightscape-particle absolute rounded-full"
+          className="nightscape-cube absolute"
           style={{
             left: `${x}%`,
-            bottom: -8,
+            top: -8,
             width: size,
             height: size,
             background: color,
-            boxShadow: `0 0 ${size * 3}px ${color}`,
+            boxShadow: `0 0 ${size * 2.5}px ${color}`,
             animationDuration: `${dur}s`,
             animationDelay: `${-delay}s`,
           }}
         />
       ))}
+
+      {/* falling voxel outlines */}
+      {VOXELS.map(([x, size, tilt, spin, dur, delay, hue], i) => {
+        const c = VOXEL_HUES[hue];
+        return (
+          <span
+            key={`v${i}`}
+            className="nightscape-cube absolute"
+            style={
+              {
+                left: `${x}%`,
+                top: -40,
+                width: size,
+                height: size,
+                border: `1px solid ${c.border}`,
+                background: c.fill,
+                boxShadow: `0 0 12px ${c.glow}, inset 0 0 8px ${c.glow}`,
+                animationDuration: `${dur}s`,
+                animationDelay: `${-delay}s`,
+                "--tilt": `${tilt}deg`,
+                "--spin": `${spin}deg`,
+              } as React.CSSProperties
+            }
+          />
+        );
+      })}
 
       {/* lunar horizon */}
       <div

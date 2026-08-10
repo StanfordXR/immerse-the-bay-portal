@@ -213,48 +213,33 @@
 }
 
 /* ── ambient background motion (Nightscape) ─────────────────────────────── */
-@keyframes nightscape-drift {
+/* Cubes start above the viewport and fall past the bottom, tumbling by
+ * --spin over the trip. --tilt/--spin default to 0 for the pixel squares. */
+@keyframes nightscape-fall {
   0% {
-    transform: translateY(0);
+    transform: translateY(0) rotate(var(--tilt, 0deg));
     opacity: 0;
   }
-  6% {
-    opacity: 0.8;
+  5% {
+    opacity: 0.7;
   }
   85% {
-    opacity: 0.6;
+    opacity: 0.5;
   }
   100% {
-    transform: translateY(-105vh);
+    transform: translateY(112vh) rotate(calc(var(--tilt, 0deg) + var(--spin, 0deg)));
     opacity: 0;
   }
 }
-@keyframes nightscape-twinkle {
-  0%, 100% {
-    opacity: 0.85;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.2;
-    transform: scale(0.75);
-  }
+.nightscape-cube {
+  opacity: 0; /* invisible unless animating (reduced motion, old browsers) */
 }
 @media (prefers-reduced-motion: no-preference) {
-  .nightscape-particle {
-    animation-name: nightscape-drift;
+  .nightscape-cube {
+    animation-name: nightscape-fall;
     animation-timing-function: linear;
     animation-iteration-count: infinite;
     will-change: transform, opacity;
-  }
-  .nightscape-twinkle {
-    animation-name: nightscape-twinkle;
-    animation-timing-function: ease-in-out;
-    animation-iteration-count: infinite;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .nightscape-particle {
-    display: none; /* stationary dots at the viewport bottom would read as dirt */
   }
 }
 
