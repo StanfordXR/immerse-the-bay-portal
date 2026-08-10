@@ -38,12 +38,12 @@ const PIXELS: ReadonlyArray<readonly [number, number, number, number, string]> =
 const VOXELS: ReadonlyArray<
   readonly [number, number, number, number, number, number, "cyan" | "violet" | "magenta"]
 > = [
-  [10, 22, 12, 100, 84, 0, "cyan"],
-  [26, 14, 33, -80, 102, 37, "violet"],
-  [43, 28, 8, 70, 76, 62, "magenta"],
-  [58, 12, 41, 120, 110, 18, "cyan"],
-  [73, 18, 21, -95, 90, 80, "violet"],
-  [90, 24, 15, 85, 96, 48, "cyan"],
+  [10, 14, 12, 100, 84, 0, "cyan"],
+  [26, 9, 33, -80, 102, 37, "violet"],
+  [43, 18, 8, 70, 76, 62, "magenta"],
+  [58, 8, 41, 120, 110, 18, "cyan"],
+  [73, 11, 21, -95, 90, 80, "violet"],
+  [90, 15, 15, 85, 96, 48, "cyan"],
 ];
 
 const VOXEL_HUES = {
