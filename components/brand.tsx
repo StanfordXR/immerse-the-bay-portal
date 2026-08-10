@@ -14,16 +14,16 @@ export function Brand({
   href?: string;
 }) {
   return (
-    <Link href={href} className="flex items-center gap-2.5">
+    <Link href={href} className="flex items-center gap-3">
       <Image
         src="/bunny.png"
         alt=""
-        width={30}
-        height={30}
-        className="h-[30px] w-[30px] object-contain"
+        width={40}
+        height={40}
+        className="h-10 w-10 object-contain"
         priority
       />
-      <span className="font-brand text-brand-gradient text-[15px] tracking-wide">
+      <span className="font-brand text-brand-gradient text-[18px] tracking-wide">
         IMMERSE THE BAY
         {suffix && <span className="text-cyan"> {suffix}</span>}
       </span>

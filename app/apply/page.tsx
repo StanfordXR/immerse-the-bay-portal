@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application } from "@/lib/db/schema";
 import { requireUser } from "@/lib/dal";
-import { applicationsAreClosed, closeDateLabel } from "@/lib/config";
+import { applicationsAreClosed, priorityDeadlineLabel } from "@/lib/config";
 import { draftSchema, type Answers } from "@/lib/form-schema";
 import { ApplyForm } from "@/components/apply-form";
 
@@ -69,7 +69,7 @@ export default async function ApplyPage() {
           <ApplyForm
             initialAnswers={initial}
             alreadySubmitted={Boolean(row?.submittedAt)}
-            closeLabel={closeDateLabel()}
+            closeLabel={priorityDeadlineLabel()}
           />
         )}
       </div>

@@ -19,31 +19,19 @@ export default function LandingPage() {
     {
       date: "August 14",
       title: "Applications open",
-      note: "Rolling — apply any time",
+      note: "Reviewed as they arrive",
       state: "now" as const,
     },
     {
       date: priorityDeadlineLabel(),
       title: "Priority round closes",
-      note: "First decision wave",
-      state: "future" as const,
-    },
-    {
-      date: priorityDecisionsLabel(),
-      title: "Priority decisions",
-      note: "By email",
+      note: `Decisions by ${priorityDecisionsLabel()}`,
       state: "future" as const,
     },
     {
       date: closeDateLabel(),
       title: "Final round closes",
-      note: "Last day to apply",
-      state: "future" as const,
-    },
-    {
-      date: finalDecisionsLabel(),
-      title: "Final decisions",
-      note: "One week after close",
+      note: `Decisions by ${finalDecisionsLabel()}`,
       state: "future" as const,
     },
     {
@@ -65,7 +53,8 @@ export default function LandingPage() {
           fill
           priority
           unoptimized
-          className="z-0 object-cover object-bottom"
+          className="z-0 object-cover"
+          style={{ objectPosition: "50% 78%" }}
           sizes="100vw"
         />
         <div

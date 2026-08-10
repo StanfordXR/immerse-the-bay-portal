@@ -694,9 +694,9 @@ export function ApplyForm({
       </div>
 
       <p className="text-center text-[13px] text-faint">
-        Your progress saves automatically. Applications close {closeLabel} —
-        you can come back and edit anytime before then, even after submitting.
-        By submitting you agree to our{" "}
+        Priority round closes {closeLabel}. Your progress is automatically
+        saved. Come back and edit anytime, even after submitting. By submitting
+        you agree to our{" "}
         <a
           href="/privacy"
           target="_blank"
