@@ -53,7 +53,7 @@ export default async function AdminApplicationsPage({
   }
   if (tagFilter) {
     conditions.push(
-      sql`exists (select 1 from ${applicationTag} at2 where at2.application_id = ${application.id} and at2.tag_id = ${tagFilter})`,
+      sql`exists (select 1 from ${applicationTag} at2 where at2.application_id = ${sql.raw('"application"."id"')} and at2.tag_id = ${tagFilter})`,
     );
   }
 
@@ -69,7 +69,9 @@ export default async function AdminApplicationsPage({
         utmSource: application.utmSource,
         submittedAt: application.submittedAt,
         decision: application.decision,
-        tags: sql<string[]>`coalesce((select array_agg(t.name order by t.name) from ${applicationTag} at3 join ${tag} t on t.id = at3.tag_id where at3.application_id = ${application.id}), '{}')`,
+        // sql.raw qualification: inside a select projection Drizzle renders
+        // ${application.id} as bare "id", which is ambiguous in the subquery.
+        tags: sql<string[]>`coalesce((select array_agg(t.name order by t.name) from ${applicationTag} at3 join ${tag} t on t.id = at3.tag_id where at3.application_id = ${sql.raw('"application"."id"')}), '{}')`,
       })
       .from(application)
       .where(conditions.length ? and(...conditions) : undefined)
