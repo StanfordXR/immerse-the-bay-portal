@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { application } from "@/lib/db/schema";
 import { requireReviewer } from "@/lib/dal";
 
-export const metadata: Metadata = { title: "Review — Immerse the Bay 2026" };
+export const metadata: Metadata = { title: "Review" };
 
 /**
  * Reviewer landing. Deliberately a shell: the review queue (blind two-read
