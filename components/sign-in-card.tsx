@@ -26,13 +26,26 @@ function readMethod(): Method | null {
 const subscribeNoop = () => () => {};
 const getServerSnapshot = () => null;
 
-function LastUsed() {
+/** Corner badge straddling the top border — the Clerk/Vercel pattern: the box
+ *  is highlighted, the label stays centered, the pill sits on the border. */
+function LastUsedBadge() {
   return (
-    <span className="ml-1 rounded-full border border-cyan-2/60 bg-cyan/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-cyan">
+    <span
+      className="pointer-events-none absolute -top-[9px] right-3.5 rounded-full px-2 py-[1.5px] font-mono text-[9.5px] font-semibold uppercase tracking-[0.08em] text-cyan"
+      style={{
+        background: "var(--color-surface)",
+        border: "1px solid color-mix(in oklab, var(--color-cyan-2) 70%, transparent)",
+      }}
+    >
       last used
     </span>
   );
 }
+
+const highlightStyle = {
+  borderColor: "var(--color-cyan-2)",
+  boxShadow: "0 0 12px color-mix(in oklab, var(--color-cyan) 18%, transparent)",
+} as const;
 
 /** Only ever bounce to our own paths — never to an absolute URL from the query string. */
 function safeNext(raw: string | null): string {
@@ -107,36 +120,44 @@ export function SignInCard() {
       <div className="mt-6 flex flex-col gap-2.5">
         <button
           type="button"
-          className="btn-ghost w-full"
+          className="btn-ghost relative w-full"
+          style={lastMethod === "google" ? highlightStyle : undefined}
           disabled={busy !== null}
           onClick={() => void social("google")}
         >
+          {lastMethod === "google" && <LastUsedBadge />}
           <GoogleIcon />
           {busy === "google" ? "Redirecting…" : "Continue with Google"}
-          {lastMethod === "google" && <LastUsed />}
         </button>
         <button
           type="button"
-          className="btn-ghost w-full"
+          className="btn-ghost relative w-full"
+          style={lastMethod === "github" ? highlightStyle : undefined}
           disabled={busy !== null}
           onClick={() => void social("github")}
         >
+          {lastMethod === "github" && <LastUsedBadge />}
           <GitHubIcon />
           {busy === "github" ? "Redirecting…" : "Continue with GitHub"}
-          {lastMethod === "github" && <LastUsed />}
         </button>
       </div>
 
       <div className="my-6 flex items-center gap-3" aria-hidden>
         <span className="h-px flex-1 bg-line" />
-        <span className="flex items-center font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
+        <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
           or with email
-          {lastMethod === "email" && <LastUsed />}
         </span>
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      <form onSubmit={(e) => void submitEmail(e)} className="flex flex-col gap-3.5">
+      <form
+        onSubmit={(e) => void submitEmail(e)}
+        className={`flex flex-col gap-3.5 ${
+          lastMethod === "email" ? "relative rounded-xl border p-4" : ""
+        }`}
+        style={lastMethod === "email" ? highlightStyle : undefined}
+      >
+        {lastMethod === "email" && <LastUsedBadge />}
         {mode === "sign-up" && (
           <div>
             <label htmlFor="si-name" className="mb-1.5 block text-[13.5px] font-medium text-muted">
