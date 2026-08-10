@@ -208,7 +208,7 @@ export default async function DashboardPage({
                 </h2>
                 <p className="mt-1 text-[14px] text-muted">
                   {row
-                    ? `${completeSteps} of 4 stages complete — your draft is saved.`
+                    ? `${completeSteps} of 4 stages complete. Your draft is saved.`
                     : `About ten minutes, autosaved as you go. Closes ${closeDateLabel()}.`}
                 </p>
               </div>
@@ -253,23 +253,23 @@ export default async function DashboardPage({
           />
         )}
 
-        <section className="card p-6">
-          <h3 className="font-display mb-3 text-[15px] font-semibold">
+        <section className="card p-6 sm:p-7">
+          <h3 className="font-display mb-4 text-[15px] font-semibold">
             Details
           </h3>
-          <dl className="grid gap-x-6 gap-y-2 text-[14px] sm:grid-cols-[11rem_1fr]">
+          <dl className="grid gap-x-6 gap-y-3.5 text-[14px] sm:grid-cols-[11rem_1fr]">
             <dt className="text-faint">Event</dt>
             <dd className="text-moonlit/90">
               November 13–15, 2026 · Stanford University
             </dd>
             <dt className="text-faint">Priority deadline</dt>
-            <dd className="text-moonlit/90">
-              {priorityDeadlineLabel()}, decisions by {priorityDecisionsLabel()}
-            </dd>
+            <dd className="text-moonlit/90">{priorityDeadlineLabel()}</dd>
+            <dt className="text-faint">Priority decisions</dt>
+            <dd className="text-moonlit/90">By {priorityDecisionsLabel()}</dd>
             <dt className="text-faint">Final deadline</dt>
-            <dd className="text-moonlit/90">
-              {closeDateLabel()}, decisions by {finalDecisionsLabel()}
-            </dd>
+            <dd className="text-moonlit/90">{closeDateLabel()}</dd>
+            <dt className="text-faint">Final decisions</dt>
+            <dd className="text-moonlit/90">By {finalDecisionsLabel()}</dd>
             <dt className="text-faint">Decisions sent from</dt>
             <dd className="text-moonlit/90">apply@immersethebay.org</dd>
             <dt className="text-faint">Questions</dt>
