@@ -1,10 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
 type Mode = "sign-in" | "sign-up";
+type Method = "google" | "github" | "email";
+
+const HINT_COOKIE = "itb_auth_hint";
+
+/** Remember which method this browser last authenticated with — a UX hint
+ *  only (js-readable, non-sensitive), used for the "Last used" badge and to
+ *  default returning browsers to sign-in mode. */
+function rememberMethod(method: Method) {
+  document.cookie = `${HINT_COOKIE}=${method}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+}
+
+function readMethod(): Method | null {
+  const match = document.cookie.match(new RegExp(`${HINT_COOKIE}=(google|github|email)`));
+  return (match?.[1] as Method) ?? null;
+}
+
+// Cookie-as-external-store: server snapshot is null (no document during SSR),
+// client snapshot reads the hint. No subscription — it can't change under us.
+const subscribeNoop = () => () => {};
+const getServerSnapshot = () => null;
+
+function LastUsed() {
+  return (
+    <span className="ml-1 rounded-full border border-cyan-2/60 bg-cyan/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-cyan">
+      last used
+    </span>
+  );
+}
 
 /** Only ever bounce to our own paths — never to an absolute URL from the query string. */
 function safeNext(raw: string | null): string {
@@ -13,18 +41,27 @@ function safeNext(raw: string | null): string {
 
 export function SignInCard() {
   const router = useRouter();
-  const next = safeNext(useSearchParams().get("next"));
+  const params = useSearchParams();
+  const next = safeNext(params.get("next"));
 
-  const [mode, setMode] = useState<Mode>("sign-in");
+  const [mode, setMode] = useState<Mode>(
+    params.get("mode") === "signup" ? "sign-up" : "sign-in",
+  );
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const lastMethod = useSyncExternalStore(
+    subscribeNoop,
+    readMethod,
+    getServerSnapshot,
+  );
 
   async function social(provider: "google" | "github") {
     setBusy(provider);
     setError(null);
+    rememberMethod(provider);
     try {
       await authClient.signIn.social({ provider, callbackURL: next });
       // browser navigates away; nothing after this runs on success
@@ -52,6 +89,7 @@ export function SignInCard() {
       setBusy(null);
       return;
     }
+    rememberMethod("email");
     router.push(next);
   }
 
@@ -63,7 +101,7 @@ export function SignInCard() {
       <p className="mt-1.5 text-[14px] text-muted">
         {mode === "sign-in"
           ? "Sign in to continue your application."
-          : "One account, one application — takes ten seconds."}
+          : "Your application starts with an account — takes ten seconds."}
       </p>
 
       <div className="mt-6 flex flex-col gap-2.5">
@@ -75,6 +113,7 @@ export function SignInCard() {
         >
           <GoogleIcon />
           {busy === "google" ? "Redirecting…" : "Continue with Google"}
+          {lastMethod === "google" && <LastUsed />}
         </button>
         <button
           type="button"
@@ -84,13 +123,15 @@ export function SignInCard() {
         >
           <GitHubIcon />
           {busy === "github" ? "Redirecting…" : "Continue with GitHub"}
+          {lastMethod === "github" && <LastUsed />}
         </button>
       </div>
 
       <div className="my-6 flex items-center gap-3" aria-hidden>
         <span className="h-px flex-1 bg-line" />
-        <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
+        <span className="flex items-center font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
           or with email
+          {lastMethod === "email" && <LastUsed />}
         </span>
         <span className="h-px flex-1 bg-line" />
       </div>

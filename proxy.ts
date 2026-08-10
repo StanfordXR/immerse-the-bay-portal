@@ -54,6 +54,16 @@ export function proxy(request: NextRequest) {
   if (needsSession && !getSessionCookie(request)) {
     const signIn = new URL("/sign-in", request.url);
     signIn.searchParams.set("next", pathname);
+    // "Begin your application" implies a first-timer — open account creation.
+    // Unless this browser has signed in before (auth-hint cookie), in which
+    // case default to sign-in: returning users far outnumber people who lost
+    // their session mid-application.
+    if (
+      pathname.startsWith("/apply") &&
+      !request.cookies.has("itb_auth_hint")
+    ) {
+      signIn.searchParams.set("mode", "signup");
+    }
     response = NextResponse.redirect(signIn);
   }
 
