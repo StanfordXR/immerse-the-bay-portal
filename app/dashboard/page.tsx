@@ -271,12 +271,7 @@ export default async function DashboardPage({
               {closeDateLabel()}, decisions by {finalDecisionsLabel()}
             </dd>
             <dt className="text-faint">Decisions sent from</dt>
-            <dd className="text-moonlit/90">
-              apply@immersethebay.org{" "}
-              <span className="text-muted">
-                (add it to your contacts so nothing lands in spam)
-              </span>
-            </dd>
+            <dd className="text-moonlit/90">apply@immersethebay.org</dd>
             <dt className="text-faint">Questions</dt>
             <dd>
               <a
