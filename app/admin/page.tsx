@@ -70,6 +70,12 @@ export default async function AdminPage() {
       <header className="flex items-center justify-between py-6">
         <Brand suffix="/ ADMIN" />
         <div className="flex items-center gap-2">
+          <Link href="/admin/users" className="btn-ghost !py-2 text-[14px]">
+            Users
+          </Link>
+          <Link href="/review" className="btn-ghost !py-2 text-[14px]">
+            Review
+          </Link>
           <a href="/admin/export" className="btn-ghost !py-2 text-[14px]">
             Export CSV ↓
           </a>

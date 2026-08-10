@@ -54,7 +54,10 @@ export default async function DashboardPage({
         <Brand />
         <div className="flex items-center gap-2">
           {(role === "admin" || role === "reviewer") && (
-            <Link href="/admin" className="btn-ghost !py-2 text-[14px]">
+            <Link
+              href={role === "admin" ? "/admin" : "/review"}
+              className="btn-ghost !py-2 text-[14px]"
+            >
               {role === "admin" ? "Admin" : "Review"}
             </Link>
           )}
