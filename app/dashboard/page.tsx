@@ -86,62 +86,118 @@ export default async function DashboardPage({
         {row?.submittedAt ? (
           <section className="card overflow-hidden">
             <div
-              className="border-b border-line p-6 sm:p-8"
+              className="flex items-start gap-4 border-b border-line p-6 sm:p-8"
               style={{
                 background:
                   "radial-gradient(40rem 14rem at 50% -60%, color-mix(in oklab, var(--color-cyan) 14%, transparent), transparent 70%)",
               }}
             >
-              <div className="flex items-center gap-4">
-                <div>
-                  <h2 className="font-display text-xl font-semibold">
-                    {justSubmitted
-                      ? "Application submitted — see you in November!"
-                      : "Application submitted"}
-                  </h2>
-                  <p className="mt-1 text-[14px] text-muted">
-                    Received{" "}
-                    {row.submittedAt.toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      timeZone: "America/Los_Angeles",
-                    })}
-                    . You can{" "}
-                    <Link
-                      href="/apply"
-                      className="text-cyan underline-offset-2 hover:underline"
-                    >
-                      edit your answers
-                    </Link>{" "}
-                    until applications close ({closeDateLabel()}).
-                  </p>
-                </div>
+              <span
+                aria-hidden
+                className="mt-0.5 flex size-11 flex-none items-center justify-center rounded-full text-[20px]"
+                style={{
+                  background: "color-mix(in oklab, var(--color-ok) 18%, var(--color-abyss))",
+                  border: "2px solid var(--color-ok)",
+                  color: "var(--color-ok)",
+                  boxShadow: "0 0 16px color-mix(in oklab, var(--color-ok) 35%, transparent)",
+                }}
+              >
+                ✓
+              </span>
+              <div>
+                <h2 className="font-display text-xl font-semibold">
+                  {justSubmitted
+                    ? "Application submitted — see you in November!"
+                    : "Your application is in"}
+                </h2>
+                <p className="mt-1 text-[14px] text-muted">
+                  Received{" "}
+                  {row.submittedAt.toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    timeZone: "America/Los_Angeles",
+                  })}
+                  . You can{" "}
+                  <Link
+                    href="/apply"
+                    className="text-cyan underline-offset-2 hover:underline"
+                  >
+                    edit your answers
+                  </Link>{" "}
+                  until applications close ({closeDateLabel()}).
+                </p>
               </div>
             </div>
-            <ol className="grid gap-0 p-2 sm:grid-cols-3">
-              {(
-                [
-                  ["Submitted", "Done ✓", true],
-                  ["In review", "Through October", false],
-                  ["Decision", `By ${finalDecisionsLabel()}, by email`, false],
-                ] as const
-              ).map(([title, when, done]) => (
-                <li key={title} className="flex items-center gap-3 p-4">
-                  <span
-                    className={`size-2 rounded-full ${
-                      done ? "bg-ok" : "bg-line-2"
-                    }`}
-                    aria-hidden
-                  />
-                  <div>
-                    <p className="text-[14px] font-medium">{title}</p>
-                    <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-faint">
-                      {when}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
+
+            {/* connected progress rail: where your application is in the process */}
+            <div className="p-6 sm:p-7">
+              <ol className="relative flex">
+                {(
+                  [
+                    ["Submitted", "Done ✓", "done"],
+                    ["In review", "Through October", "future"],
+                    ["Decision", `By ${finalDecisionsLabel()}, by email`, "future"],
+                  ] as const
+                ).map(([title, when, state], i, all) => (
+                  <li key={title} className="relative flex-1">
+                    <div className="flex items-center">
+                      <span
+                        aria-hidden
+                        className={`h-[3px] flex-1 ${i === 0 ? "opacity-0" : ""}`}
+                        style={{
+                          background:
+                            all[i - 1]?.[2] === "done"
+                              ? "linear-gradient(90deg, var(--color-ok), var(--color-line-2))"
+                              : "var(--color-line)",
+                        }}
+                      />
+                      <span
+                        aria-hidden
+                        className="flex size-7 flex-none items-center justify-center rounded-full text-[12px] font-bold"
+                        style={{
+                          background:
+                            state === "done"
+                              ? "var(--color-ok)"
+                              : "var(--color-surface-2)",
+                          border: `2px solid ${
+                            state === "done" ? "var(--color-ok)" : "var(--color-line-2)"
+                          }`,
+                          color: state === "done" ? "#06281c" : "var(--color-faint)",
+                          boxShadow:
+                            state === "done"
+                              ? "0 0 10px color-mix(in oklab, var(--color-ok) 40%, transparent)"
+                              : undefined,
+                        }}
+                      >
+                        {state === "done" ? "✓" : i + 1}
+                      </span>
+                      <span
+                        aria-hidden
+                        className={`h-[3px] flex-1 ${i === all.length - 1 ? "opacity-0" : ""}`}
+                        style={{
+                          background:
+                            state === "done"
+                              ? "linear-gradient(90deg, var(--color-ok), var(--color-line))"
+                              : "var(--color-line)",
+                        }}
+                      />
+                    </div>
+                    <div className="mt-2.5 text-center">
+                      <p
+                        className={`text-[14px] font-semibold ${
+                          state === "done" ? "text-moonlit" : "text-muted"
+                        }`}
+                      >
+                        {title}
+                      </p>
+                      <p className="mt-0.5 font-mono text-[10.5px] uppercase tracking-[0.08em] text-faint">
+                        {when}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
           </section>
         ) : (
           <section className="card p-6 sm:p-8">
