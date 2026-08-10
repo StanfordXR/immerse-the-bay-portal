@@ -212,6 +212,52 @@
   }
 }
 
+/* ── ambient background motion (Nightscape) ─────────────────────────────── */
+@keyframes nightscape-drift {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  6% {
+    opacity: 0.8;
+  }
+  85% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-105vh);
+    opacity: 0;
+  }
+}
+@keyframes nightscape-twinkle {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.2;
+    transform: scale(0.75);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .nightscape-particle {
+    animation-name: nightscape-drift;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform, opacity;
+  }
+  .nightscape-twinkle {
+    animation-name: nightscape-twinkle;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nightscape-particle {
+    display: none; /* stationary dots at the viewport bottom would read as dirt */
+  }
+}
+
 @layer utilities {
   .font-display {
     font-family: var(--font-display);
