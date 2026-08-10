@@ -1,36 +1,53 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
-import { closeDateLabel } from "@/lib/config";
+import { closeDateLabel, priorityDeadlineLabel } from "@/lib/config";
 
-const STAGES = [
-  {
-    n: "01",
-    title: "Apply",
-    when: `Open now — closes ${closeDateLabel()}`,
-    body: "One application, about ten minutes. Your draft saves as you go.",
-  },
-  {
-    n: "02",
-    title: "Review",
-    when: "Through October",
-    body: "Every application is read by the Stanford XR team. All backgrounds and skill levels welcome.",
-  },
-  {
-    n: "03",
-    title: "Decisions",
-    when: "Late October",
-    body: "Acceptances by email, with waitlist waves as spots open up.",
-  },
-] as const;
+/**
+ * Deliberately minimal: the event site (immersethebay.org) carries the
+ * marketing story. This page has two jobs — start an application, and show
+ * the application timeline. Nothing else.
+ */
 
 export default function LandingPage() {
+  const timeline = [
+    {
+      date: "August 14",
+      title: "Applications open",
+      note: "Rolling — apply any time",
+      state: "now" as const,
+    },
+    {
+      date: priorityDeadlineLabel(),
+      title: "Priority round closes",
+      note: "First decision wave",
+      state: "future" as const,
+    },
+    {
+      date: closeDateLabel(),
+      title: "Final round closes",
+      note: "Last day to apply",
+      state: "future" as const,
+    },
+    {
+      date: "Late October",
+      title: "Decisions",
+      note: "By email, in waves",
+      state: "future" as const,
+    },
+    {
+      date: "November 13–15",
+      title: "Immerse the Bay",
+      note: "Stanford University",
+      state: "future" as const,
+    },
+  ];
+
   return (
     <main className="flex min-h-dvh flex-col">
-      {/* ── hero over the key art ──────────────────────────────────────────── */}
       {/* `isolate` + explicit z-order: without it, Chrome composited the fixed
           Nightscape layer above this absolutely-positioned image. */}
-      <section className="relative isolate overflow-hidden">
+      <section className="relative isolate flex flex-1 flex-col overflow-hidden">
         <Image
           src="/skyline.jpg"
           alt=""
@@ -40,7 +57,6 @@ export default function LandingPage() {
           className="z-0 object-cover object-bottom"
           sizes="100vw"
         />
-        {/* legibility + blend into the page ground */}
         <div
           aria-hidden
           className="absolute inset-0 z-[1]"
@@ -50,23 +66,18 @@ export default function LandingPage() {
           }}
         />
 
-        <div className="relative z-[2] mx-auto w-full max-w-5xl px-6">
+        <div className="relative z-[2] mx-auto flex w-full max-w-5xl flex-1 flex-col px-6">
           <header className="flex items-center justify-between py-6">
             <Brand />
-            <nav className="flex items-center gap-2">
-              <a
-                href="https://immersethebay.org"
-                className="btn-ghost hidden !py-2 text-[14px] sm:inline-flex"
-              >
-                Event site ↗
-              </a>
-              <Link href="/sign-in" className="btn-ghost !py-2 text-[14px]">
-                Sign in
-              </Link>
-            </nav>
+            <a
+              href="https://immersethebay.org"
+              className="btn-ghost !py-2 text-[14px]"
+            >
+              Event site ↗
+            </a>
           </header>
 
-          <div className="flex flex-col items-center py-24 text-center sm:py-36">
+          <div className="flex flex-1 flex-col items-center justify-center py-24 text-center sm:py-32">
             <p className="eyebrow mb-5">
               Stanford XR · November 13–15, 2026 · Stanford University
             </p>
@@ -86,72 +97,68 @@ export default function LandingPage() {
               </span>
               .
             </h1>
-            <p className="mt-6 max-w-xl text-balance text-[17px] leading-relaxed text-moonlit/85">
-              Immerse the Bay is the Bay Area&apos;s leading XR hackathon — 36
-              hours of building in AR, VR, and mixed reality with 300 hackers
-              from around the world. Applications for 2026 are open.
-            </p>
 
-            <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
               <Link href="/apply" className="btn-primary px-7 py-3 text-[16px]">
                 Begin your application
               </Link>
-              <span className="font-mono text-[12px] text-moonlit/60">
-                ~10 minutes · autosaves
-              </span>
+              <Link href="/sign-in" className="btn-ghost px-6 py-3 text-[15px]">
+                Sign in
+              </Link>
             </div>
+            <p className="mt-4 font-mono text-[12px] text-moonlit/60">
+              under 10 minutes · auto-saves
+            </p>
           </div>
         </div>
       </section>
 
-      {/* ── stats ──────────────────────────────────────────────────────────── */}
-      <section className="mx-auto w-full max-w-5xl px-6">
-        <dl className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 py-12">
-          {(
-            [
-              ["36", "hours of hacking"],
-              ["300+", "hackers"],
-              ["$150k+", "in XR equipment"],
-              ["All levels", "welcome"],
-            ] as const
-          ).map(([stat, label]) => (
-            <div key={label} className="text-center">
-              <dt className="font-display text-xl font-semibold text-moonlit">
-                {stat}
-              </dt>
-              <dd className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
-                {label}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      {/* ── how it works ───────────────────────────────────────────────────── */}
+      {/* ── the application timeline ───────────────────────────────────────── */}
       <section
-        aria-label="How it works"
-        className="mx-auto w-full max-w-5xl px-6 pb-16"
+        aria-label="Application timeline"
+        className="mx-auto w-full max-w-5xl px-6 pb-14 pt-4"
       >
-        <div className="neon-rule mb-10" />
-        <ol className="grid gap-4 sm:grid-cols-3">
-          {STAGES.map((stage) => (
-            <li key={stage.title} className="card flex flex-col gap-3 p-6">
-              <div className="flex items-baseline gap-3">
-                <span className="font-brand text-brand-gradient text-[22px]">
-                  {stage.n}
-                </span>
-                <div>
-                  <h2 className="font-display text-[16px] font-semibold">
-                    {stage.title}
-                  </h2>
-                  <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-cyan">
-                    {stage.when}
-                  </p>
-                </div>
-              </div>
-              <p className="text-[14px] leading-relaxed text-muted">
-                {stage.body}
+        <ol className="relative flex flex-col gap-7 sm:flex-row sm:gap-0">
+          {/* connecting rail */}
+          <span
+            aria-hidden
+            className="absolute left-[5px] top-1.5 h-[calc(100%-1rem)] w-px sm:left-0 sm:top-[5px] sm:h-px sm:w-full"
+            style={{
+              background:
+                "linear-gradient(to bottom, color-mix(in oklab, var(--color-cyan) 60%, transparent), color-mix(in oklab, var(--color-magenta) 45%, transparent))",
+            }}
+          />
+          {timeline.map((item) => (
+            <li
+              key={item.title}
+              className="relative flex-1 pl-6 sm:pl-0 sm:pr-4 sm:pt-6"
+            >
+              <span
+                aria-hidden
+                className="absolute left-0 top-1.5 size-[11px] rounded-full sm:top-0"
+                style={{
+                  background:
+                    item.state === "now" ? "var(--color-cyan)" : "var(--color-surface-2)",
+                  border: `2px solid ${
+                    item.state === "now" ? "var(--color-cyan)" : "var(--color-line-2)"
+                  }`,
+                  boxShadow:
+                    item.state === "now"
+                      ? "0 0 12px color-mix(in oklab, var(--color-cyan) 60%, transparent)"
+                      : undefined,
+                }}
+              />
+              <p
+                className={`font-mono text-[11px] uppercase tracking-[0.12em] ${
+                  item.state === "now" ? "text-cyan" : "text-faint"
+                }`}
+              >
+                {item.date}
               </p>
+              <p className="mt-0.5 text-[14.5px] font-semibold text-moonlit">
+                {item.title}
+              </p>
+              <p className="text-[13px] text-muted">{item.note}</p>
             </li>
           ))}
         </ol>
