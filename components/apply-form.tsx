@@ -489,7 +489,7 @@ export function ApplyForm({
             </Field>
 
             <Field
-              label="We partner with leaders across the XR industry. If you could ask their CEOs one question, what would it be?"
+              label="If you could ask an XR industry CEO one question, what would it be?"
               error={errors.ceoQuestion}
             >
               {({ id, describedBy, invalid }) => (

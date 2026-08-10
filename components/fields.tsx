@@ -25,7 +25,7 @@ export function Field({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-[13.5px] font-medium text-muted">
+      <label htmlFor={id} className="text-balance text-[13.5px] font-medium text-muted">
         {label}
         {optional && (
           <span className="ml-1.5 font-normal text-faint">optional</span>
