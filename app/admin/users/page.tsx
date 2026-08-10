@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { account, application, user } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/dal";
 
-export const metadata: Metadata = { title: "Users — Admin" };
+export const metadata: Metadata = { title: "Users" };
 
 export default async function AdminUsersPage() {
   const { user: me } = await requireAdmin();
