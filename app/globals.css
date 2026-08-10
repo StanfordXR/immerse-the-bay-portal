@@ -1,0 +1,244 @@
+@import "tailwindcss";
+
+/*
+ * Immerse the Bay 2026 — lunar cyberpunk.
+ * Palette sampled from the 2026 key art: near-black purple sky, indigo towers,
+ * magenta nebula fog, cyan neon rims, lavender lunar ground.
+ * Dark-committed: this is a night city. There is no light theme.
+ */
+
+@theme inline {
+  --font-display: var(--font-chakra);
+  --font-sans: var(--font-plex);
+  --font-mono: var(--font-plex-mono);
+}
+
+@theme {
+  --color-void: #0a0514; /* sky behind the skyline */
+  --color-abyss: #100a20; /* deepest panel wells */
+  --color-surface: #161031; /* card faces */
+  --color-surface-2: #1e1640; /* raised faces */
+  --color-line: #2c2255; /* tower edges */
+  --color-line-2: #3b2f6e; /* lit edges */
+  --color-moonlit: #ece7fb; /* primary text — the pale towers */
+  --color-muted: #a79dcb; /* secondary text */
+  --color-faint: #776d9e; /* placeholders, disabled */
+  --color-cyan: #6ee8f7; /* neon rim — interactive accent */
+  --color-cyan-2: #29c8e6;
+  --color-violet: #8b5cf6;
+  --color-nebula: #a34fd0; /* the fog */
+  --color-magenta: #e263f0; /* the pink towers */
+  --color-danger: #fb7185;
+  --color-ok: #4ade80;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--color-void);
+    color: var(--color-moonlit);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-cyan) 32%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-cyan);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* native pickers (date input) render on dark */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.85) sepia(0.2) saturate(3) hue-rotate(160deg);
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  /* ── text inputs / selects / textareas ─────────────────────────────── */
+  .field {
+    width: 100%;
+    border: 1px solid var(--color-line);
+    background: color-mix(in oklab, var(--color-abyss) 85%, transparent);
+    color: var(--color-moonlit);
+    border-radius: 10px;
+    padding: 0.625rem 0.875rem;
+    font-size: 15px;
+    line-height: 1.5;
+    transition:
+      border-color 140ms ease,
+      box-shadow 140ms ease;
+  }
+  .field::placeholder {
+    color: var(--color-faint);
+  }
+  .field:hover {
+    border-color: var(--color-line-2);
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-cyan-2);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-cyan) 16%, transparent);
+  }
+  .field[aria-invalid="true"] {
+    border-color: var(--color-danger);
+  }
+  select.field {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' stroke='%23a79dcb' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.875rem center;
+    padding-right: 2.25rem;
+  }
+  select.field option {
+    background: var(--color-surface);
+    color: var(--color-moonlit);
+  }
+
+  /* ── buttons ───────────────────────────────────────────────────────── */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 10px;
+    padding: 0.7rem 1.4rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    color: #062029;
+    background: linear-gradient(135deg, var(--color-cyan) 0%, var(--color-cyan-2) 100%);
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--color-cyan) 45%, transparent),
+      0 4px 24px color-mix(in oklab, var(--color-cyan) 22%, transparent);
+    transition:
+      filter 140ms ease,
+      transform 140ms ease,
+      box-shadow 140ms ease;
+    cursor: pointer;
+  }
+  .btn-primary:hover {
+    filter: brightness(1.08);
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--color-cyan) 60%, transparent),
+      0 4px 32px color-mix(in oklab, var(--color-cyan) 32%, transparent);
+  }
+  .btn-primary:active {
+    transform: translateY(1px);
+  }
+  .btn-primary:disabled {
+    filter: saturate(0.4) brightness(0.75);
+    cursor: not-allowed;
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 10px;
+    padding: 0.7rem 1.25rem;
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--color-moonlit);
+    border: 1px solid var(--color-line-2);
+    background: color-mix(in oklab, var(--color-surface) 70%, transparent);
+    transition:
+      border-color 140ms ease,
+      background 140ms ease;
+    cursor: pointer;
+  }
+  .btn-ghost:hover {
+    border-color: color-mix(in oklab, var(--color-cyan) 50%, var(--color-line-2));
+    background: var(--color-surface-2);
+  }
+  .btn-ghost:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* ── cards ─────────────────────────────────────────────────────────── */
+  .card {
+    background: color-mix(in oklab, var(--color-surface) 92%, transparent);
+    border: 1px solid var(--color-line);
+    border-radius: 14px;
+  }
+
+  /* ── selectable chips ──────────────────────────────────────────────── */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-line-2);
+    background: color-mix(in oklab, var(--color-abyss) 70%, transparent);
+    color: var(--color-muted);
+    padding: 0.4rem 0.9rem;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition:
+      border-color 120ms ease,
+      color 120ms ease,
+      background 120ms ease,
+      box-shadow 120ms ease;
+    cursor: pointer;
+  }
+  .chip:hover {
+    border-color: color-mix(in oklab, var(--color-cyan) 45%, var(--color-line-2));
+    color: var(--color-moonlit);
+  }
+  .chip[aria-pressed="true"] {
+    border-color: var(--color-cyan-2);
+    background: color-mix(in oklab, var(--color-cyan) 12%, var(--color-abyss));
+    color: var(--color-cyan);
+    box-shadow: 0 0 12px color-mix(in oklab, var(--color-cyan) 18%, transparent);
+  }
+
+  /* ── small labels ──────────────────────────────────────────────────── */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-cyan);
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  /* Brand wordmark face (SD Glitch, from the marketing site). Uppercase only. */
+  .font-brand {
+    font-family: var(--font-glitch), var(--font-display), sans-serif;
+    text-transform: uppercase;
+  }
+  /* The marketing site's title treatment: moonlight fading into violet. */
+  .text-brand-gradient {
+    background: linear-gradient(100deg, #ece7fb 5%, #b9a8f0 45%, #8b5cf6 95%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .text-glow-cyan {
+    text-shadow: 0 0 18px color-mix(in oklab, var(--color-cyan) 45%, transparent);
+  }
+  .neon-rule {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--color-cyan) 55%, transparent) 20%,
+      color-mix(in oklab, var(--color-magenta) 55%, transparent) 80%,
+      transparent
+    );
+  }
+}
