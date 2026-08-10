@@ -15,6 +15,13 @@
       "when": 1786324335258,
       "tag": "0001_daily_machine_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786387311434,
+      "tag": "0002_silent_shaman",
+      "breakpoints": true
     }
   ]
 }

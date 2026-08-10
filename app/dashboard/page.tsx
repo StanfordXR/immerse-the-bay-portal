@@ -7,6 +7,8 @@ import { application } from "@/lib/db/schema";
 import { getRole, requireUser } from "@/lib/dal";
 import { closeDateLabel, finalDecisionsLabel } from "@/lib/config";
 import { draftSchema, STEPS, stepStatus } from "@/lib/form-schema";
+import { ensureReferralCode, getLeaderboard } from "@/lib/referral";
+import { ReferralCard } from "@/components/referral-card";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -24,10 +26,20 @@ export default async function DashboardPage({
       answers: application.answers,
       submittedAt: application.submittedAt,
       firstName: application.firstName,
+      referralAnonymous: application.referralAnonymous,
     })
     .from(application)
     .where(eq(application.userId, user.id))
     .limit(1);
+
+  // Referral machinery exists only after submission. ensureReferralCode also
+  // lazily backfills applications submitted before the feature shipped.
+  const referralCode = row?.submittedAt
+    ? await ensureReferralCode(user.id)
+    : null;
+  const leaderboard = referralCode ? await getLeaderboard(referralCode) : null;
+  const portalBase =
+    process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org";
 
   const parsed = draftSchema.safeParse(row?.answers ?? {});
   const answers = parsed.success ? parsed.data : {};
@@ -173,6 +185,16 @@ export default async function DashboardPage({
               </div>
             )}
           </section>
+        )}
+
+        {referralCode && leaderboard && (
+          <ReferralCard
+            code={referralCode}
+            anonymous={row?.referralAnonymous ?? false}
+            top={leaderboard.top}
+            you={leaderboard.you}
+            baseUrl={portalBase}
+          />
         )}
 
         <section className="card p-6">

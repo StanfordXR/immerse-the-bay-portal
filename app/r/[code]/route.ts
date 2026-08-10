@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { after } from "next/server";
+import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { linkClick } from "@/lib/db/schema";
+import { application, linkClick } from "@/lib/db/schema";
 
 /**
  * Self-hosted short links for QR codes and campaign posts. Clicks land in our
@@ -39,14 +40,27 @@ export async function GET(
   { params }: { params: Promise<{ code: string }> },
 ) {
   const { code } = await params;
-  const destination = LINKS[code.toLowerCase()];
+  const normalized = code.toLowerCase();
+  let destination = LINKS[normalized];
+
+  // Personal referral codes are minted per applicant at submit time.
+  if (!destination && /^[a-z2-9]{6}$/.test(normalized)) {
+    const [row] = await db
+      .select({ code: application.referralCode })
+      .from(application)
+      .where(eq(application.referralCode, normalized))
+      .limit(1);
+    if (row) {
+      destination = `/apply?utm_source=ref&utm_content=${normalized}`;
+    }
+  }
 
   if (!destination) redirect("/");
 
   after(async () => {
     try {
       await db.insert(linkClick).values({
-        code: code.toLowerCase(),
+        code: normalized,
         referrer: request.headers.get("referer"),
         userAgent: request.headers.get("user-agent")?.slice(0, 300) ?? null,
       });

@@ -92,6 +92,13 @@ export const application = pgTable(
     // word-of-mouth, which no amount of tracking can see.
     heardAboutUs: text("heard_about_us"),
 
+    // ── referrals ─────────────────────────────────────────────────────────
+    // Minted on first submit. A referred application carries
+    // utm_source='ref' + utm_content=<code>; only completed (submitted)
+    // applications count toward the leaderboard.
+    referralCode: text("referral_code").unique(),
+    referralAnonymous: boolean("referral_anonymous").notNull().default(false),
+
     // ── first-touch attribution ───────────────────────────────────────────
     // Copied off the itb_attr cookie at submit. Explicit columns rather than
     // jsonb so `GROUP BY utm_source` stays trivial.

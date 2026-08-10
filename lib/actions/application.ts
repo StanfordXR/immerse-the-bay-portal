@@ -24,6 +24,7 @@ import {
   type Answers,
 } from "@/lib/form-schema";
 import { sendSubmissionConfirmation } from "@/lib/email";
+import { ensureReferralCode } from "@/lib/referral";
 
 export type SaveResult = { ok: true } | { ok: false; error: string };
 
@@ -136,6 +137,7 @@ export async function submitApplication(raw: unknown): Promise<SubmitResult> {
   });
 
   if (firstSubmit) {
+    await ensureReferralCode(authz.user.id).catch(() => {});
     const email = authz.user.email;
     const name = answers.firstName || "there";
     const close = closeDateLabel();
