@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
+import { HeroCta } from "@/components/hero-cta";
 import {
   closeDateLabel,
   finalDecisionsLabel,
@@ -69,12 +70,17 @@ export default function LandingPage() {
         <div className="relative z-[2] mx-auto flex w-full max-w-5xl flex-1 flex-col px-6">
           <header className="flex items-center justify-between py-5">
             <Brand />
-            <a
-              href="https://immersethebay.org"
-              className="btn-ghost !py-2 text-[15px]"
-            >
-              ← Back to main site
-            </a>
+            <nav className="flex items-center gap-4">
+              <a
+                href="https://immersethebay.org"
+                className="text-[14px] text-moonlit/60 transition-colors hover:text-moonlit"
+              >
+                ← Back to main site
+              </a>
+              <Link href="/sign-in" className="btn-ghost !py-2 text-[15px]">
+                Sign in
+              </Link>
+            </nav>
           </header>
 
           <div className="flex flex-1 flex-col items-center justify-center pb-0 pt-0 text-center">
@@ -98,13 +104,8 @@ export default function LandingPage() {
               .
             </h1>
 
-            <div className="mt-9 flex flex-wrap items-center justify-center gap-3.5">
-              <Link href="/apply" className="btn-primary px-8 py-3.5 text-[17px]">
-                Begin your application
-              </Link>
-              <Link href="/sign-in" className="btn-ghost px-7 py-3.5 text-[16px]">
-                Sign in
-              </Link>
+            <div className="mt-9">
+              <HeroCta />
             </div>
             <p className="mt-3.5 font-mono text-[13.5px] text-moonlit/70">
               under 10 minutes · auto-saves
