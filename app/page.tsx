@@ -62,12 +62,12 @@ export default function LandingPage() {
           className="absolute inset-0 z-[1]"
           style={{
             background:
-              "linear-gradient(180deg, rgba(10,5,20,0.66) 0%, rgba(10,5,20,0.4) 35%, rgba(10,5,20,0.26) 62%, rgba(10,5,20,0.5) 86%, #0a0514 100%)",
+              "linear-gradient(180deg, rgba(10,5,20,0.78) 0%, rgba(10,5,20,0.55) 35%, rgba(10,5,20,0.42) 62%, rgba(10,5,20,0.68) 100%)",
           }}
         />
 
         <div className="relative z-[2] mx-auto flex w-full max-w-5xl flex-1 flex-col px-6">
-          <header className="flex items-center justify-between py-6">
+          <header className="flex items-center justify-between py-5">
             <Brand />
             <a
               href="https://immersethebay.org"
@@ -77,7 +77,7 @@ export default function LandingPage() {
             </a>
           </header>
 
-          <div className="flex flex-1 flex-col items-center justify-center py-24 text-center sm:py-32">
+          <div className="flex flex-1 flex-col items-center justify-center pb-0 pt-0 text-center">
             <p className="eyebrow mb-5 !text-[13px]">
               November 13–15, 2026 · Stanford University
             </p>
@@ -98,7 +98,7 @@ export default function LandingPage() {
               .
             </h1>
 
-            <div className="mt-11 flex flex-wrap items-center justify-center gap-3.5">
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-3.5">
               <Link href="/apply" className="btn-primary px-8 py-3.5 text-[17px]">
                 Begin your application
               </Link>
@@ -106,62 +106,57 @@ export default function LandingPage() {
                 Sign in
               </Link>
             </div>
-            <p className="mt-4.5 font-mono text-[13.5px] text-moonlit/70">
+            <p className="mt-3.5 font-mono text-[13.5px] text-moonlit/70">
               under 10 minutes · auto-saves
             </p>
           </div>
-        </div>
-      </section>
 
-      {/* ── the application timeline: evenly spaced ────────────────────────── */}
-      <section
-        aria-label="Application timeline"
-        className="mx-auto w-full max-w-6xl px-6 pb-16 pt-6"
-      >
-        <ol className="relative flex flex-col gap-8 sm:flex-row sm:gap-0">
-          {/* connecting rail */}
-          <span
-            aria-hidden
-            className="absolute left-[5px] top-1.5 h-[calc(100%-1rem)] w-px sm:left-0 sm:top-[5px] sm:h-px sm:w-full"
-            style={{
-              background:
-                "linear-gradient(to bottom, color-mix(in oklab, var(--color-cyan) 60%, transparent), color-mix(in oklab, var(--color-magenta) 45%, transparent))",
-            }}
-          />
-          {timeline.map((item) => (
-            <li
-              key={item.title}
-              className="relative flex-1 pl-7 sm:pl-0 sm:pr-4 sm:pt-7"
-            >
+          <div className="pb-5 sm:pb-6">
+            <ol className="relative flex flex-col gap-7 sm:flex-row sm:gap-0">
               <span
                 aria-hidden
-                className="absolute left-0 top-1.5 size-3 rounded-full sm:top-0"
+                className="absolute left-[5px] top-1.5 h-[calc(100%-1rem)] w-px sm:left-0 sm:top-[5px] sm:h-px sm:w-full"
                 style={{
                   background:
-                    item.state === "now" ? "var(--color-cyan)" : "var(--color-surface-2)",
-                  border: `2px solid ${
-                    item.state === "now" ? "var(--color-cyan)" : "var(--color-line-2)"
-                  }`,
-                  boxShadow:
-                    item.state === "now"
-                      ? "0 0 12px color-mix(in oklab, var(--color-cyan) 60%, transparent)"
-                      : undefined,
+                    "linear-gradient(to bottom, color-mix(in oklab, var(--color-cyan) 60%, transparent), color-mix(in oklab, var(--color-magenta) 45%, transparent))",
                 }}
               />
-              <p
-                className={`font-mono text-[12px] uppercase tracking-[0.12em] ${
-                  item.state === "now" ? "text-cyan" : "text-faint"
-                }`}
-              >
-                {item.date}
-              </p>
-              <p className="mt-1 text-[16px] font-semibold text-moonlit">
-                {item.title}
-              </p>
-              <p className="text-[14px] text-muted">{item.note}</p>
-            </li>
-          ))}
-        </ol>
+              {timeline.map((item) => (
+                <li
+                  key={item.title}
+                  className="relative flex-1 pl-7 sm:pl-0 sm:pr-4 sm:pt-4"
+                >
+                  <span
+                    aria-hidden
+                    className="absolute left-0 top-1.5 size-3 rounded-full sm:top-0"
+                    style={{
+                      background:
+                        item.state === "now" ? "var(--color-cyan)" : "rgba(30,22,64,0.9)",
+                      border: `2px solid ${
+                        item.state === "now" ? "var(--color-cyan)" : "var(--color-line-2)"
+                      }`,
+                      boxShadow:
+                        item.state === "now"
+                          ? "0 0 12px color-mix(in oklab, var(--color-cyan) 60%, transparent)"
+                          : undefined,
+                    }}
+                  />
+                  <p
+                    className={`font-mono text-[12px] uppercase tracking-[0.12em] ${
+                      item.state === "now" ? "text-cyan" : "text-moonlit/55"
+                    }`}
+                  >
+                    {item.date}
+                  </p>
+                  <p className="mt-0.5 text-[15.5px] font-semibold text-moonlit">
+                    {item.title}
+                  </p>
+                  <p className="text-[13.5px] text-moonlit/60">{item.note}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
       </section>
 
       <footer className="mx-auto w-full max-w-6xl px-6">

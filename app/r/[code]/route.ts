@@ -4,31 +4,34 @@ import { db } from "@/lib/db";
 import { linkClick } from "@/lib/db/schema";
 
 /**
- * Self-hosted short links for QR codes and campaign posts.
+ * Self-hosted short links for QR codes and campaign posts. Clicks land in our
+ * own Postgres, joinable against submissions and acceptances.
  *
- * Built rather than bought: Dub's free tier is ~1,000 tracked events (one busy
- * afternoon at an activities fair) and Bitly's free plan interposes an ad page —
- * not something to put between a flyer scan and an application form. Clicks land
- * in our own Postgres, joinable against submissions and acceptances.
+ * Tagging scheme (deliberately condensed — short URLs beat taxonomy purity):
+ *   utm_source  = where, in the shortest unambiguous token (ig, li, dc, flyer…)
+ *   utm_content = placement within the source, when there's more than one
+ *   no utm_campaign / utm_medium — one event, and the source implies the medium
  *
- * Conventions: `utm_campaign=itb-2026` on every link. One code per *physical
- * location* for flyers — that's how you learn Huang lobby beats Tresidder 6:1.
- * Test-scan every code with a real phone before the print run.
+ * Personal referral codes: utm_source=ref, utm_content=<handle>. Add a row here
+ * and in the Notion master list; performance is visible in PostHog and /admin.
+ *
+ * Master list of codes lives in Notion (owner: Victor). Add codes BEFORE
+ * anything ships — printed QR codes are unfixable.
  */
 const LINKS: Record<string, string> = {
-  // flyers — one code per location
-  f1: "/apply?utm_source=flyer&utm_medium=qr&utm_campaign=itb-2026&utm_content=huang-lobby",
-  f2: "/apply?utm_source=flyer&utm_medium=qr&utm_campaign=itb-2026&utm_content=tresidder-board",
-  f3: "/apply?utm_source=flyer&utm_medium=qr&utm_campaign=itb-2026&utm_content=dschool",
-  f4: "/apply?utm_source=flyer&utm_medium=qr&utm_campaign=itb-2026&utm_content=activities-fair",
-  // social
-  ig: "/apply?utm_source=instagram&utm_medium=social&utm_campaign=itb-2026&utm_content=bio-link",
-  li: "/apply?utm_source=linkedin&utm_medium=social&utm_campaign=itb-2026",
-  dc: "/apply?utm_source=discord&utm_medium=social&utm_campaign=itb-2026",
-  // partners — one code per partner club
-  bx: "/apply?utm_source=berkeley-xr&utm_medium=partner&utm_campaign=itb-2026",
+  // flyers — one code per physical location
+  f1: "/apply?utm_source=flyer&utm_content=huang",
+  f2: "/apply?utm_source=flyer&utm_content=tress",
+  f3: "/apply?utm_source=flyer&utm_content=dschool",
+  f4: "/apply?utm_source=flyer&utm_content=fair",
+  // socials
+  ig: "/apply?utm_source=ig&utm_content=bio",
+  li: "/apply?utm_source=li",
+  dc: "/apply?utm_source=dc",
   // mailing lists
-  ml: "/apply?utm_source=mailing-list&utm_medium=email&utm_campaign=itb-2026",
+  ml: "/apply?utm_source=email",
+  // partner clubs — one code per partner
+  bx: "/apply?utm_source=berkeley-xr",
 };
 
 export async function GET(
