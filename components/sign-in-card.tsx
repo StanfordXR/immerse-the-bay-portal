@@ -111,7 +111,7 @@ export function SignInCard() {
       <h1 className="font-display text-2xl font-semibold">
         {mode === "sign-in" ? "Welcome back" : "Create your account"}
       </h1>
-      <p className="mt-1.5 text-[14px] text-muted">
+      <p className="mt-1.5 text-[13px] text-muted sm:whitespace-nowrap">
         {mode === "sign-in"
           ? "Sign in to continue your application."
           : "Your application starts with an account — takes ten seconds."}
