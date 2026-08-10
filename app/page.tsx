@@ -1,7 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
-import { closeDateLabel, priorityDeadlineLabel } from "@/lib/config";
+import {
+  closeDateLabel,
+  finalDecisionsLabel,
+  priorityDeadlineLabel,
+  priorityDecisionsLabel,
+} from "@/lib/config";
 
 /**
  * Deliberately minimal: the event site (immersethebay.org) carries the
@@ -24,15 +29,21 @@ export default function LandingPage() {
       state: "future" as const,
     },
     {
+      date: priorityDecisionsLabel(),
+      title: "Priority decisions",
+      note: "By email",
+      state: "future" as const,
+    },
+    {
       date: closeDateLabel(),
       title: "Final round closes",
       note: "Last day to apply",
       state: "future" as const,
     },
     {
-      date: "Late October",
-      title: "Decisions",
-      note: "By email, in waves",
+      date: finalDecisionsLabel(),
+      title: "Final decisions",
+      note: "One week after close",
       state: "future" as const,
     },
     {
@@ -62,7 +73,7 @@ export default function LandingPage() {
           className="absolute inset-0 z-[1]"
           style={{
             background:
-              "linear-gradient(180deg, rgba(10,5,20,0.5) 0%, rgba(10,5,20,0.22) 35%, rgba(10,5,20,0.08) 62%, rgba(10,5,20,0.35) 86%, #0a0514 100%)",
+              "linear-gradient(180deg, rgba(10,5,20,0.66) 0%, rgba(10,5,20,0.4) 35%, rgba(10,5,20,0.26) 62%, rgba(10,5,20,0.5) 86%, #0a0514 100%)",
           }}
         />
 
@@ -71,17 +82,17 @@ export default function LandingPage() {
             <Brand />
             <a
               href="https://immersethebay.org"
-              className="btn-ghost !py-2 text-[14px]"
+              className="btn-ghost !py-2 text-[15px]"
             >
               Event site ↗
             </a>
           </header>
 
           <div className="flex flex-1 flex-col items-center justify-center py-24 text-center sm:py-32">
-            <p className="eyebrow mb-5">
-              Stanford XR · November 13–15, 2026 · Stanford University
+            <p className="eyebrow mb-5 !text-[13px]">
+              November 13–15, 2026 · Stanford University
             </p>
-            <h1 className="font-brand max-w-3xl text-balance text-3xl leading-[1.14] sm:text-5xl">
+            <h1 className="font-brand max-w-4xl text-balance text-4xl leading-[1.14] sm:text-6xl">
               Build the next{" "}
               <span
                 className="text-glow-cyan"
@@ -98,27 +109,27 @@ export default function LandingPage() {
               .
             </h1>
 
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-              <Link href="/apply" className="btn-primary px-7 py-3 text-[16px]">
+            <div className="mt-11 flex flex-wrap items-center justify-center gap-3.5">
+              <Link href="/apply" className="btn-primary px-8 py-3.5 text-[17px]">
                 Begin your application
               </Link>
-              <Link href="/sign-in" className="btn-ghost px-6 py-3 text-[15px]">
+              <Link href="/sign-in" className="btn-ghost px-7 py-3.5 text-[16px]">
                 Sign in
               </Link>
             </div>
-            <p className="mt-4 font-mono text-[12px] text-moonlit/60">
+            <p className="mt-4.5 font-mono text-[13.5px] text-moonlit/70">
               under 10 minutes · auto-saves
             </p>
           </div>
         </div>
       </section>
 
-      {/* ── the application timeline ───────────────────────────────────────── */}
+      {/* ── the application timeline: evenly spaced ────────────────────────── */}
       <section
         aria-label="Application timeline"
-        className="mx-auto w-full max-w-5xl px-6 pb-14 pt-4"
+        className="mx-auto w-full max-w-6xl px-6 pb-16 pt-6"
       >
-        <ol className="relative flex flex-col gap-7 sm:flex-row sm:gap-0">
+        <ol className="relative flex flex-col gap-8 sm:flex-row sm:gap-0">
           {/* connecting rail */}
           <span
             aria-hidden
@@ -131,11 +142,11 @@ export default function LandingPage() {
           {timeline.map((item) => (
             <li
               key={item.title}
-              className="relative flex-1 pl-6 sm:pl-0 sm:pr-4 sm:pt-6"
+              className="relative flex-1 pl-7 sm:pl-0 sm:pr-4 sm:pt-7"
             >
               <span
                 aria-hidden
-                className="absolute left-0 top-1.5 size-[11px] rounded-full sm:top-0"
+                className="absolute left-0 top-1.5 size-3 rounded-full sm:top-0"
                 style={{
                   background:
                     item.state === "now" ? "var(--color-cyan)" : "var(--color-surface-2)",
@@ -149,23 +160,23 @@ export default function LandingPage() {
                 }}
               />
               <p
-                className={`font-mono text-[11px] uppercase tracking-[0.12em] ${
+                className={`font-mono text-[12px] uppercase tracking-[0.12em] ${
                   item.state === "now" ? "text-cyan" : "text-faint"
                 }`}
               >
                 {item.date}
               </p>
-              <p className="mt-0.5 text-[14.5px] font-semibold text-moonlit">
+              <p className="mt-1 text-[16px] font-semibold text-moonlit">
                 {item.title}
               </p>
-              <p className="text-[13px] text-muted">{item.note}</p>
+              <p className="text-[14px] text-muted">{item.note}</p>
             </li>
           ))}
         </ol>
       </section>
 
-      <footer className="mx-auto w-full max-w-5xl px-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line py-6 text-[13px] text-faint">
+      <footer className="mx-auto w-full max-w-6xl px-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line py-6 text-[14px] text-faint">
           <span>© 2026 Stanford XR</span>
           <div className="flex gap-5">
             <a href="https://immersethebay.org" className="hover:text-muted">

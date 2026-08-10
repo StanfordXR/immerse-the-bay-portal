@@ -43,3 +43,22 @@ export function closeDateLabel(): string {
     timeZone: "America/Los_Angeles",
   });
 }
+
+function plusOneWeekLabel(date: Date | null): string {
+  if (!date) return "TBA";
+  const d = new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000);
+  return d.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    timeZone: "America/Los_Angeles",
+  });
+}
+
+/** Decisions land one week after each round closes — derived, so an extension moves them automatically. */
+export function priorityDecisionsLabel(): string {
+  return plusOneWeekLabel(priorityDeadline());
+}
+
+export function finalDecisionsLabel(): string {
+  return plusOneWeekLabel(applicationsClose());
+}

@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application } from "@/lib/db/schema";
 import { getRole, requireUser } from "@/lib/dal";
-import { closeDateLabel } from "@/lib/config";
+import { closeDateLabel, finalDecisionsLabel } from "@/lib/config";
 import { draftSchema, STEPS, stepStatus } from "@/lib/form-schema";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -111,7 +111,7 @@ export default async function DashboardPage({
                 [
                   ["Submitted", "Done ✓", true],
                   ["In review", "Through October", false],
-                  ["Decision", "Late October, by email", false],
+                  ["Decision", `By ${finalDecisionsLabel()}, by email`, false],
                 ] as const
               ).map(([title, when, done]) => (
                 <li key={title} className="flex items-center gap-3 p-4">
