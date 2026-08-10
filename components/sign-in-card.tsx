@@ -105,7 +105,7 @@ export function SignInCard() {
       <p className="mt-1.5 text-[13px] text-muted sm:whitespace-nowrap">
         {mode === "sign-in"
           ? "Sign in to continue your application."
-          : "Your application starts with an account — takes ten seconds."}
+          : "Your application starts with an account. Takes ten seconds."}
       </p>
 
       <div className="mt-6 flex flex-col gap-2.5">
