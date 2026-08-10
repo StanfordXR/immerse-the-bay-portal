@@ -46,7 +46,7 @@ export default function LandingPage() {
     <main className="flex min-h-dvh flex-col">
       {/* `isolate` + explicit z-order: without it, Chrome composited the fixed
           Nightscape layer above this absolutely-positioned image. */}
-      <section className="relative isolate flex flex-1 flex-col overflow-hidden">
+      <section className="relative isolate flex min-h-dvh flex-col overflow-hidden">
         <Image
           src="/skyline.jpg"
           alt=""
@@ -54,7 +54,7 @@ export default function LandingPage() {
           priority
           unoptimized
           className="z-0 object-cover"
-          style={{ objectPosition: "50% 78%" }}
+          style={{ objectPosition: "50% 62%" }}
           sizes="100vw"
         />
         <div
@@ -73,7 +73,7 @@ export default function LandingPage() {
               href="https://immersethebay.org"
               className="btn-ghost !py-2 text-[15px]"
             >
-              Event site ↗
+              ← Back to main site
             </a>
           </header>
 
