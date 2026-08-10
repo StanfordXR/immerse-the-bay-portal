@@ -82,14 +82,23 @@ export default function PrivacyPage() {
           <p>
             Attendees must be 18 or older on November 13, 2026. Date of birth is
             used to verify this at acceptance. Applications from people under 18
-            are not carried forward and are deleted on the schedule below.
+            are not carried forward and are removed on the schedule below.
           </p>
         </Section>
 
         <Section title="How long we keep it">
           <p>
-            Application data is deleted within 12 months after the event. To
-            have your data deleted sooner — or to ask anything about it — email{" "}
+            We keep application data for up to 12 months after the event, then
+            delete or de-identify it. We may keep some records longer where
+            there&apos;s a genuine need — for example, attendance records for
+            accepted participants, or where required for safety or legal
+            reasons. Aggregate statistics that can&apos;t identify anyone (like
+            applicant counts by school or referral source) may be kept
+            indefinitely to plan future events.
+          </p>
+          <p>
+            To have your data deleted sooner — or to ask anything about it —
+            email{" "}
             <a
               href="mailto:admin@stanfordxr.org"
               className="text-cyan underline-offset-2 hover:underline"

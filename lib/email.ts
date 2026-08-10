@@ -61,7 +61,7 @@ export async function sendSubmissionConfirmation(
       "Your application to Immerse the Bay 2026 is in.",
       "",
       `You can review or edit your application until applications close (${closeLabel}) at:`,
-      `${process.env.BETTER_AUTH_URL ?? "https://apply.immersethebay.org"}/dashboard`,
+      `${process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org"}/dashboard`,
       "",
       "What happens next:",
       "  1. Applications close, and our review team reads every application.",

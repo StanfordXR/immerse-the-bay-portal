@@ -10,7 +10,7 @@
  *   - partner clubs go in utm_source with utm_medium=partner, so "which partner
  *     performed best" is a one-line GROUP BY.
  */
-const BASE = process.argv[2] ?? "https://apply.immersethebay.org";
+const BASE = process.argv[2] ?? "https://portal.immersethebay.org";
 
 const rows = [
   // [channel, placement, short link code, source, medium, content, notes]
