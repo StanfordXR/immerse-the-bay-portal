@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { desc, isNotNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application, feedback, user } from "@/lib/db/schema";
+import { applicantOwnedOnly } from "@/lib/db/applicant-filter";
 import { requireAdmin } from "@/lib/dal";
 
 export const metadata: Metadata = { title: "Admin" };
@@ -17,7 +18,8 @@ export default async function AdminPage() {
       submitted: sql<number>`count(*) filter (where ${application.submittedAt} is not null)::int`,
       last24h: sql<number>`count(*) filter (where ${application.submittedAt} > now() - interval '24 hours')::int`,
     })
-    .from(application);
+    .from(application)
+    .where(applicantOwnedOnly);
 
   const sources = await db
     .select({
@@ -27,6 +29,7 @@ export default async function AdminPage() {
       submitted: sql<number>`count(*) filter (where ${application.submittedAt} is not null)::int`,
     })
     .from(application)
+    .where(applicantOwnedOnly)
     .groupBy(application.utmSource, application.utmMedium)
     .orderBy(desc(sql`count(*)`));
 
@@ -41,7 +44,7 @@ export default async function AdminPage() {
       submittedAt: application.submittedAt,
     })
     .from(application)
-    .where(isNotNull(application.submittedAt))
+    .where(sql`${isNotNull(application.submittedAt)} and ${applicantOwnedOnly}`)
     .orderBy(desc(application.submittedAt))
     .limit(100);
 

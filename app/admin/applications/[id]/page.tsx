@@ -166,6 +166,12 @@ export default async function AdminApplicationDetail({
               {row.hackathonsBucket ?? "·"}
               {row.firstHackathon ? " · first hackathon" : ""}
             </dd>
+            <dt className="text-faint">Times at ITB</dt>
+            <dd className="text-moonlit/90">
+              {row.priorAttendance === "0"
+                ? "First time"
+                : (row.priorAttendance ?? "·")}
+            </dd>
             <dt className="text-faint">Primary skill</dt>
             <dd className="text-moonlit/90">{row.primarySkill ?? "·"}</dd>
             <dt className="text-faint">Skills</dt>
@@ -229,7 +235,10 @@ export default async function AdminApplicationDetail({
             <dt className="text-faint">Accessibility</dt>
             <dd className="text-moonlit/90">{row.accessibilityNeeds || "·"}</dd>
             <dt className="text-faint">Heard about us</dt>
-            <dd className="text-moonlit/90">{row.heardAboutUs || "·"}</dd>
+            <dd className="text-moonlit/90">
+              {row.heardAboutUs || "·"}
+              {row.heardAboutUsName ? ` · via ${row.heardAboutUsName}` : ""}
+            </dd>
             <dt className="text-faint">First touch</dt>
             <dd className="font-mono text-[13px] text-moonlit/90">
               {row.utmSource

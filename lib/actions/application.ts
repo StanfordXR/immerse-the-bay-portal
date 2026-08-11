@@ -136,6 +136,16 @@ export async function submitApplication(raw: unknown): Promise<SubmitResult> {
     kind: firstSubmit ? "submitted" : "resubmitted",
   });
 
+  // The static landing page reads this client-side to flip its CTA from
+  // "Continue your application" to "View your application".
+  jar.set("itb_applied", "1", {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+  });
+
   if (firstSubmit) {
     await ensureReferralCode(authz.user.id).catch(() => {});
     const email = authz.user.email;

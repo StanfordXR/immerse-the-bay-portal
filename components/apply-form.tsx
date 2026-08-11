@@ -15,6 +15,8 @@ import {
   GRAD_YEARS,
   HACKATHON_BUCKETS,
   HACKATHON_BUCKET_LABELS,
+  PRIOR_ATTENDANCE,
+  PRIOR_ATTENDANCE_LABELS,
   HEARD_OPTIONS,
   PRIMARY_SKILLS,
   PRONOUN_OPTIONS,
@@ -28,6 +30,13 @@ import {
   type StepIndex,
 } from "@/lib/form-schema";
 import { saveDraft, submitApplication } from "@/lib/actions/application";
+
+// Sources where a specific person sent them our way.
+const HEARD_NAMEABLE = new Set<string>([
+  "Friend or classmate",
+  "Class or professor",
+  "Partner club at my school",
+]);
 import { Stepper } from "@/components/stepper";
 import { ChipGroup, Field, WordCount } from "@/components/fields";
 
@@ -393,21 +402,38 @@ export function ApplyForm({
               </Field>
             </div>
 
-            <Field label="Hackathons attended before" error={errors.hackathonsBucket}>
-              {() => (
-                <ChipGroup
-                  ariaLabel="Hackathons attended"
-                  options={HACKATHON_BUCKETS}
-                  labels={HACKATHON_BUCKET_LABELS}
-                  values={a.hackathonsBucket ? [a.hackathonsBucket] : []}
-                  onChange={([v]) =>
-                    set({
-                      hackathonsBucket: (v ?? undefined) as Answers["hackathonsBucket"],
-                    })
-                  }
-                />
-              )}
-            </Field>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="Hackathons attended before" error={errors.hackathonsBucket}>
+                {() => (
+                  <ChipGroup
+                    ariaLabel="Hackathons attended"
+                    options={HACKATHON_BUCKETS}
+                    labels={HACKATHON_BUCKET_LABELS}
+                    values={a.hackathonsBucket ? [a.hackathonsBucket] : []}
+                    onChange={([v]) =>
+                      set({
+                        hackathonsBucket: (v ?? undefined) as Answers["hackathonsBucket"],
+                      })
+                    }
+                  />
+                )}
+              </Field>
+              <Field label="Times at Immerse the Bay" error={errors.priorAttendance}>
+                {() => (
+                  <ChipGroup
+                    ariaLabel="Times at Immerse the Bay"
+                    options={PRIOR_ATTENDANCE}
+                    labels={PRIOR_ATTENDANCE_LABELS}
+                    values={a.priorAttendance ? [a.priorAttendance] : []}
+                    onChange={([v]) =>
+                      set({
+                        priorAttendance: (v ?? undefined) as Answers["priorAttendance"],
+                      })
+                    }
+                  />
+                )}
+              </Field>
+            </div>
 
             <Field
               label="Skills"
@@ -563,29 +589,53 @@ export function ApplyForm({
               </Field>
             </div>
 
-            <Field label="How did you hear about us?" error={errors.heardAboutUs}>
-              {({ id, describedBy, invalid }) => (
-                <select
-                  id={id}
-                  className="field sm:max-w-80"
-                  value={a.heardAboutUs ?? ""}
-                  aria-describedby={describedBy}
-                  aria-invalid={invalid || undefined}
-                  onChange={(e) =>
-                    set({
-                      heardAboutUs: e.target.value as Answers["heardAboutUs"],
-                    })
-                  }
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="How did you hear about us?" error={errors.heardAboutUs}>
+                {({ id, describedBy, invalid }) => (
+                  <select
+                    id={id}
+                    className="field"
+                    value={a.heardAboutUs ?? ""}
+                    aria-describedby={describedBy}
+                    aria-invalid={invalid || undefined}
+                    onChange={(e) => {
+                      const heardAboutUs = e.target.value as Answers["heardAboutUs"];
+                      set(
+                        HEARD_NAMEABLE.has(e.target.value)
+                          ? { heardAboutUs }
+                          : { heardAboutUs, heardAboutUsName: "" },
+                      );
+                    }}
+                  >
+                    <option value="">Select…</option>
+                    {HEARD_OPTIONS.map((h) => (
+                      <option key={h} value={h}>
+                        {h}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </Field>
+              {HEARD_NAMEABLE.has(a.heardAboutUs ?? "") && (
+                <Field
+                  label="Who? Name-drop them"
+                  optional
+                  hint="They earn eternal glory."
                 >
-                  <option value="">Select…</option>
-                  {HEARD_OPTIONS.map((h) => (
-                    <option key={h} value={h}>
-                      {h}
-                    </option>
-                  ))}
-                </select>
+                  {({ id, describedBy }) => (
+                    <input
+                      id={id}
+                      className="field"
+                      placeholder="e.g. Steven Lee"
+                      maxLength={100}
+                      value={a.heardAboutUsName ?? ""}
+                      aria-describedby={describedBy}
+                      onChange={(e) => set({ heardAboutUsName: e.target.value })}
+                    />
+                  )}
+                </Field>
               )}
-            </Field>
+            </div>
 
             {/* resume + its sharing consent live together */}
             <div className="flex flex-col gap-4 rounded-xl border border-line bg-abyss/40 p-4 sm:p-5">
@@ -773,6 +823,7 @@ function ReviewStep({
         ],
         ["Graduation", a.gradYear],
         ["Hackathons", a.hackathonsBucket && HACKATHON_BUCKET_LABELS[a.hackathonsBucket]],
+        ["Times at Immerse the Bay", a.priorAttendance && PRIOR_ATTENDANCE_LABELS[a.priorAttendance]],
         ["Primary skill", a.primarySkill],
         ["Skills", a.skills?.length ? a.skills.join(", ") : undefined],
         ["Portfolio", a.portfolioUrl],
@@ -794,7 +845,12 @@ function ReviewStep({
         ["Dietary", a.dietaryNeeds],
         ["Accessibility", a.accessibilityNeeds],
         ["Resume", a.resumeUrl ? "Attached ✓" : "None"],
-        ["Heard about us via", a.heardAboutUs],
+        [
+          "Heard about us via",
+          a.heardAboutUsName
+            ? `${a.heardAboutUs} (${a.heardAboutUsName})`
+            : a.heardAboutUs,
+        ],
         ["Sponsor resume sharing", a.sponsorShareOk ? "Yes" : "No"],
       ],
     },

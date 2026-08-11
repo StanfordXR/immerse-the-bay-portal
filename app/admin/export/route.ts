@@ -1,6 +1,7 @@
 import { desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application, user } from "@/lib/db/schema";
+import { applicantOwnedOnly } from "@/lib/db/applicant-filter";
 import { getAuthorizedUser } from "@/lib/dal";
 import { eq } from "drizzle-orm";
 
@@ -22,6 +23,7 @@ export async function GET(): Promise<Response> {
       schoolRegion: application.schoolRegion,
       gradYear: application.gradYear,
       hackathonsBucket: application.hackathonsBucket,
+      priorAttendance: application.priorAttendance,
       primarySkill: application.primarySkill,
       portfolioUrl: application.portfolioUrl,
       tshirtSize: application.tshirtSize,
@@ -30,6 +32,7 @@ export async function GET(): Promise<Response> {
       resumeUrl: application.resumeUrl,
       sponsorShareOk: application.sponsorShareOk,
       heardAboutUs: application.heardAboutUs,
+      heardAboutUsName: application.heardAboutUsName,
       utmSource: application.utmSource,
       utmMedium: application.utmMedium,
       utmCampaign: application.utmCampaign,
@@ -39,13 +42,15 @@ export async function GET(): Promise<Response> {
     })
     .from(application)
     .innerJoin(user, eq(application.userId, user.id))
+    .where(applicantOwnedOnly)
     .orderBy(desc(application.submittedAt));
 
   const header = [
     "submitted_at", "created_at", "first_name", "last_name", "email",
     "date_of_birth", "school", "country", "region", "grad_year", "hackathons",
-    "primary_skill", "portfolio", "tshirt", "dietary", "accessibility",
-    "resume_url", "sponsor_share_ok", "heard_about_us", "utm_source",
+    "itb_before", "primary_skill", "portfolio", "tshirt", "dietary",
+    "accessibility", "resume_url", "sponsor_share_ok", "heard_about_us",
+    "heard_name", "utm_source",
     "utm_medium", "utm_campaign", "utm_content", "referrer",
     "why_participate", "ceo_question", "skills",
   ];
@@ -65,10 +70,12 @@ export async function GET(): Promise<Response> {
         r.createdAt.toISOString(),
         r.firstName, r.lastName, r.email, r.dateOfBirth,
         r.schoolName, r.schoolCountry, r.schoolRegion, r.gradYear,
-        r.hackathonsBucket, r.primarySkill, r.portfolioUrl, r.tshirtSize,
+        r.hackathonsBucket, r.priorAttendance, r.primarySkill, r.portfolioUrl,
+        r.tshirtSize,
         r.dietaryNeeds, r.accessibilityNeeds, r.resumeUrl,
         r.sponsorShareOk ? "yes" : "no",
-        r.heardAboutUs, r.utmSource, r.utmMedium, r.utmCampaign, r.utmContent,
+        r.heardAboutUs, r.heardAboutUsName,
+        r.utmSource, r.utmMedium, r.utmCampaign, r.utmContent,
         r.referrer,
         answers.whyParticipate, answers.ceoQuestion,
         Array.isArray(answers.skills) ? answers.skills.join("; ") : "",

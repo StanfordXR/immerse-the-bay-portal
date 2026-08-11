@@ -4,6 +4,7 @@ import { and, desc, eq, ilike, isNotNull, isNull, or, sql, type SQL } from "driz
 import { Brand } from "@/components/brand";
 import { db } from "@/lib/db";
 import { application, applicationTag, tag } from "@/lib/db/schema";
+import { applicantOwnedOnly } from "@/lib/db/applicant-filter";
 import { requireAdmin } from "@/lib/dal";
 
 export const metadata: Metadata = { title: "Applications" };
@@ -34,7 +35,8 @@ export default async function AdminApplicationsPage({
   const source = (params.source ?? "").trim();
   const tagFilter = (params.tag ?? "").trim();
 
-  const conditions: SQL[] = [];
+  // Core testers promoted to reviewer/admin vanish from the applicant pool.
+  const conditions: SQL[] = [applicantOwnedOnly];
   if (status === "submitted") conditions.push(isNotNull(application.submittedAt));
   if (status === "draft") conditions.push(isNull(application.submittedAt));
   if (decision === "undecided") conditions.push(isNull(application.decision));
@@ -74,7 +76,7 @@ export default async function AdminApplicationsPage({
         tags: sql<string[]>`coalesce((select array_agg(t.name order by t.name) from ${applicationTag} at3 join ${tag} t on t.id = at3.tag_id where at3.application_id = ${sql.raw('"application"."id"')}), '{}')`,
       })
       .from(application)
-      .where(conditions.length ? and(...conditions) : undefined)
+      .where(and(...conditions))
       .orderBy(desc(sql`coalesce(${application.submittedAt}, ${application.updatedAt})`))
       .limit(500),
     db

@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 import { Brand } from "@/components/brand";
 import { db } from "@/lib/db";
 import { application } from "@/lib/db/schema";
+import { applicantOwnedOnly } from "@/lib/db/applicant-filter";
 import { requireReviewer } from "@/lib/dal";
 
 export const metadata: Metadata = { title: "Review" };
@@ -21,7 +22,8 @@ export default async function ReviewPage() {
       total: sql<number>`count(*)::int`,
       submitted: sql<number>`(count(*) filter (where ${application.submittedAt} is not null))::int`,
     })
-    .from(application);
+    .from(application)
+    .where(applicantOwnedOnly);
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-5 sm:px-6">

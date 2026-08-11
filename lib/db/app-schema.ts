@@ -77,6 +77,9 @@ export const application = pgTable(
     // Bucketed on the form (0 / 1-2 / 3-5 / 6+) rather than a free integer.
     hackathonsBucket: text("hackathons_bucket"),
     firstHackathon: boolean("first_hackathon"),
+    // Times at Immerse the Bay before (0 / 1 / 2 / 3+). Year-over-year
+    // repeat-attendee metric, never an admissions signal.
+    priorAttendance: text("prior_attendance"),
     primarySkill: text("primary_skill"),
     portfolioUrl: text("portfolio_url"),
     tshirtSize: text("tshirt_size"),
@@ -91,6 +94,9 @@ export const application = pgTable(
     // Self-reported, as a cross-check on the UTM data below. Catches
     // word-of-mouth, which no amount of tracking can see.
     heardAboutUs: text("heard_about_us"),
+    // Optional name-drop when heard via a friend, class, or partner club:
+    // tells us which individual people drive signups.
+    heardAboutUsName: text("heard_about_us_name"),
 
     // ── referrals ─────────────────────────────────────────────────────────
     // Minted on first submit. A referred application carries

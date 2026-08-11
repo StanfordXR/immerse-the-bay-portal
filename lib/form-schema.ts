@@ -31,6 +31,16 @@ export const HACKATHON_BUCKET_LABELS: Record<string, string> = {
   "6+": "6+",
 };
 
+// Repeat-attendee metric only, never an admissions signal.
+export const PRIOR_ATTENDANCE = ["0", "1", "2", "3+"] as const;
+
+export const PRIOR_ATTENDANCE_LABELS: Record<string, string> = {
+  "0": "First time",
+  "1": "1",
+  "2": "2",
+  "3+": "3+",
+};
+
 export const GRAD_YEARS = [
   "2026",
   "2027",
@@ -217,7 +227,7 @@ export function wordCount(value: string): number {
 }
 
 const WHY_MIN_WORDS = 20;
-const WHY_MAX_WORDS = 300;
+const WHY_MAX_WORDS = 200;
 const CEO_MIN_WORDS = 3;
 const CEO_MAX_WORDS = 50;
 
@@ -253,6 +263,7 @@ const baseSchema = z.object({
   schoolRegion: z.string().trim().max(80).optional().default(""),
   gradYear: z.enum(GRAD_YEARS, { message: "Required" }),
   hackathonsBucket: z.enum(HACKATHON_BUCKETS, { message: "Required" }),
+  priorAttendance: z.enum(PRIOR_ATTENDANCE, { message: "Required" }),
   primarySkill: z.enum(PRIMARY_SKILLS, { message: "Required" }),
   skills: z.array(z.string().max(40)).max(32).optional().default([]),
   skillsOther: z.string().trim().max(300).optional().default(""),
@@ -284,6 +295,7 @@ const baseSchema = z.object({
   accessibilityNeeds: z.string().trim().max(500).optional().default(""),
   resumeUrl: z.string().trim().max(500).optional().default(""),
   heardAboutUs: z.enum(HEARD_OPTIONS, { message: "Required" }),
+  heardAboutUsName: z.string().trim().max(100).optional().default(""),
   sponsorShareOk: z.boolean().optional().default(false),
 });
 
@@ -326,6 +338,7 @@ export const STEPS = [
       "schoolRegion",
       "gradYear",
       "hackathonsBucket",
+      "priorAttendance",
       "primarySkill",
       "skills",
       "skillsOther",
@@ -346,6 +359,7 @@ export const STEPS = [
       "accessibilityNeeds",
       "resumeUrl",
       "heardAboutUs",
+      "heardAboutUsName",
       "sponsorShareOk",
     ],
   },
@@ -408,6 +422,7 @@ export function answersToColumns(a: Answers) {
     gradYear: gradYearNum,
     hackathonsBucket: a.hackathonsBucket ?? null,
     firstHackathon: a.hackathonsBucket ? a.hackathonsBucket === "0" : null,
+    priorAttendance: a.priorAttendance ?? null,
     primarySkill: a.primarySkill ?? null,
     portfolioUrl: a.portfolioUrl || null,
     tshirtSize: a.tshirtSize ?? null,
@@ -416,5 +431,6 @@ export function answersToColumns(a: Answers) {
     resumeUrl: a.resumeUrl || null,
     sponsorShareOk: a.sponsorShareOk ?? false,
     heardAboutUs: a.heardAboutUs ?? null,
+    heardAboutUsName: a.heardAboutUsName || null,
   };
 }
