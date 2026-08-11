@@ -3,14 +3,24 @@ import { finalDecisionsLabel, priorityDecisionsLabel } from "@/lib/config";
 
 /**
  * Design drafts for the submission-confirmation email, sent via the admin
- * sample route (?variant=a|b|c) so the team can compare in real inboxes.
- * The winner gets folded into lib/email.ts and this file deleted.
+ * sample route (?variant=d|e) so the team can compare in real inboxes.
+ * Both use the Stanford XR letterhead (the chosen header); they differ in
+ * where the edit-until line and the referral copy sit. The winner gets
+ * folded into lib/email.ts and this file deleted.
  */
 
 const SXR_LOGO = "https://i.imgur.com/ksJBwbD.png"; // same asset as the campaign emails
 
 function portalBase(): string {
   return process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org";
+}
+
+function letterhead(): string {
+  return `
+  <div style="text-align: center; margin-bottom: 8px;">
+    <img src="${SXR_LOGO}" alt="Stanford XR" style="max-width: 220px; height: auto;">
+  </div>
+  <div style="height: 1px; background-color: #eee; margin: 0 0 24px 0;"></div>`;
 }
 
 function nextSteps(): string {
@@ -23,11 +33,11 @@ function nextSteps(): string {
   </div>`;
 }
 
-function cta(): string {
+function button(caption: string): string {
   return `
   <div style="text-align: center; margin: 26px 0;">
     <a href="${portalBase()}/dashboard" style="display: inline-block; background-color: #8b5cf6; color: #ffffff !important; padding: 14px 0; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px; width: 260px; text-align: center;">View your application</a>
-    <p style="font-size: 12px; color: #999; margin: 10px 0 0 0;">Share your referral link from the dashboard and climb the leaderboard</p>
+    ${caption}
   </div>`;
 }
 
@@ -50,48 +60,28 @@ ${body}
 </html>`;
 }
 
-/** A. Letterhead: Stanford XR logo up top, then a plain letter. One header moment. */
-export function draftA(name: string, closeLabel: string): string {
-  return shell(`
-  <div style="text-align: center; margin-bottom: 8px;">
-    <img src="${SXR_LOGO}" alt="Stanford XR" style="max-width: 220px; height: auto;">
-  </div>
-  <div style="height: 1px; background-color: #eee; margin: 0 0 24px 0;"></div>
-
+/**
+ * D. Flipped: referral talk lives in the description, the edit-until line
+ * sits underneath the View your application button.
+ */
+export function draftD(name: string, closeLabel: string): string {
+  return shell(`${letterhead()}
   <p>Hi ${name},</p>
-  <p><strong>Thank you for applying to Immerse the Bay 2026.</strong> Your application is in, and we are excited to read it. You can review or edit your answers any time until applications close on <strong>${closeLabel}</strong>.</p>
-  ${cta()}
+  <p><strong>Thank you for applying to Immerse the Bay 2026.</strong> Your application is in, and we are excited to read it. Bring your friends along too: share your referral link from your dashboard and climb the leaderboard. Top referrers get shoutouts at the opening ceremony.</p>
+  ${button(`<p style="font-size: 12px; color: #999; margin: 10px 0 0 0;">You can review or edit your answers anytime until applications close on ${closeLabel}</p>`)}
   ${nextSteps()}
   ${outro()}`);
 }
 
-/** B. Single banner: one violet band carries the header job, no logo, no inner heading. */
-export function draftB(name: string, closeLabel: string): string {
-  return shell(`
-  <div style="background: linear-gradient(100deg, #8b5cf6, #6c5ce7); padding: 22px 24px; border-radius: 8px; margin-bottom: 24px; text-align: center;">
-    <div style="color: #e6dcff; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px;">Immerse the Bay 2026</div>
-    <div style="color: #ffffff; font-weight: bold; font-size: 21px; margin-top: 4px;">Application received</div>
-  </div>
-
+/**
+ * E. Unflipped: edit-until line stays in the opening paragraph, referral
+ * line stays underneath the button.
+ */
+export function draftE(name: string, closeLabel: string): string {
+  return shell(`${letterhead()}
   <p>Hi ${name},</p>
-  <p>Thank you for applying to Immerse the Bay 2026. Your application is in, and we are excited to read it. You can review or edit your answers any time until applications close on <strong>${closeLabel}</strong>.</p>
-  ${cta()}
-  ${nextSteps()}
-  ${outro()}`);
-}
-
-/** C. Dark brand band: portal bunny and wordmark on the night sky, light body below. */
-export function draftC(name: string, closeLabel: string): string {
-  return shell(`
-  <div style="background-color: #0a0514; padding: 24px; border-radius: 8px; margin-bottom: 24px; text-align: center;">
-    <img src="${portalBase()}/icon.png" alt="" width="56" height="56" style="width: 56px; height: 56px; margin-bottom: 8px;">
-    <div style="color: #ffffff; font-weight: bold; font-size: 19px; letter-spacing: 2px;">IMMERSE THE BAY</div>
-    <div style="color: #a79dcb; font-size: 12px; margin-top: 2px;">by Stanford XR</div>
-  </div>
-
-  <p>Hi ${name},</p>
-  <p><strong>Thank you for applying to Immerse the Bay 2026.</strong> Your application is in, and we are excited to read it. You can review or edit your answers any time until applications close on <strong>${closeLabel}</strong>.</p>
-  ${cta()}
+  <p><strong>Thank you for applying to Immerse the Bay 2026.</strong> Your application is in, and we are excited to read it. You can review or edit your answers anytime until applications close on <strong>${closeLabel}</strong>.</p>
+  ${button(`<p style="font-size: 12px; color: #999; margin: 10px 0 0 0;">Share your referral link from the dashboard and climb the leaderboard</p>`)}
   ${nextSteps()}
   ${outro()}`);
 }
@@ -100,7 +90,6 @@ export const EMAIL_DRAFTS: Record<
   string,
   { label: string; render: (name: string, closeLabel: string) => string }
 > = {
-  a: { label: "Draft A, Stanford XR letterhead", render: draftA },
-  b: { label: "Draft B, single violet banner", render: draftB },
-  c: { label: "Draft C, dark brand band", render: draftC },
+  d: { label: "Draft D, referral in body, edit line under button", render: draftD },
+  e: { label: "Draft E, edit line in body, referral under button", render: draftE },
 };
