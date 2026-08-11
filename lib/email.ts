@@ -79,11 +79,12 @@ export function submissionConfirmationHtml(
 
   <div style="background-color: #f6f3ff; padding: 18px 20px; border-left: 4px solid #8b5cf6; margin: 0 0 24px 0; border-radius: 4px; text-align: center;">
     <div style="color: #8b5cf6; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-size: 13px; margin-bottom: 6px;">Application received</div>
-    <h2 style="margin: 0; color: #1a1033;">You are on the launchpad, ${name} 🌙</h2>
-    <p style="margin: 10px 0 0 0; color: #555;">Your application to Immerse the Bay 2026 is in.</p>
+    <h2 style="margin: 0; color: #1a1033;">Thank you for applying to Immerse the Bay 2026</h2>
   </div>
 
-  <p>You can review or edit your answers any time until applications close on <strong>${escapeHtml(closeLabel)}</strong>.</p>
+  <p>Hi ${name},</p>
+
+  <p>Your application is in, and we are excited to read it. You can review or edit your answers any time until applications close on <strong>${escapeHtml(closeLabel)}</strong>.</p>
 
   <div style="text-align: center; margin: 26px 0;">
     <a href="${portal}/dashboard" style="display: inline-block; background-color: #8b5cf6; color: #ffffff !important; padding: 14px 0; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px; width: 260px; text-align: center;">View your application</a>
@@ -92,14 +93,14 @@ export function submissionConfirmationHtml(
 
   <div style="background-color: #f9f9fb; padding: 15px 20px; border-radius: 6px; margin: 20px 0; font-size: 14px;">
     <p style="margin: 0 0 6px 0;"><strong>What happens next:</strong></p>
-    <p style="margin: 0 0 4px 0;">🌒 Our review team reads every application as it arrives.</p>
-    <p style="margin: 0 0 4px 0;">🌓 Decisions go out by email: priority round by ${escapeHtml(priorityDecisionsLabel())}, final round by ${escapeHtml(finalDecisionsLabel())}.</p>
-    <p style="margin: 0;">🌕 The hackathon runs November 13 to 15, 2026 at Stanford.</p>
+    <p style="margin: 0 0 4px 0;">1. Our review team reads every application as it arrives.</p>
+    <p style="margin: 0 0 4px 0;">2. Decisions go out by email: priority round by ${escapeHtml(priorityDecisionsLabel())}, final round by ${escapeHtml(finalDecisionsLabel())}.</p>
+    <p style="margin: 0;">3. The hackathon runs November 13 to 15, 2026 at Stanford.</p>
   </div>
 
   <p style="margin: 20px 0 0 0;">Any questions? Email <a href="mailto:admin@stanfordxr.org" style="color: #6c5ce7; text-decoration: none;">admin@stanfordxr.org</a>.</p>
 
-  <p style="margin: 20px 0 0 0;"><strong>See you in November,</strong><br>The Stanford XR team</p>
+  <p style="margin: 20px 0 0 0;"><strong>Warmly,</strong><br>The Stanford XR team</p>
 
   <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #aaa;">
     <a href="https://immersethebay.org" style="color: #aaa; text-decoration: none;">immersethebay.org</a> · <a href="https://stanfordxr.org" style="color: #aaa; text-decoration: none;">stanfordxr.org</a>
@@ -120,7 +121,7 @@ export async function sendSubmissionConfirmation(
     text: [
       `Hi ${firstName},`,
       "",
-      "Your application to Immerse the Bay 2026 is in.",
+      "Thank you for applying to Immerse the Bay 2026. Your application is in, and we are excited to read it.",
       "",
       `You can review or edit your application until applications close (${closeLabel}) at:`,
       `${process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org"}/dashboard`,
@@ -132,7 +133,7 @@ export async function sendSubmissionConfirmation(
       "",
       "Any questions? Email admin@stanfordxr.org.",
       "",
-      "See you in November,",
+      "Warmly,",
       "The Stanford XR team",
       "https://immersethebay.org",
     ].join("\n"),

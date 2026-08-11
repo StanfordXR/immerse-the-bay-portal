@@ -16,7 +16,6 @@ import {
   HACKATHON_BUCKETS,
   HACKATHON_BUCKET_LABELS,
   PRIOR_ATTENDANCE,
-  PRIOR_ATTENDANCE_LABELS,
   HEARD_OPTIONS,
   PRIMARY_SKILLS,
   PRONOUN_OPTIONS,
@@ -418,12 +417,14 @@ export function ApplyForm({
                   />
                 )}
               </Field>
-              <Field label="Times at Immerse the Bay" error={errors.priorAttendance}>
+              <Field
+                label="Immerse the Bays attended before"
+                error={errors.priorAttendance}
+              >
                 {() => (
                   <ChipGroup
-                    ariaLabel="Times at Immerse the Bay"
+                    ariaLabel="Immerse the Bays attended before"
                     options={PRIOR_ATTENDANCE}
-                    labels={PRIOR_ATTENDANCE_LABELS}
                     values={a.priorAttendance ? [a.priorAttendance] : []}
                     onChange={([v]) =>
                       set({
@@ -575,7 +576,7 @@ export function ApplyForm({
               <Field
                 label="Accessibility needs"
                 optional
-                hint="Anything that helps us make the weekend work for you"
+                hint="Anything that'll help make the weekend work"
               >
                 {({ id, describedBy }) => (
                   <input
@@ -626,7 +627,7 @@ export function ApplyForm({
                     <input
                       id={id}
                       className="field"
-                      placeholder="e.g. Steven Lee"
+                      placeholder="e.g. Steven Le"
                       maxLength={100}
                       value={a.heardAboutUsName ?? ""}
                       aria-describedby={describedBy}
@@ -823,7 +824,7 @@ function ReviewStep({
         ],
         ["Graduation", a.gradYear],
         ["Hackathons", a.hackathonsBucket && HACKATHON_BUCKET_LABELS[a.hackathonsBucket]],
-        ["Times at Immerse the Bay", a.priorAttendance && PRIOR_ATTENDANCE_LABELS[a.priorAttendance]],
+        ["Immerse the Bays attended", a.priorAttendance],
         ["Primary skill", a.primarySkill],
         ["Skills", a.skills?.length ? a.skills.join(", ") : undefined],
         ["Portfolio", a.portfolioUrl],

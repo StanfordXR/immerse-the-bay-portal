@@ -166,12 +166,8 @@ export default async function AdminApplicationDetail({
               {row.hackathonsBucket ?? "·"}
               {row.firstHackathon ? " · first hackathon" : ""}
             </dd>
-            <dt className="text-faint">Times at ITB</dt>
-            <dd className="text-moonlit/90">
-              {row.priorAttendance === "0"
-                ? "First time"
-                : (row.priorAttendance ?? "·")}
-            </dd>
+            <dt className="text-faint">ITBs attended</dt>
+            <dd className="text-moonlit/90">{row.priorAttendance ?? "·"}</dd>
             <dt className="text-faint">Primary skill</dt>
             <dd className="text-moonlit/90">{row.primarySkill ?? "·"}</dd>
             <dt className="text-faint">Skills</dt>

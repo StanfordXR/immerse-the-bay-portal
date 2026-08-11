@@ -32,14 +32,7 @@ export const HACKATHON_BUCKET_LABELS: Record<string, string> = {
 };
 
 // Repeat-attendee metric only, never an admissions signal.
-export const PRIOR_ATTENDANCE = ["0", "1", "2", "3+"] as const;
-
-export const PRIOR_ATTENDANCE_LABELS: Record<string, string> = {
-  "0": "First time",
-  "1": "1",
-  "2": "2",
-  "3+": "3+",
-};
+export const PRIOR_ATTENDANCE = ["0", "1", "2", "3"] as const;
 
 export const GRAD_YEARS = [
   "2026",
