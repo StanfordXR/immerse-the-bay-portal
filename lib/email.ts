@@ -82,11 +82,6 @@ export function submissionConfirmationHtml(
 
   <p><strong>Thank you for applying to Immerse the Bay 2026.</strong> Your application is in, and we are excited to read it.</p>
 
-  <div style="text-align: center; margin: 26px 0;">
-    <a href="${portal}/dashboard" style="display: inline-block; background-color: #8b5cf6; color: #ffffff !important; padding: 14px 0; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px; width: 260px; text-align: center;">View your application</a>
-    <p style="font-size: 12px; color: #999; margin: 10px 0 0 0;">You can review or edit your answers anytime until applications close on ${escapeHtml(closeLabel)}</p>
-  </div>
-
   <div style="background-color: #f9f9fb; padding: 15px 20px; border-radius: 6px; margin: 20px 0; font-size: 14px;">
     <p style="margin: 0 0 6px 0;"><strong>What happens next:</strong></p>
     <p style="margin: 0 0 4px 0;">1. Our review team will read each and every application.</p>
@@ -94,6 +89,11 @@ export function submissionConfirmationHtml(
     <p style="margin: 0 0 2px 18px;">• Priority round by ${escapeHtml(priorityDecisionsLabel())}</p>
     <p style="margin: 0 0 4px 18px;">• Final round by ${escapeHtml(finalDecisionsLabel())}</p>
     <p style="margin: 0;">3. The hackathon runs November 13 to 15, 2026 at Stanford.</p>
+  </div>
+
+  <div style="text-align: center; margin: 26px 0;">
+    <a href="${portal}/dashboard" style="display: inline-block; background-color: #8b5cf6; color: #ffffff !important; padding: 14px 0; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px; width: 260px; text-align: center;">View your application</a>
+    <p style="font-size: 12px; color: #999; margin: 10px 0 0 0;">You can review or edit your answers anytime until applications close on ${escapeHtml(closeLabel)}</p>
   </div>
 
   <p style="margin: 20px 0 0 0;">Bring your friends along too: share your referral link from your dashboard and climb the leaderboard. If you have any questions, please feel free to reach out to <a href="mailto:admin@stanfordxr.org" style="color: #6c5ce7; text-decoration: none;">admin@stanfordxr.org</a>.</p>
@@ -121,16 +121,16 @@ export async function sendSubmissionConfirmation(
       "",
       "Thank you for applying to Immerse the Bay 2026. Your application is in, and we are excited to read it.",
       "",
-      "View your application:",
-      `${process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org"}/dashboard`,
-      `You can review or edit your answers anytime until applications close on ${closeLabel}.`,
-      "",
       "What happens next:",
       "  1. Our review team will read each and every application.",
       "  2. Decisions go out by email:",
       `     - Priority round by ${priorityDecisionsLabel()}`,
       `     - Final round by ${finalDecisionsLabel()}`,
       "  3. The hackathon runs November 13 to 15, 2026 at Stanford.",
+      "",
+      "View your application:",
+      `${process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org"}/dashboard`,
+      `You can review or edit your answers anytime until applications close on ${closeLabel}.`,
       "",
       "Bring your friends along too: share your referral link from your dashboard and climb the leaderboard. If you have any questions, please feel free to reach out to admin@stanfordxr.org.",
       "",

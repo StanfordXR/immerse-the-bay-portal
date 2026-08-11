@@ -130,8 +130,12 @@ export function ApplyForm({
     try {
       const result = await submitApplication(answers);
       if (result.ok) {
-        track("application_submitted", { source: answers.heardAboutUs });
-        router.push("/dashboard?submitted=1");
+        if (!alreadySubmitted) {
+          track("application_submitted", { source: answers.heardAboutUs });
+        }
+        // Edits return to a calm dashboard; only first submits get the
+        // celebration banner.
+        router.push(alreadySubmitted ? "/dashboard" : "/dashboard?submitted=1");
         return;
       }
       setSubmitError(result.error);
@@ -703,7 +707,11 @@ export function ApplyForm({
         )}
 
         {step === 4 && (
-          <ReviewStep answers={a} onEdit={(i) => goTo(i)} />
+          <ReviewStep
+            answers={a}
+            onEdit={(i) => goTo(i)}
+            alreadySubmitted={alreadySubmitted}
+          />
         )}
 
         <div className="mt-8 flex items-center justify-between gap-3 border-t border-line pt-6">
@@ -731,7 +739,9 @@ export function ApplyForm({
               onClick={() => void handleSubmit()}
             >
               {submitting
-                ? "Submitting…"
+                ? alreadySubmitted
+                  ? "Saving…"
+                  : "Submitting…"
                 : alreadySubmitted
                   ? "Save changes"
                   : "Submit application"}
@@ -792,9 +802,11 @@ function SaveBadge({ state, preview }: { state: SaveState; preview: boolean }) {
 function ReviewStep({
   answers: a,
   onEdit,
+  alreadySubmitted,
 }: {
   answers: Answers;
   onEdit: (step: StepIndex) => void;
+  alreadySubmitted: boolean;
 }) {
   const sections: Array<{
     step: StepIndex;
@@ -860,8 +872,9 @@ function ReviewStep({
   return (
     <div className="flex flex-col gap-6">
       <p className="text-[14.5px] leading-relaxed text-muted">
-        One last look before launch. You can still edit after submitting, right
-        up until applications close.
+        {alreadySubmitted
+          ? "Your application is already in. Saving updates it in place, it never creates a second application."
+          : "One last look before launch. You can still edit after submitting, right up until applications close."}
       </p>
       {sections.map((section) => (
         <section key={section.title} className="rounded-xl border border-line bg-abyss/50 p-4 sm:p-5">
