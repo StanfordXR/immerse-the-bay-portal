@@ -162,7 +162,7 @@ export default function LandingPage() {
           around #4b19ad, seen through the hero's darkening overlay). */}
       <footer
         style={{
-          background: "linear-gradient(180deg, #200d47 0%, #341670 100%)",
+          background: "linear-gradient(180deg, #180a36 0%, #261156 100%)",
         }}
       >
         <div
