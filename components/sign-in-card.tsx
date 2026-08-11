@@ -40,9 +40,15 @@ const highlightStyle = {
   boxShadow: "0 0 12px color-mix(in oklab, var(--color-cyan) 18%, transparent)",
 } as const;
 
-/** Only ever bounce to our own paths — never to an absolute URL from the query string. */
+/**
+ * Only ever bounce to our own paths — never to an absolute URL from the query
+ * string. The default (and plain /apply) goes through /continue, which sends
+ * submitted applicants to the dashboard and everyone else to the form.
+ */
 function safeNext(raw: string | null): string {
-  return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/apply";
+  const next =
+    raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/continue";
+  return next === "/apply" ? "/continue" : next;
 }
 
 export function SignInCard() {
