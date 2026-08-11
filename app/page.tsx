@@ -67,10 +67,26 @@ export default function LandingPage() {
           }}
         />
 
-        {/* Full-bleed header band in the image's own sky color (top edge
-            samples #090514), so the image can sit lower without a seam. */}
-        <div className="relative z-[2] w-full" style={{ background: "#090514" }}>
-          <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-5">
+        {/* Full-bleed header band showing the image's top pixels mirrored
+            vertically: the band's bottom row equals the image's top row, so
+            the sky continues upward with no visible seam. Veiled with the
+            same darkening as the hero's top so the nav stays readable. */}
+        <div className="relative z-[2] w-full overflow-hidden">
+          <Image
+            src="/skyline.jpg"
+            alt=""
+            fill
+            unoptimized
+            className="object-cover"
+            style={{ objectPosition: "50% 0%", transform: "scaleY(-1)" }}
+            sizes="100vw"
+          />
+          <div
+            aria-hidden
+            className="absolute inset-0"
+            style={{ background: "rgba(10,5,20,0.78)" }}
+          />
+          <header className="relative mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-5">
             <Brand />
             <nav className="flex items-center gap-4">
               <a
@@ -85,7 +101,7 @@ export default function LandingPage() {
         </div>
 
         <div className="relative z-[2] mx-auto flex w-full max-w-5xl flex-1 flex-col px-6">
-          <div className="flex flex-1 flex-col items-center justify-center pb-0 pt-0 text-center">
+          <div className="flex flex-1 flex-col items-center justify-center pb-14 pt-0 text-center sm:pb-20">
             <p className="eyebrow mb-5 !text-[13px]">
               November 13–15, 2026 · Stanford University
             </p>
@@ -114,7 +130,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="pb-5 sm:pb-6">
+          <div className="pb-12 sm:pb-16">
             <ol className="relative flex flex-col gap-7 sm:flex-row sm:gap-0">
               <span
                 aria-hidden
