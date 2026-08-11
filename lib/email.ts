@@ -80,7 +80,7 @@ export function submissionConfirmationHtml(
 
   <p>Hi ${name},</p>
 
-  <p><strong>Thank you for applying to Immerse the Bay 2026.</strong> Your application is in, and we are excited to read it. Bring your friends along too: share your referral link from your dashboard and climb the leaderboard. If you have any questions, please feel free to reach out to <a href="mailto:admin@stanfordxr.org" style="color: #6c5ce7; text-decoration: none;">admin@stanfordxr.org</a>.</p>
+  <p><strong>Thank you for applying to Immerse the Bay 2026.</strong> Your application is in, and we are excited to read it.</p>
 
   <div style="text-align: center; margin: 26px 0;">
     <a href="${portal}/dashboard" style="display: inline-block; background-color: #8b5cf6; color: #ffffff !important; padding: 14px 0; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px; width: 260px; text-align: center;">View your application</a>
@@ -95,6 +95,8 @@ export function submissionConfirmationHtml(
     <p style="margin: 0 0 4px 18px;">• Final round by ${escapeHtml(finalDecisionsLabel())}</p>
     <p style="margin: 0;">3. The hackathon runs November 13 to 15, 2026 at Stanford.</p>
   </div>
+
+  <p style="margin: 20px 0 0 0;">Bring your friends along too: share your referral link from your dashboard and climb the leaderboard. If you have any questions, please feel free to reach out to <a href="mailto:admin@stanfordxr.org" style="color: #6c5ce7; text-decoration: none;">admin@stanfordxr.org</a>.</p>
 
   <p style="margin: 20px 0 0 0;"><strong>Warmly,</strong><br>The Stanford XR team</p>
 
@@ -117,7 +119,7 @@ export async function sendSubmissionConfirmation(
     text: [
       `Hi ${firstName},`,
       "",
-      "Thank you for applying to Immerse the Bay 2026. Your application is in, and we are excited to read it. Bring your friends along too: share your referral link from your dashboard and climb the leaderboard. If you have any questions, please feel free to reach out to admin@stanfordxr.org.",
+      "Thank you for applying to Immerse the Bay 2026. Your application is in, and we are excited to read it.",
       "",
       "View your application:",
       `${process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org"}/dashboard`,
@@ -129,6 +131,8 @@ export async function sendSubmissionConfirmation(
       `     - Priority round by ${priorityDecisionsLabel()}`,
       `     - Final round by ${finalDecisionsLabel()}`,
       "  3. The hackathon runs November 13 to 15, 2026 at Stanford.",
+      "",
+      "Bring your friends along too: share your referral link from your dashboard and climb the leaderboard. If you have any questions, please feel free to reach out to admin@stanfordxr.org.",
       "",
       "Warmly,",
       "The Stanford XR team",

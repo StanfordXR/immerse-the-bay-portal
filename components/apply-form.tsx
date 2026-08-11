@@ -263,7 +263,7 @@ export function ApplyForm({
 
             <Field
               label="Date of birth"
-              hint="Attendees must be 18+ on November 13, 2026. We check this at acceptance. It won't stop you from applying."
+              hint="Attendees must be 18+ on November 13, 2026."
               error={errors.dateOfBirth}
             >
               {({ id, describedBy, invalid }) => (
