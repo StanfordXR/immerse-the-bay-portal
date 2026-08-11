@@ -55,7 +55,7 @@ export default function LandingPage() {
           priority
           unoptimized
           className="z-0 object-cover"
-          style={{ objectPosition: "50% 62%" }}
+          style={{ objectPosition: "50% 78%" }}
           sizes="100vw"
         />
         <div
@@ -67,8 +67,10 @@ export default function LandingPage() {
           }}
         />
 
-        <div className="relative z-[2] mx-auto flex w-full max-w-5xl flex-1 flex-col px-6">
-          <header className="flex items-center justify-between py-5">
+        {/* Full-bleed header band in the image's own sky color (top edge
+            samples #090514), so the image can sit lower without a seam. */}
+        <div className="relative z-[2] w-full" style={{ background: "#090514" }}>
+          <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-5">
             <Brand />
             <nav className="flex items-center gap-4">
               <a
@@ -80,13 +82,15 @@ export default function LandingPage() {
               <HeaderAuthLink />
             </nav>
           </header>
+        </div>
 
+        <div className="relative z-[2] mx-auto flex w-full max-w-5xl flex-1 flex-col px-6">
           <div className="flex flex-1 flex-col items-center justify-center pb-0 pt-0 text-center">
             <p className="eyebrow mb-5 !text-[13px]">
               November 13–15, 2026 · Stanford University
             </p>
             <h1 className="font-brand max-w-4xl text-balance text-4xl leading-[1.14] sm:text-6xl">
-              Build the next{" "}
+              Take me to the{" "}
               <span
                 className="text-glow-cyan"
                 style={{
@@ -97,7 +101,7 @@ export default function LandingPage() {
                   color: "transparent",
                 }}
               >
-                reality
+                moon
               </span>
               .
             </h1>
@@ -156,33 +160,28 @@ export default function LandingPage() {
             </ol>
           </div>
         </div>
-      </section>
 
-      {/* Footer continues the render's violet ground (bottom edge samples
-          around #4b19ad, seen through the hero's darkening overlay). */}
-      <footer
-        style={{
-          background: "linear-gradient(180deg, #180a36 0%, #261156 100%)",
-        }}
-      >
-        <div
-          className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-6 text-[14px]"
-          style={{ color: "rgba(226, 218, 250, 0.72)" }}
-        >
-          <span>© 2026 Stanford XR</span>
-          <div className="flex gap-5">
-            <a href="https://immersethebay.org" className="hover:text-moonlit">
-              immersethebay.org
-            </a>
-            <a href="/privacy" className="hover:text-moonlit">
-              Privacy
-            </a>
-            <a href="mailto:admin@stanfordxr.org" className="hover:text-moonlit">
-              Contact
-            </a>
+        {/* Footer sits inside the hero, directly on the render's ground. */}
+        <footer className="relative z-[2]">
+          <div
+            className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-6 pb-5 pt-1 text-[13.5px]"
+            style={{ color: "rgba(226, 218, 250, 0.66)" }}
+          >
+            <span>© 2026 Stanford XR</span>
+            <div className="flex gap-5">
+              <a href="https://immersethebay.org" className="hover:text-moonlit">
+                immersethebay.org
+              </a>
+              <a href="/privacy" className="hover:text-moonlit">
+                Privacy
+              </a>
+              <a href="mailto:admin@stanfordxr.org" className="hover:text-moonlit">
+                Contact
+              </a>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </section>
     </main>
   );
 }
