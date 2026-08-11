@@ -67,26 +67,11 @@ export default function LandingPage() {
           }}
         />
 
-        {/* Full-bleed header band showing the image's top pixels mirrored
-            vertically: the band's bottom row equals the image's top row, so
-            the sky continues upward with no visible seam. Veiled with the
-            same darkening as the hero's top so the nav stays readable. */}
-        <div className="relative z-[2] w-full overflow-hidden">
-          <Image
-            src="/skyline.jpg"
-            alt=""
-            fill
-            unoptimized
-            className="object-cover"
-            style={{ objectPosition: "50% 0%", transform: "scaleY(-1)" }}
-            sizes="100vw"
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0"
-            style={{ background: "rgba(10,5,20,0.78)" }}
-          />
-          <header className="relative mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-5">
+        {/* The nav floats directly on the render's sky: one image behind
+            everything means no seam to hide at any viewport width. The
+            hero overlay below already darkens the top for readability. */}
+        <div className="relative z-[2] w-full">
+          <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-5">
             <Brand />
             <nav className="flex items-center gap-4">
               <a
@@ -106,7 +91,6 @@ export default function LandingPage() {
               November 13–15, 2026 · Stanford University
             </p>
             <h1 className="font-brand max-w-4xl text-balance text-4xl leading-[1.14] sm:text-6xl">
-              Take me to the{" "}
               <span
                 className="text-glow-cyan"
                 style={{
@@ -115,6 +99,14 @@ export default function LandingPage() {
                   WebkitBackgroundClip: "text",
                   backgroundClip: "text",
                   color: "transparent",
+                }}
+              >
+                Take me to the
+              </span>{" "}
+              <span
+                style={{
+                  color: "#ffffff",
+                  textShadow: "0 0 24px rgba(236, 231, 251, 0.65)",
                 }}
               >
                 moon
@@ -130,7 +122,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="pb-12 sm:pb-16">
+          <div className="pb-16 sm:pb-24">
             <ol className="relative flex flex-col gap-7 sm:flex-row sm:gap-0">
               <span
                 aria-hidden
