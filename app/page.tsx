@@ -158,17 +158,26 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="mx-auto w-full max-w-6xl px-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line py-6 text-[14px] text-faint">
+      {/* Footer continues the render's violet ground (bottom edge samples
+          around #4b19ad, seen through the hero's darkening overlay). */}
+      <footer
+        style={{
+          background: "linear-gradient(180deg, #200d47 0%, #341670 100%)",
+        }}
+      >
+        <div
+          className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-6 text-[14px]"
+          style={{ color: "rgba(226, 218, 250, 0.72)" }}
+        >
           <span>© 2026 Stanford XR</span>
           <div className="flex gap-5">
-            <a href="https://immersethebay.org" className="hover:text-muted">
+            <a href="https://immersethebay.org" className="hover:text-moonlit">
               immersethebay.org
             </a>
-            <a href="/privacy" className="hover:text-muted">
+            <a href="/privacy" className="hover:text-moonlit">
               Privacy
             </a>
-            <a href="mailto:admin@stanfordxr.org" className="hover:text-muted">
+            <a href="mailto:admin@stanfordxr.org" className="hover:text-moonlit">
               Contact
             </a>
           </div>
