@@ -71,7 +71,7 @@ export default function LandingPage() {
             everything means no seam to hide at any viewport width. The
             hero overlay below already darkens the top for readability. */}
         <div className="relative z-[2] w-full">
-          <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-5">
+          <header className="mx-auto flex w-full max-w-[96rem] items-center justify-between px-6 py-5 sm:px-8">
             <Brand />
             <nav className="flex items-center gap-4">
               <a
@@ -172,14 +172,11 @@ export default function LandingPage() {
         {/* Footer sits inside the hero, directly on the render's ground. */}
         <footer className="relative z-[2]">
           <div
-            className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-6 pb-5 pt-1 text-[13.5px]"
+            className="mx-auto flex w-full max-w-[96rem] flex-wrap items-center justify-between gap-3 px-6 pb-5 pt-1 text-[13.5px] sm:px-8"
             style={{ color: "rgba(226, 218, 250, 0.66)" }}
           >
             <span>© 2026 Stanford XR</span>
             <div className="flex gap-5">
-              <a href="https://immersethebay.org" className="hover:text-moonlit">
-                immersethebay.org
-              </a>
               <a href="/privacy" className="hover:text-moonlit">
                 Privacy
               </a>
