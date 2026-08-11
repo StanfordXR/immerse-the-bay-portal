@@ -73,10 +73,9 @@ export function submissionConfirmationHtml(
 <html>
 <head><meta charset="UTF-8"></head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
-  <div style="text-align: center; margin-bottom: 8px;">
-    <img src="https://i.imgur.com/ksJBwbD.png" alt="Stanford XR" style="max-width: 220px; height: auto;">
+  <div style="background-color: #0a0514; border-radius: 8px; padding: 26px 24px; margin-bottom: 24px; text-align: center;">
+    <img src="${portal}/itb-wordmark.png" alt="Immerse the Bay" width="250" style="max-width: 250px; height: auto;">
   </div>
-  <div style="height: 1px; background-color: #eee; margin: 0 0 24px 0;"></div>
 
   <p>Hi ${name},</p>
 
@@ -88,7 +87,7 @@ export function submissionConfirmationHtml(
     <p style="margin: 0 0 2px 0;">2. Decisions go out by email:</p>
     <p style="margin: 0 0 2px 18px;">• Priority round by ${escapeHtml(priorityDecisionsLabel())}</p>
     <p style="margin: 0 0 4px 18px;">• Final round by ${escapeHtml(finalDecisionsLabel())}</p>
-    <p style="margin: 0;">3. The hackathon runs November 13 to 15, 2026 at Stanford.</p>
+    <p style="margin: 0;">3. The hackathon runs November 13 to 15, 2026 at Stanford.*</p>
   </div>
 
   <div style="text-align: center; margin: 26px 0;">
@@ -100,7 +99,9 @@ export function submissionConfirmationHtml(
 
   <p style="margin: 20px 0 0 0;"><strong>Warmly,</strong><br>The Stanford XR team</p>
 
-  <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #aaa;">
+  <p style="margin: 24px 0 0 0; font-size: 11px; color: #aaa;">*Dates to be finalized</p>
+
+  <div style="text-align: center; margin-top: 16px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #aaa;">
     <a href="https://immersethebay.org" style="color: #aaa; text-decoration: none;">immersethebay.org</a> · <a href="https://stanfordxr.org" style="color: #aaa; text-decoration: none;">stanfordxr.org</a>
   </div>
 </body>
@@ -126,7 +127,7 @@ export async function sendSubmissionConfirmation(
       "  2. Decisions go out by email:",
       `     - Priority round by ${priorityDecisionsLabel()}`,
       `     - Final round by ${finalDecisionsLabel()}`,
-      "  3. The hackathon runs November 13 to 15, 2026 at Stanford.",
+      "  3. The hackathon runs November 13 to 15, 2026 at Stanford.*",
       "",
       "View your application:",
       `${process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org"}/dashboard`,
@@ -136,6 +137,8 @@ export async function sendSubmissionConfirmation(
       "",
       "Warmly,",
       "The Stanford XR team",
+      "",
+      "*Dates to be finalized",
       "https://immersethebay.org",
     ].join("\n"),
   });
