@@ -58,10 +58,10 @@ function escapeHtml(s: string): string {
 }
 
 /**
- * Branded HTML body for the submission confirmation. Table-free 600px layout
- * in the style of the Stanford XR campaign emails (Arial, light background,
- * violet accents); every style is inline for email-client compatibility.
- * The plain-text part remains the deliverability workhorse.
+ * Branded HTML body for the submission confirmation: Stanford XR letterhead
+ * (the same logo asset as the campaign emails) over a plain letter, one CTA,
+ * and a compact what-happens-next box. Every style is inline for email-client
+ * compatibility. The plain-text part remains the deliverability workhorse.
  */
 export function submissionConfirmationHtml(
   firstName: string,
@@ -73,32 +73,28 @@ export function submissionConfirmationHtml(
 <html>
 <head><meta charset="UTF-8"></head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
-  <div style="text-align: center; margin-bottom: 26px;">
-    <img src="${portal}/icon.png" alt="Immerse the Bay" width="72" height="72" style="width: 72px; height: 72px;">
+  <div style="text-align: center; margin-bottom: 8px;">
+    <img src="https://i.imgur.com/ksJBwbD.png" alt="Stanford XR" style="max-width: 220px; height: auto;">
   </div>
-
-  <div style="background-color: #f6f3ff; padding: 18px 20px; border-left: 4px solid #8b5cf6; margin: 0 0 24px 0; border-radius: 4px; text-align: center;">
-    <div style="color: #8b5cf6; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-size: 13px; margin-bottom: 6px;">Application received</div>
-    <h2 style="margin: 0; color: #1a1033;">Thank you for applying to Immerse the Bay 2026</h2>
-  </div>
+  <div style="height: 1px; background-color: #eee; margin: 0 0 24px 0;"></div>
 
   <p>Hi ${name},</p>
 
-  <p>Your application is in, and we are excited to read it. You can review or edit your answers any time until applications close on <strong>${escapeHtml(closeLabel)}</strong>.</p>
+  <p><strong>Thank you for applying to Immerse the Bay 2026.</strong> Your application is in, and we are excited to read it. Bring your friends along too: share your referral link from your dashboard and climb the leaderboard. If you have any questions, please feel free to reach out to <a href="mailto:admin@stanfordxr.org" style="color: #6c5ce7; text-decoration: none;">admin@stanfordxr.org</a>.</p>
 
   <div style="text-align: center; margin: 26px 0;">
     <a href="${portal}/dashboard" style="display: inline-block; background-color: #8b5cf6; color: #ffffff !important; padding: 14px 0; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px; width: 260px; text-align: center;">View your application</a>
-    <p style="font-size: 12px; color: #999; margin: 10px 0 0 0;">Share your referral link from the dashboard and climb the leaderboard</p>
+    <p style="font-size: 12px; color: #999; margin: 10px 0 0 0;">You can review or edit your answers anytime until applications close on ${escapeHtml(closeLabel)}</p>
   </div>
 
   <div style="background-color: #f9f9fb; padding: 15px 20px; border-radius: 6px; margin: 20px 0; font-size: 14px;">
     <p style="margin: 0 0 6px 0;"><strong>What happens next:</strong></p>
-    <p style="margin: 0 0 4px 0;">1. Our review team reads every application as it arrives.</p>
-    <p style="margin: 0 0 4px 0;">2. Decisions go out by email: priority round by ${escapeHtml(priorityDecisionsLabel())}, final round by ${escapeHtml(finalDecisionsLabel())}.</p>
+    <p style="margin: 0 0 4px 0;">1. Our review team will read each and every application.</p>
+    <p style="margin: 0 0 2px 0;">2. Decisions go out by email:</p>
+    <p style="margin: 0 0 2px 18px;">• Priority round by ${escapeHtml(priorityDecisionsLabel())}</p>
+    <p style="margin: 0 0 4px 18px;">• Final round by ${escapeHtml(finalDecisionsLabel())}</p>
     <p style="margin: 0;">3. The hackathon runs November 13 to 15, 2026 at Stanford.</p>
   </div>
-
-  <p style="margin: 20px 0 0 0;">Any questions? Email <a href="mailto:admin@stanfordxr.org" style="color: #6c5ce7; text-decoration: none;">admin@stanfordxr.org</a>.</p>
 
   <p style="margin: 20px 0 0 0;"><strong>Warmly,</strong><br>The Stanford XR team</p>
 
@@ -121,17 +117,18 @@ export async function sendSubmissionConfirmation(
     text: [
       `Hi ${firstName},`,
       "",
-      "Thank you for applying to Immerse the Bay 2026. Your application is in, and we are excited to read it.",
+      "Thank you for applying to Immerse the Bay 2026. Your application is in, and we are excited to read it. Bring your friends along too: share your referral link from your dashboard and climb the leaderboard. If you have any questions, please feel free to reach out to admin@stanfordxr.org.",
       "",
-      `You can review or edit your application until applications close (${closeLabel}) at:`,
+      "View your application:",
       `${process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org"}/dashboard`,
+      `You can review or edit your answers anytime until applications close on ${closeLabel}.`,
       "",
       "What happens next:",
-      "  1. Our review team reads every application as it arrives.",
-      `  2. Decisions go out by email: priority round by ${priorityDecisionsLabel()}, final round by ${finalDecisionsLabel()}.`,
+      "  1. Our review team will read each and every application.",
+      "  2. Decisions go out by email:",
+      `     - Priority round by ${priorityDecisionsLabel()}`,
+      `     - Final round by ${finalDecisionsLabel()}`,
       "  3. The hackathon runs November 13 to 15, 2026 at Stanford.",
-      "",
-      "Any questions? Email admin@stanfordxr.org.",
       "",
       "Warmly,",
       "The Stanford XR team",
