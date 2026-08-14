@@ -54,6 +54,13 @@ export function proxy(request: NextRequest) {
   if (needsSession && !getSessionCookie(request)) {
     const signIn = new URL("/sign-in", request.url);
     signIn.searchParams.set("next", pathname);
+    // Carry UTM params onto the redirect: the itb_attr cookie already has
+    // them (set below), but PostHog's SDK only sees the URL the browser
+    // renders — without this, every signed-out Apply click loses its
+    // utm_source in analytics.
+    for (const [key, value] of request.nextUrl.searchParams) {
+      if (key.startsWith("utm_")) signIn.searchParams.set(key, value);
+    }
     // "Begin your application" implies a first-timer — open account creation.
     // Unless this browser has signed in before (auth-hint cookie), in which
     // case default to sign-in: returning users far outnumber people who lost
