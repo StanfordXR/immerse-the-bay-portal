@@ -126,14 +126,8 @@ export default async function DashboardPage({
                     day: "numeric",
                     timeZone: "America/Los_Angeles",
                   })}
-                  . You can{" "}
-                  <Link
-                    href="/apply"
-                    className="text-cyan underline-offset-2 hover:underline"
-                  >
-                    edit your answers
-                  </Link>{" "}
-                  until applications close ({closeDateLabel()}).
+                  . You can edit your answers until applications close (
+                  {closeDateLabel()}).
                 </p>
               </div>
               <Link
@@ -162,7 +156,9 @@ export default async function DashboardPage({
                         style={{
                           background:
                             all[i - 1]?.[2] === "done"
-                              ? "linear-gradient(90deg, var(--color-ok), var(--color-line-2))"
+                              ? // continues the previous node's fade so the
+                                // two half-rails read as one segment
+                                "linear-gradient(90deg, color-mix(in oklab, var(--color-ok) 45%, var(--color-line-2)), var(--color-line-2))"
                               : "var(--color-line)",
                         }}
                       />
@@ -192,7 +188,7 @@ export default async function DashboardPage({
                         style={{
                           background:
                             state === "done"
-                              ? "linear-gradient(90deg, var(--color-ok), var(--color-line))"
+                              ? "linear-gradient(90deg, var(--color-ok), color-mix(in oklab, var(--color-ok) 45%, var(--color-line-2)))"
                               : "var(--color-line)",
                         }}
                       />

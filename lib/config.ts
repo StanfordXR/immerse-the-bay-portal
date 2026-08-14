@@ -34,6 +34,12 @@ export function applicationsAreClosed(): boolean {
   return close !== null && Date.now() > close.getTime();
 }
 
+/** True while the priority round is still ahead; deadline copy pivots on it. */
+export function priorityRoundOpen(): boolean {
+  const cutoff = priorityDeadline();
+  return cutoff !== null && Date.now() < cutoff.getTime();
+}
+
 export function closeDateLabel(): string {
   const close = applicationsClose();
   if (!close) return "TBA";

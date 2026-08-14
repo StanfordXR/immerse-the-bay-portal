@@ -19,7 +19,7 @@ export default function PreviewPage() {
       <ApplyForm
         initialAnswers={{ firstName: "Ada", lastName: "Lovelace" }}
         alreadySubmitted={false}
-        closeLabel="October 2"
+        deadlineNote="Priority round closes October 2."
         preview
       />
     </main>

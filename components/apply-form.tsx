@@ -59,12 +59,14 @@ function stateFromSaveError(error: string): SaveState {
 export function ApplyForm({
   initialAnswers,
   alreadySubmitted,
-  closeLabel,
+  deadlineNote,
   preview = false,
 }: {
   initialAnswers: Answers;
   alreadySubmitted: boolean;
-  closeLabel: string;
+  /** Full sentence, e.g. "Priority round closes October 2." — the caller
+   *  decides which deadline is currently the relevant one. */
+  deadlineNote: string;
   preview?: boolean;
 }) {
   const router = useRouter();
@@ -825,9 +827,8 @@ export function ApplyForm({
       </div>
 
       <p className="text-center text-[13px] text-faint">
-        Priority round closes {closeLabel}. Your progress is automatically
-        saved. Come back and edit anytime, even after submitting. By submitting
-        you agree to our{" "}
+        {deadlineNote} Your progress is automatically saved. Come back and edit
+        anytime, even after submitting. By submitting you agree to our{" "}
         <a
           href="/privacy"
           target="_blank"

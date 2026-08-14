@@ -330,7 +330,13 @@ export const draftSchema = baseSchema.partial().extend({
   gradYear: z.string().max(20).optional(),
   hackathonsBucket: z.string().max(10).optional(),
   priorAttendance: z.string().max(5).optional(),
-  primarySkill: z.string().max(60).optional(),
+  // Normalizes option labels autosaved by pre-rename deploys (em dash form)
+  // so stale tabs can't write values the submit enum rejects.
+  primarySkill: z
+    .string()
+    .max(60)
+    .transform((v) => v.replace(" — ", ": "))
+    .optional(),
   portfolioUrl: z.string().trim().max(600).optional(),
   whyParticipate: z.string().trim().max(3000).optional(),
   ceoQuestion: z.string().trim().max(800).optional(),

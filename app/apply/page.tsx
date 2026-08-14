@@ -9,6 +9,7 @@ import {
   applicationsAreClosed,
   closeDateLabel,
   priorityDeadlineLabel,
+  priorityRoundOpen,
 } from "@/lib/config";
 import { draftSchema, type Answers } from "@/lib/form-schema";
 import { ApplyForm } from "@/components/apply-form";
@@ -33,11 +34,12 @@ export default async function ApplyPage() {
   const initial: Answers = stored.success ? stored.data : {};
 
   // Prefill name from the OAuth profile — two fewer fields to type. Only for
-  // clean two-word names: GitHub often reports a handle ("haoran-git-hub"),
-  // and three-part names split wrong more often than right.
+  // clean two-word names: GitHub often reports a handle ("haoran_dev42"),
+  // and three-part names split wrong more often than right. Hyphens stay
+  // allowed — "Anne-Marie Smith" is a name, not a handle.
   if (!initial.firstName && !initial.lastName && user.name) {
     const parts = user.name.trim().split(/\s+/);
-    const looksLikeHandle = /[\d_@\-.]/.test(user.name);
+    const looksLikeHandle = /[\d_@]/.test(user.name);
     if (parts.length === 2 && !looksLikeHandle) {
       initial.firstName = parts[0];
       initial.lastName = parts[1];
@@ -45,6 +47,8 @@ export default async function ApplyPage() {
   }
 
   const closed = applicationsAreClosed();
+  // The banner and footer talk about the priority round only while it exists.
+  const priorityOpen = priorityRoundOpen();
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-5 sm:px-6">
@@ -63,8 +67,10 @@ export default async function ApplyPage() {
           </h1>
           {!closed && (
             <p className="mt-2 text-[13.5px] text-faint">
-              Priority round closes {priorityDeadlineLabel()}. Final deadline{" "}
-              {closeDateLabel()}.
+              {priorityOpen
+                ? `Priority round closes ${priorityDeadlineLabel()}. `
+                : ""}
+              Final deadline {closeDateLabel()}.
             </p>
           )}
         </div>
@@ -84,7 +90,11 @@ export default async function ApplyPage() {
           <ApplyForm
             initialAnswers={initial}
             alreadySubmitted={Boolean(row?.submittedAt)}
-            closeLabel={priorityDeadlineLabel()}
+            deadlineNote={
+              priorityOpen
+                ? `Priority round closes ${priorityDeadlineLabel()}.`
+                : `Applications close ${closeDateLabel()}.`
+            }
           />
         )}
       </div>
