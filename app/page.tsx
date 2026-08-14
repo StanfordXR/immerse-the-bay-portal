@@ -62,8 +62,11 @@ export default function LandingPage() {
           aria-hidden
           className="absolute inset-0 z-[1]"
           style={{
-            background:
+            background: [
+              // light vignette: edges settle, center stays open
+              "radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(10,5,20,0.4) 100%)",
               "linear-gradient(180deg, rgba(10,5,20,0.78) 0%, rgba(10,5,20,0.55) 35%, rgba(10,5,20,0.42) 62%, rgba(10,5,20,0.68) 100%)",
+            ].join(","),
           }}
         />
 
