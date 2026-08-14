@@ -5,7 +5,11 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application } from "@/lib/db/schema";
 import { requireUser } from "@/lib/dal";
-import { applicationsAreClosed, priorityDeadlineLabel } from "@/lib/config";
+import {
+  applicationsAreClosed,
+  closeDateLabel,
+  priorityDeadlineLabel,
+} from "@/lib/config";
 import { draftSchema, type Answers } from "@/lib/form-schema";
 import { ApplyForm } from "@/components/apply-form";
 
@@ -57,6 +61,10 @@ export default async function ApplyPage() {
           <h1 className="font-display text-3xl font-bold">
             {row?.submittedAt ? "Edit your application" : "Your metamorphosis begins"}
           </h1>
+          <p className="mt-2 text-[13.5px] text-faint">
+            Priority round closes {priorityDeadlineLabel()}. Final deadline{" "}
+            {closeDateLabel()}.
+          </p>
         </div>
 
         {closed ? (

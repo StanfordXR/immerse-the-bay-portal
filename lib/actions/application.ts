@@ -43,10 +43,17 @@ async function recordUserAttribution(userId: string): Promise<void> {
     .onConflictDoNothing();
 }
 
+// Generous ceiling on the serialized answers object; individual fields are
+// zod-capped far below this. Guards storage and parsing cost, not honesty.
+const MAX_PAYLOAD_CHARS = 64_000;
+
 export async function saveDraft(raw: unknown): Promise<SaveResult> {
   const authz = await getAuthorizedUser();
   if (!authz) return { ok: false, error: "signed-out" };
   if (applicationsAreClosed()) return { ok: false, error: "closed" };
+  if (JSON.stringify(raw).length > MAX_PAYLOAD_CHARS) {
+    return { ok: false, error: "invalid" };
+  }
 
   const parsed = draftSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, error: "invalid" };
@@ -73,6 +80,9 @@ export async function submitApplication(raw: unknown): Promise<SubmitResult> {
   if (!authz) return { ok: false, error: "Your session expired — sign in again." };
   if (applicationsAreClosed()) {
     return { ok: false, error: "Applications have closed." };
+  }
+  if (JSON.stringify(raw).length > MAX_PAYLOAD_CHARS) {
+    return { ok: false, error: "Some answers are too long." };
   }
 
   const parsed = submitSchema.safeParse(raw);

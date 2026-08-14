@@ -47,12 +47,12 @@ export const GRAD_YEARS = [
 ] as const;
 
 export const PRIMARY_SKILLS = [
-  "Engineering — Unity",
-  "Engineering — Unreal",
-  "Engineering — Web / WebXR",
-  "Engineering — AI / ML",
+  "Engineering: Unity",
+  "Engineering: Unreal",
+  "Engineering: Web / WebXR",
+  "Engineering: AI / ML",
   "3D / Technical Art",
-  "Design — UI / UX / Spatial",
+  "Design: UI / UX / Spatial",
   "Audio",
   "Hardware",
   "Product / PM",
@@ -279,7 +279,10 @@ const baseSchema = z.object({
     .string()
     .trim()
     .max(800)
-    .refine((v) => wordCount(v) >= CEO_MIN_WORDS, "Give us a real question")
+    .refine(
+      (v) => wordCount(v) >= CEO_MIN_WORDS,
+      `Ask a real question, at least ${CEO_MIN_WORDS} words`,
+    )
     .refine((v) => wordCount(v) <= CEO_MAX_WORDS, `Keep it under ${CEO_MAX_WORDS} words`),
 
   // stage 4 — logistics

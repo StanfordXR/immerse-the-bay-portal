@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { track } from "@/lib/analytics";
 
 type Mode = "sign-in" | "sign-up";
 type Method = "google" | "github" | "email";
@@ -73,11 +74,13 @@ export function SignInCard() {
   async function social(provider: "google" | "github") {
     setBusy(provider);
     setError(null);
+    track("auth_method_clicked", { method: provider, mode });
     try {
       await authClient.signIn.social({ provider, callbackURL: next });
       // browser navigates away; nothing after this runs on success
     } catch {
       setError("Couldn't reach the sign-in service. Try again.");
+      track("auth_error", { method: provider, kind: "network" });
       setBusy(null);
     }
   }
@@ -86,6 +89,7 @@ export function SignInCard() {
     e.preventDefault();
     setBusy("email");
     setError(null);
+    track("auth_method_clicked", { method: "email", mode });
     try {
       const result =
         mode === "sign-up"
@@ -100,6 +104,11 @@ export function SignInCard() {
                   ? "Couldn't create that account."
                   : "Wrong email or password.")),
         );
+        track("auth_error", {
+          method: "email",
+          mode,
+          kind: result.error.status === 429 ? "rate-limited" : "rejected",
+        });
         setBusy(null);
         return;
       }
@@ -107,6 +116,7 @@ export function SignInCard() {
     } catch {
       // A dropped connection must never leave the button stuck on "One moment…"
       setError("Network hiccup. Check your connection and try again.");
+      track("auth_error", { method: "email", mode, kind: "network" });
       setBusy(null);
     }
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type ReactNode } from "react";
+import { memo, useEffect, useId, useRef, type ReactNode } from "react";
 
 /** Shared form primitives. Every input is labeled, described, and error-wired. */
 
@@ -45,48 +45,71 @@ export function Field({
   );
 }
 
-export function ChipGroup({
-  options,
-  labels,
-  values,
-  onChange,
-  multiple = false,
-  ariaLabel,
-}: {
+type ChipGroupProps = {
   options: readonly string[];
   labels?: Record<string, string>;
   values: string[];
   onChange: (next: string[]) => void;
   multiple?: boolean;
   ariaLabel: string;
-}) {
-  function toggle(option: string) {
-    if (multiple) {
-      onChange(
-        values.includes(option)
-          ? values.filter((v) => v !== option)
-          : [...values, option],
-      );
-    } else {
-      onChange(values.includes(option) ? [] : [option]);
+};
+
+/**
+ * Memoized: big chip walls (27 skills) were re-rendering on every unrelated
+ * keystroke and lagging older phones. The comparator ignores `onChange`
+ * identity (callers pass inline lambdas); the latest one is kept in a ref so
+ * clicks never see a stale closure.
+ */
+export const ChipGroup = memo(
+  function ChipGroup({
+    options,
+    labels,
+    values,
+    onChange,
+    multiple = false,
+    ariaLabel,
+  }: ChipGroupProps) {
+    const onChangeRef = useRef(onChange);
+    useEffect(() => {
+      onChangeRef.current = onChange;
+    });
+
+    function toggle(option: string) {
+      if (multiple) {
+        onChangeRef.current(
+          values.includes(option)
+            ? values.filter((v) => v !== option)
+            : [...values, option],
+        );
+      } else {
+        onChangeRef.current(values.includes(option) ? [] : [option]);
+      }
     }
-  }
-  return (
-    <div className="flex flex-wrap gap-2" role="group" aria-label={ariaLabel}>
-      {options.map((option) => (
-        <button
-          key={option}
-          type="button"
-          className="chip"
-          aria-pressed={values.includes(option)}
-          onClick={() => toggle(option)}
-        >
-          {labels?.[option] ?? option}
-        </button>
-      ))}
-    </div>
-  );
-}
+
+    return (
+      <div className="flex flex-wrap gap-2" role="group" aria-label={ariaLabel}>
+        {options.map((option) => (
+          <button
+            key={option}
+            type="button"
+            className="chip"
+            aria-pressed={values.includes(option)}
+            onClick={() => toggle(option)}
+          >
+            {labels?.[option] ?? option}
+          </button>
+        ))}
+      </div>
+    );
+  },
+  (prev, next) =>
+    prev.options === next.options &&
+    prev.labels === next.labels &&
+    prev.multiple === next.multiple &&
+    prev.ariaLabel === next.ariaLabel &&
+    prev.values.length === next.values.length &&
+    prev.values.every((v, i) => v === next.values[i]),
+);
 
 export function WordCount({ value, min, max }: { value: string; min?: number; max: number }) {
   const words = value.trim().split(/\s+/).filter(Boolean).length;
@@ -99,7 +122,7 @@ export function WordCount({ value, min, max }: { value: string; min?: number; ma
       aria-hidden
     >
       {words}/{max} words
-      {under ? ` · ${min - words} more to go` : ""}
+      {under ? ` · ${min - words} more word${min - words === 1 ? "" : "s"} needed` : ""}
     </span>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { submitFeedback } from "@/lib/actions/feedback";
+import { track } from "@/lib/analytics";
 
 const FIELDS = [
   {
@@ -45,6 +46,7 @@ export function FeedbackForm() {
     }));
     if (result.ok) {
       setState("done");
+      track("feedback_submitted");
     } else {
       setState("idle");
       setError(("error" in result && result.error) || "Try again.");

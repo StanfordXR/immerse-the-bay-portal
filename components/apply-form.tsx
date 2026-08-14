@@ -8,7 +8,6 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
-import posthog from "posthog-js";
 import {
   COUNTRIES,
   ESSAY_LIMITS,
@@ -22,13 +21,16 @@ import {
   SKILL_CHIPS,
   STEPS,
   TSHIRT_SIZES,
-  UNIVERSITY_SUGGESTIONS,
   US_STATES,
   stepIssues,
   type Answers,
   type StepIndex,
 } from "@/lib/form-schema";
 import { saveDraft, submitApplication } from "@/lib/actions/application";
+import { track } from "@/lib/analytics";
+import { Stepper } from "@/components/stepper";
+import { ChipGroup, Field, WordCount } from "@/components/fields";
+import { SchoolCombobox } from "@/components/school-combobox";
 
 // Sources where a specific person sent them our way.
 const HEARD_NAMEABLE = new Set<string>([
@@ -36,8 +38,6 @@ const HEARD_NAMEABLE = new Set<string>([
   "Class or professor",
   "Partner club at my school",
 ]);
-import { Stepper } from "@/components/stepper";
-import { ChipGroup, Field, WordCount } from "@/components/fields";
 
 type SaveState =
   | "idle"
@@ -55,9 +55,6 @@ function stateFromSaveError(error: string): SaveState {
   return "offline";
 }
 
-const track = (event: string, props?: Record<string, unknown>) => {
-  if (process.env.NEXT_PUBLIC_POSTHOG_KEY) posthog.capture(event, props);
-};
 
 export function ApplyForm({
   initialAnswers,
@@ -125,8 +122,19 @@ export function ApplyForm({
 
   function goTo(next: StepIndex) {
     setStep(next);
-    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
+
+  // Scroll after the new step has painted; doing it inside goTo raced the
+  // re-render and silently lost on mobile (stress-test report).
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    topRef.current?.scrollIntoView({ block: "start" });
+    track("application_step_viewed", { step: STEPS[step].id });
+  }, [step]);
 
   function handleNext() {
     const issues = stepIssues(answers, step);
@@ -159,9 +167,9 @@ export function ApplyForm({
     try {
       const result = await submitApplication(answers);
       if (result.ok) {
-        if (!alreadySubmitted) {
-          track("application_submitted", { source: answers.heardAboutUs });
-        }
+        track(alreadySubmitted ? "application_updated" : "application_submitted", {
+          source: answers.heardAboutUs,
+        });
         // Edits return to a calm dashboard; only first submits get the
         // celebration banner.
         router.push(alreadySubmitted ? "/dashboard" : "/dashboard?submitted=1");
@@ -199,6 +207,7 @@ export function ApplyForm({
         handleUploadUrl: "/api/upload",
       });
       set({ resumeUrl: blob.url });
+      track("resume_uploaded");
     } catch {
       setUploadError("Upload failed. You can also submit without a resume.");
     } finally {
@@ -324,24 +333,14 @@ export function ApplyForm({
           <div className="flex flex-col gap-5">
             <Field label="University or organization" error={errors.schoolName}>
               {({ id, describedBy, invalid }) => (
-                <>
-                  <input
-                    id={id}
-                    className="field"
-                    list="universities"
-                    placeholder="Start typing…"
-                    maxLength={200}
-                    value={a.schoolName ?? ""}
-                    aria-describedby={describedBy}
-                    aria-invalid={invalid || undefined}
-                    onChange={(e) => set({ schoolName: e.target.value })}
-                  />
-                  <datalist id="universities">
-                    {UNIVERSITY_SUGGESTIONS.map((u) => (
-                      <option key={u} value={u} />
-                    ))}
-                  </datalist>
-                </>
+                <SchoolCombobox
+                  id={id}
+                  value={a.schoolName ?? ""}
+                  onChange={(schoolName) => set({ schoolName })}
+                  describedBy={describedBy}
+                  invalid={invalid}
+                  maxLength={200}
+                />
               )}
             </Field>
 
@@ -413,7 +412,7 @@ export function ApplyForm({
                   </select>
                 )}
               </Field>
-              <Field label="What best describes you?" error={errors.primarySkill}>
+              <Field label="Your primary skill" error={errors.primarySkill}>
                 {({ id, describedBy, invalid }) => (
                   <select
                     id={id}
@@ -530,7 +529,7 @@ export function ApplyForm({
           <div className="flex flex-col gap-6">
             <Field
               label="Why do you want to be at Immerse the Bay, and what do you hope to get out of it?"
-              hint="A short paragraph is perfect. Specific beats polished: tell us what you actually want to build or learn."
+              hint="20 to 200 words. A short paragraph is perfect. Specific beats polished: tell us what you actually want to build or learn."
               error={errors.whyParticipate}
             >
               {({ id, describedBy, invalid }) => (
@@ -557,6 +556,7 @@ export function ApplyForm({
 
             <Field
               label="If you could ask an XR industry CEO one question, what would it be?"
+              hint="3 to 50 words."
               error={errors.ceoQuestion}
             >
               {({ id, describedBy, invalid }) => (

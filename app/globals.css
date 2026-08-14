@@ -22,7 +22,7 @@
   --color-line-2: #3b2f6e; /* lit edges */
   --color-moonlit: #ece7fb; /* primary text — the pale towers */
   --color-muted: #a79dcb; /* secondary text */
-  --color-faint: #776d9e; /* placeholders, disabled */
+  --color-faint: #8d84b8; /* placeholders, disabled — 5.3:1 on surface, WCAG AA */
   --color-cyan: #6ee8f7; /* neon rim — interactive accent */
   --color-cyan-2: #29c8e6;
   --color-violet: #8b5cf6;
@@ -192,11 +192,11 @@
     padding: 0.4rem 0.9rem;
     font-size: 13.5px;
     font-weight: 500;
+    /* colors only: animating box-shadow janked chip taps on older phones */
     transition:
       border-color 120ms ease,
       color 120ms ease,
-      background 120ms ease,
-      box-shadow 120ms ease;
+      background 120ms ease;
     cursor: pointer;
   }
   .chip:hover {

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
+import { track } from "@/lib/analytics";
 
 /**
  * The landing page is a static prerender, so the CTA reads optimistic cookies
@@ -21,15 +22,25 @@ const getSnapshot = () => {
 export function HeroCta() {
   const state = useSyncExternalStore(subscribeNoop, getSnapshot, getServerSnapshot);
 
+  const onClick = () => track("hero_cta_clicked", { state });
+
   if (state === "applied") {
     return (
-      <Link href="/dashboard" className="btn-primary px-8 py-3.5 text-[17px]">
+      <Link
+        href="/dashboard"
+        className="btn-primary px-8 py-3.5 text-[17px]"
+        onClick={onClick}
+      >
         View your application
       </Link>
     );
   }
   return (
-    <Link href="/apply" className="btn-primary px-8 py-3.5 text-[17px]">
+    <Link
+      href="/apply"
+      className="btn-primary px-8 py-3.5 text-[17px]"
+      onClick={onClick}
+    >
       {state === "returning" ? "Continue your application" : "Begin your application"}
     </Link>
   );

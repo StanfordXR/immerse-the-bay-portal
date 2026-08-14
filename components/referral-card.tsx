@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { setReferralAnonymity } from "@/lib/actions/referral";
+import { track } from "@/lib/analytics";
 import type { LeaderboardRow } from "@/lib/referral";
 
 /**
@@ -31,12 +32,14 @@ export function ReferralCard({
   function copy() {
     void navigator.clipboard.writeText(link).then(() => {
       setCopied(true);
+      track("referral_link_copied");
       setTimeout(() => setCopied(false), 2000);
     });
   }
 
   function toggleAnonymity(next: boolean) {
     setIsAnonymous(next);
+    track("referral_anonymity_toggled", { anonymous: next });
     startTransition(async () => {
       const result = await setReferralAnonymity(next);
       if (!result.ok) setIsAnonymous(!next); // revert on failure
@@ -56,8 +59,9 @@ export function ReferralCard({
           Bring your friends
         </h2>
         <p className="mt-1 text-[14px] leading-relaxed text-muted">
-          Share your link. Every friend who <em>completes</em> an application
-          counts. Top referrers get shoutouts at the opening ceremony.
+          Share your link. It tags your friend the moment they open it, and
+          counts once they <em>submit</em> an application. Top referrers get
+          shoutouts at the opening ceremony.
         </p>
 
         <div className="mt-4 flex flex-wrap items-center gap-2.5">
