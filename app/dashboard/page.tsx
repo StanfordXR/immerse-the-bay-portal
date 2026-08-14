@@ -42,8 +42,12 @@ export default async function DashboardPage({
   // Applicants see the leaderboard once submitted; staff see it always.
   const leaderboard =
     referralCode || isStaff ? await getLeaderboard(referralCode) : null;
+  // Share links read as the marketing site; its /r/ redirect hands them to
+  // this app's tracker. Locally there is no apex site, so use our own host.
   const portalBase =
-    process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org";
+    process.env.NODE_ENV === "production"
+      ? "https://immersethebay.org"
+      : (process.env.BETTER_AUTH_URL ?? "http://localhost:3111");
 
   const parsed = draftSchema.safeParse(row?.answers ?? {});
   const answers = parsed.success ? parsed.data : {};

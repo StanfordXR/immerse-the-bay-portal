@@ -68,7 +68,10 @@ export async function GET(
       .where(eq(application.referralCode, normalized))
       .limit(1);
     if (row) {
-      destination = `/apply?utm_source=ref&utm_content=${normalized}`;
+      // Referred friends land on the marketing site like every other
+      // campaign; the external-redirect branch below stamps first touch so
+      // the referral still counts when they eventually submit.
+      destination = `https://immersethebay.org/?utm_source=ref&utm_content=${normalized}`;
     }
   }
 
