@@ -30,8 +30,6 @@ const LINKS: Record<string, string> = {
   li: "/apply?utm_source=li",
   dc: "/apply?utm_source=dc",
   // a/b creative tests — same source, variant in utm_content
-  ig1: "/apply?utm_source=ig&utm_content=a",
-  ig2: "/apply?utm_source=ig&utm_content=b",
   li1: "/apply?utm_source=li&utm_content=a",
   li2: "/apply?utm_source=li&utm_content=b",
   // mailing lists
