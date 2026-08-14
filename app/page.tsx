@@ -64,7 +64,7 @@ export default function LandingPage() {
           style={{
             background: [
               // light vignette: edges settle, center stays open
-              "radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(10,5,20,0.4) 100%)",
+              "radial-gradient(110% 85% at 50% 45%, transparent 48%, rgba(10,5,20,0.58) 100%)",
               "linear-gradient(180deg, rgba(10,5,20,0.78) 0%, rgba(10,5,20,0.55) 35%, rgba(10,5,20,0.42) 62%, rgba(10,5,20,0.68) 100%)",
             ].join(","),
           }}
