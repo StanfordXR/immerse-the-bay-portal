@@ -29,8 +29,11 @@ export function SchoolCombobox({
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  // Filter only once they type in this focus session: reopening on a chosen
+  // value must show the full list again (the native datalist's failure mode).
+  const [typed, setTyped] = useState(false);
 
-  const query = value.trim().toLowerCase();
+  const query = typed ? value.trim().toLowerCase() : "";
   const matches = query
     ? UNIVERSITY_SUGGESTIONS.filter((u) => u.toLowerCase().includes(query))
     : [...UNIVERSITY_SUGGESTIONS];
@@ -93,10 +96,14 @@ export function SchoolCombobox({
         value={value}
         onChange={(e) => {
           onChange(e.target.value);
+          setTyped(true);
           setOpen(true);
           setActive(0);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          setTyped(false);
+          setOpen(true);
+        }}
         onKeyDown={onKeyDown}
       />
       {open && rows.length > 0 && (
