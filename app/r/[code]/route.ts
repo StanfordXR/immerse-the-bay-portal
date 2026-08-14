@@ -29,6 +29,12 @@ const LINKS: Record<string, string> = {
   ig: "/apply?utm_source=ig&utm_content=bio",
   li: "/apply?utm_source=li",
   dc: "/apply?utm_source=dc",
+  // discord servers — one code per server (sxr = Stanford XR, itbNN = that
+  // year's hackathon server)
+  dcx: "/apply?utm_source=dc&utm_content=sxr",
+  dc25: "/apply?utm_source=dc&utm_content=itb25",
+  dc24: "/apply?utm_source=dc&utm_content=itb24",
+  dc23: "/apply?utm_source=dc&utm_content=itb23",
   // a/b creative tests — same source, variant in utm_content
   li1: "/apply?utm_source=li&utm_content=a",
   li2: "/apply?utm_source=li&utm_content=b",
