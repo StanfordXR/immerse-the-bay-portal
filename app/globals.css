@@ -54,6 +54,14 @@
     border-radius: 4px;
   }
 
+  /* iOS Safari gives date inputs an intrinsic min-width that can overflow
+     their card on narrow screens */
+  input[type="date"] {
+    min-width: 0;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
   /* native pickers (date input) render on dark */
   input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(0.85) sepia(0.2) saturate(3) hue-rotate(160deg);

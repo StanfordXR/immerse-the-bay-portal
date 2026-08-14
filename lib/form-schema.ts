@@ -309,8 +309,19 @@ export const submitSchema = baseSchema.superRefine((data, ctx) => {
   }
 });
 
-/** Drafts accept anything partially filled; unknown keys are stripped. */
-export const draftSchema = baseSchema.partial();
+/**
+ * Drafts accept anything partially filled. Fields with minimums, word counts,
+ * or shape refines relax to bare char caps here: a half-typed essay or URL
+ * must autosave cleanly, not flip the badge to an error. submitSchema still
+ * enforces everything at submission.
+ */
+export const draftSchema = baseSchema.partial().extend({
+  schoolName: z.string().trim().max(200).optional(),
+  portfolioUrl: z.string().trim().max(600).optional(),
+  whyParticipate: z.string().trim().max(3000).optional(),
+  ceoQuestion: z.string().trim().max(800).optional(),
+  dateOfBirth: z.string().max(10).optional(),
+});
 
 export type Answers = z.infer<typeof draftSchema>;
 
@@ -408,7 +419,12 @@ export function answersToColumns(a: Answers) {
   return {
     firstName: a.firstName ?? null,
     lastName: a.lastName ?? null,
-    dateOfBirth: a.dateOfBirth ?? null,
+    // Drafts may carry a partial date; only a complete value reaches the
+    // date-typed column.
+    dateOfBirth:
+      a.dateOfBirth && /^\d{4}-\d{2}-\d{2}$/.test(a.dateOfBirth)
+        ? a.dateOfBirth
+        : null,
     schoolName: a.schoolName ?? null,
     schoolCountry: a.schoolCountry ?? null,
     schoolRegion: a.schoolRegion || null,

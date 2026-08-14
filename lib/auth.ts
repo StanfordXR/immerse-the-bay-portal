@@ -72,9 +72,11 @@ export const auth = betterAuth({
     storage: "database",
     window: 60,
     max: 60,
+    // Keyed per IP: a dorm or campus NAT puts many applicants behind one
+    // address on launch day, so these are looser than single-user limits.
     customRules: {
-      "/sign-up/email": { window: 60, max: 5 },
-      "/sign-in/email": { window: 60, max: 10 },
+      "/sign-up/email": { window: 60, max: 20 },
+      "/sign-in/email": { window: 60, max: 30 },
     },
   },
 

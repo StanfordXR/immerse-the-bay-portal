@@ -86,21 +86,29 @@ export function SignInCard() {
     e.preventDefault();
     setBusy("email");
     setError(null);
-    const result =
-      mode === "sign-up"
-        ? await authClient.signUp.email({ name: name.trim(), email, password })
-        : await authClient.signIn.email({ email, password });
-    if (result.error) {
-      setError(
-        result.error.message ??
-          (mode === "sign-up"
-            ? "Couldn't create that account."
-            : "Wrong email or password."),
-      );
+    try {
+      const result =
+        mode === "sign-up"
+          ? await authClient.signUp.email({ name: name.trim(), email, password })
+          : await authClient.signIn.email({ email, password });
+      if (result.error) {
+        setError(
+          result.error.status === 429
+            ? "Too many attempts. Wait a minute and try again."
+            : (result.error.message ??
+                (mode === "sign-up"
+                  ? "Couldn't create that account."
+                  : "Wrong email or password.")),
+        );
+        setBusy(null);
+        return;
+      }
+      router.push(next);
+    } catch {
+      // A dropped connection must never leave the button stuck on "One moment…"
+      setError("Network hiccup. Check your connection and try again.");
       setBusy(null);
-      return;
     }
-    router.push(next);
   }
 
   return (

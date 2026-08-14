@@ -115,11 +115,9 @@ export default async function DashboardPage({
               >
                 ✓
               </span>
-              <div>
+              <div className="min-w-0">
                 <h2 className="font-display text-xl font-semibold">
-                  {justSubmitted
-                    ? "Application submitted — see you in November!"
-                    : "Your application is in"}
+                  {justSubmitted ? "Application submitted!" : "Your application is in"}
                 </h2>
                 <p className="mt-1 text-[14px] text-muted">
                   Received{" "}
@@ -138,6 +136,12 @@ export default async function DashboardPage({
                   until applications close ({closeDateLabel()}).
                 </p>
               </div>
+              <Link
+                href="/apply"
+                className="btn-ghost ml-auto flex-none self-center !py-2 text-[14px]"
+              >
+                Edit application
+              </Link>
             </div>
 
             {/* connected progress rail: where your application is in the process */}

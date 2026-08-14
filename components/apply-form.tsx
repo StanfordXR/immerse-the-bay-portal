@@ -39,7 +39,21 @@ const HEARD_NAMEABLE = new Set<string>([
 import { Stepper } from "@/components/stepper";
 import { ChipGroup, Field, WordCount } from "@/components/fields";
 
-type SaveState = "idle" | "saving" | "saved" | "error";
+type SaveState =
+  | "idle"
+  | "saving"
+  | "saved"
+  | "invalid"
+  | "signed-out"
+  | "closed"
+  | "offline";
+
+function stateFromSaveError(error: string): SaveState {
+  if (error === "invalid") return "invalid";
+  if (error === "signed-out") return "signed-out";
+  if (error === "closed") return "closed";
+  return "offline";
+}
 
 const track = (event: string, props?: Record<string, unknown>) => {
   if (process.env.NEXT_PUBLIC_POSTHOG_KEY) posthog.capture(event, props);
@@ -86,13 +100,28 @@ export function ApplyForm({
     const timer = setTimeout(async () => {
       try {
         const result = await saveDraft(answers);
-        setSaveState(result.ok ? "saved" : "error");
+        setSaveState(result.ok ? "saved" : stateFromSaveError(result.error));
       } catch {
-        setSaveState("error");
+        setSaveState("offline");
       }
     }, 900);
     return () => clearTimeout(timer);
   }, [answers, preview]);
+
+  // Real retry while offline: another attempt every 5 seconds until one lands.
+  const [retryTick, setRetryTick] = useState(0);
+  useEffect(() => {
+    if (saveState !== "offline" || preview) return;
+    const timer = setTimeout(async () => {
+      try {
+        const result = await saveDraft(answers);
+        setSaveState(result.ok ? "saved" : stateFromSaveError(result.error));
+      } catch {
+        setRetryTick((t) => t + 1); // still offline; re-arm this effect
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [saveState, retryTick, answers, preview]);
 
   function goTo(next: StepIndex) {
     setStep(next);
@@ -208,6 +237,7 @@ export function ApplyForm({
                     id={id}
                     className="field"
                     autoComplete="given-name"
+                    maxLength={100}
                     value={a.firstName ?? ""}
                     aria-describedby={describedBy}
                     aria-invalid={invalid || undefined}
@@ -221,6 +251,7 @@ export function ApplyForm({
                     id={id}
                     className="field"
                     autoComplete="family-name"
+                    maxLength={100}
                     value={a.lastName ?? ""}
                     aria-describedby={describedBy}
                     aria-invalid={invalid || undefined}
@@ -255,6 +286,7 @@ export function ApplyForm({
                     <input
                       id={id}
                       className="field"
+                      maxLength={60}
                       value={a.pronounsSelf ?? ""}
                       aria-describedby={describedBy}
                       aria-invalid={invalid || undefined}
@@ -274,7 +306,7 @@ export function ApplyForm({
                 <input
                   id={id}
                   type="date"
-                  className="field sm:max-w-60"
+                  className="field w-full min-w-0 sm:max-w-60"
                   autoComplete="bday"
                   min="1900-01-01"
                   max={new Date().toISOString().slice(0, 10)}
@@ -298,6 +330,7 @@ export function ApplyForm({
                     className="field"
                     list="universities"
                     placeholder="Start typing…"
+                    maxLength={200}
                     value={a.schoolName ?? ""}
                     aria-describedby={describedBy}
                     aria-invalid={invalid || undefined}
@@ -463,6 +496,7 @@ export function ApplyForm({
                     id={id}
                     className="field"
                     placeholder="e.g. shader wizardry, pitch decks"
+                    maxLength={300}
                     value={a.skillsOther ?? ""}
                     onChange={(e) => set({ skillsOther: e.target.value })}
                   />
@@ -480,6 +514,7 @@ export function ApplyForm({
                     className="field"
                     inputMode="url"
                     placeholder="linkedin.com/in/you, github.com/you"
+                    maxLength={600}
                     value={a.portfolioUrl ?? ""}
                     aria-describedby={describedBy}
                     aria-invalid={invalid || undefined}
@@ -503,6 +538,7 @@ export function ApplyForm({
                   <textarea
                     id={id}
                     className="field min-h-40 resize-y"
+                    maxLength={3000}
                     value={a.whyParticipate ?? ""}
                     aria-describedby={describedBy}
                     aria-invalid={invalid || undefined}
@@ -528,6 +564,7 @@ export function ApplyForm({
                   <textarea
                     id={id}
                     className="field min-h-24 resize-y"
+                    maxLength={800}
                     value={a.ceoQuestion ?? ""}
                     aria-describedby={describedBy}
                     aria-invalid={invalid || undefined}
@@ -571,6 +608,7 @@ export function ApplyForm({
                   <input
                     id={id}
                     className="field"
+                    maxLength={300}
                     value={a.dietaryNeeds ?? ""}
                     aria-describedby={describedBy}
                     onChange={(e) => set({ dietaryNeeds: e.target.value })}
@@ -586,6 +624,7 @@ export function ApplyForm({
                   <input
                     id={id}
                     className="field"
+                    maxLength={500}
                     value={a.accessibilityNeeds ?? ""}
                     aria-describedby={describedBy}
                     onChange={(e) => set({ accessibilityNeeds: e.target.value })}
@@ -777,19 +816,22 @@ function SaveBadge({ state, preview }: { state: SaveState; preview: boolean }) {
   if (preview) {
     return <span className="font-mono text-[11px] text-faint">PREVIEW</span>;
   }
-  const label =
-    state === "saving"
-      ? "Saving…"
-      : state === "saved"
-        ? "Saved"
-        : state === "error"
-          ? "Offline — retrying"
-          : "";
+  const LABELS: Record<SaveState, string> = {
+    idle: "",
+    saving: "Saving…",
+    saved: "Saved",
+    invalid: "Draft not saved, an answer is too long",
+    "signed-out": "Signed out, sign in to keep saving",
+    closed: "Applications closed",
+    offline: "Not saved, retrying…",
+  };
+  const label = LABELS[state];
   if (!label) return null;
+  const danger = !["saving", "saved"].includes(state);
   return (
     <span
       className={`font-mono text-[11px] tracking-wide ${
-        state === "error" ? "text-danger" : "text-faint"
+        danger ? "text-danger" : "text-faint"
       }`}
       aria-live="polite"
     >
@@ -890,13 +932,13 @@ function ReviewStep({
               Edit
             </button>
           </div>
-          <dl className="grid gap-x-6 gap-y-2 text-[14px] sm:grid-cols-[10rem_1fr]">
+          <dl className="grid gap-x-6 gap-y-2 text-[14px] sm:grid-cols-[10rem_minmax(0,1fr)]">
             {section.rows
               .filter(([, v]) => v)
               .map(([label, value]) => (
                 <div key={label} className="contents">
                   <dt className="text-faint">{label}</dt>
-                  <dd className="whitespace-pre-wrap break-words text-moonlit/90">
+                  <dd className="min-w-0 whitespace-pre-wrap break-words text-moonlit/90 [overflow-wrap:anywhere]">
                     {value}
                   </dd>
                 </div>

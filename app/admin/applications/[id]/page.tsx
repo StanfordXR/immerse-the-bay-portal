@@ -152,7 +152,7 @@ export default async function AdminApplicationDetail({
           <h2 className="font-display mb-4 text-[15px] font-semibold">
             Background
           </h2>
-          <dl className="grid gap-x-6 gap-y-3 text-[14px] sm:grid-cols-[11rem_1fr]">
+          <dl className="grid gap-x-6 gap-y-3 text-[14px] sm:grid-cols-[11rem_minmax(0,1fr)] [&_dd]:min-w-0 [&_dd]:break-words">
             <dt className="text-faint">School</dt>
             <dd className="text-moonlit/90">
               {row.schoolName || "·"}
@@ -207,13 +207,13 @@ export default async function AdminApplicationDetail({
           <h3 className="text-[13px] font-medium text-faint">
             Why do you want to be part of Immerse the Bay?
           </h3>
-          <p className="mt-1.5 whitespace-pre-wrap text-[14.5px] leading-relaxed text-moonlit/90">
+          <p className="mt-1.5 whitespace-pre-wrap break-words text-[14.5px] leading-relaxed text-moonlit/90 [overflow-wrap:anywhere]">
             {answers.whyParticipate || "·"}
           </p>
           <h3 className="mt-5 text-[13px] font-medium text-faint">
             CEO question
           </h3>
-          <p className="mt-1.5 whitespace-pre-wrap text-[14.5px] leading-relaxed text-moonlit/90">
+          <p className="mt-1.5 whitespace-pre-wrap break-words text-[14.5px] leading-relaxed text-moonlit/90 [overflow-wrap:anywhere]">
             {answers.ceoQuestion || "·"}
           </p>
         </section>
@@ -223,7 +223,7 @@ export default async function AdminApplicationDetail({
           <h2 className="font-display mb-4 text-[15px] font-semibold">
             Logistics and attribution
           </h2>
-          <dl className="grid gap-x-6 gap-y-3 text-[14px] sm:grid-cols-[11rem_1fr]">
+          <dl className="grid gap-x-6 gap-y-3 text-[14px] sm:grid-cols-[11rem_minmax(0,1fr)] [&_dd]:min-w-0 [&_dd]:break-words">
             <dt className="text-faint">T-shirt</dt>
             <dd className="text-moonlit/90">{row.tshirtSize ?? "·"}</dd>
             <dt className="text-faint">Dietary</dt>

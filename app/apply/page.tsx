@@ -28,11 +28,16 @@ export default async function ApplyPage() {
   const stored = draftSchema.safeParse(row?.answers ?? {});
   const initial: Answers = stored.success ? stored.data : {};
 
-  // Prefill name from the OAuth profile — two fewer fields to type.
+  // Prefill name from the OAuth profile — two fewer fields to type. Only for
+  // clean two-word names: GitHub often reports a handle ("haoran-git-hub"),
+  // and three-part names split wrong more often than right.
   if (!initial.firstName && !initial.lastName && user.name) {
     const parts = user.name.trim().split(/\s+/);
-    initial.firstName = parts[0] ?? "";
-    initial.lastName = parts.slice(1).join(" ");
+    const looksLikeHandle = /[\d_@\-.]/.test(user.name);
+    if (parts.length === 2 && !looksLikeHandle) {
+      initial.firstName = parts[0];
+      initial.lastName = parts[1];
+    }
   }
 
   const closed = applicationsAreClosed();
