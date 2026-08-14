@@ -1,8 +1,15 @@
 import { redirect } from "next/navigation";
-import { after } from "next/server";
+import { NextResponse, after } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application, linkClick } from "@/lib/db/schema";
+import {
+  ATTRIBUTION_COOKIE,
+  ATTRIBUTION_MAX_AGE,
+  UTM_PARAMS,
+  normalizeUtm,
+  type Attribution,
+} from "@/lib/attribution";
 
 /**
  * Self-hosted short links for QR codes and campaign posts. Clicks land in our
@@ -30,11 +37,12 @@ const LINKS: Record<string, string> = {
   li: "/apply?utm_source=li",
   dc: "/apply?utm_source=dc",
   // discord servers — one code per server (sxr = Stanford XR, itbNN = that
-  // year's hackathon server)
-  dcx: "/apply?utm_source=dc&utm_content=sxr",
-  dc25: "/apply?utm_source=dc&utm_content=itb25",
-  dc24: "/apply?utm_source=dc&utm_content=itb24",
-  dc23: "/apply?utm_source=dc&utm_content=itb23",
+  // year's hackathon server). These land on the marketing site, not /apply:
+  // cold-ish audiences should see what the event is before an application form.
+  dcx: "https://immersethebay.org/?utm_source=dc&utm_content=sxr",
+  dc25: "https://immersethebay.org/?utm_source=dc&utm_content=itb25",
+  dc24: "https://immersethebay.org/?utm_source=dc&utm_content=itb24",
+  dc23: "https://immersethebay.org/?utm_source=dc&utm_content=itb23",
   // a/b creative tests — same source, variant in utm_content
   li1: "/apply?utm_source=li&utm_content=a",
   li2: "/apply?utm_source=li&utm_content=b",
@@ -65,6 +73,61 @@ export async function GET(
   }
 
   if (!destination) redirect("/");
+
+  // External destinations (the marketing site) can't set the first-touch
+  // cookie themselves — the marketing repo has no middleware — so the hop sets
+  // it here from the destination's own UTM params. This is different from the
+  // hop-must-not-set rule in proxy.ts: that rule guards against a *referrer*
+  // captured on the hop beating the destination's UTMs; here the cookie IS the
+  // destination's UTMs. First touch still wins: an existing cookie is kept.
+  if (destination.startsWith("http")) {
+    const dest = new URL(destination);
+    const response = NextResponse.redirect(dest, 307);
+
+    const hasCookie = (request.headers.get("cookie") ?? "").includes(
+      `${ATTRIBUTION_COOKIE}=`,
+    );
+    if (!hasCookie) {
+      const attribution: Attribution = {};
+      for (const param of UTM_PARAMS) {
+        const value = normalizeUtm(dest.searchParams.get(param));
+        if (value) {
+          attribution[param.replace("utm_", "") as keyof Attribution] =
+            value as never;
+        }
+      }
+      if (Object.keys(attribution).length > 0) {
+        attribution.lp = dest.pathname.slice(0, 120);
+        attribution.ts = Date.now();
+        response.cookies.set({
+          name: ATTRIBUTION_COOKIE,
+          value: JSON.stringify(attribution),
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          maxAge: ATTRIBUTION_MAX_AGE,
+          ...(process.env.COOKIE_DOMAIN
+            ? { domain: process.env.COOKIE_DOMAIN }
+            : {}),
+        });
+      }
+    }
+
+    after(async () => {
+      try {
+        await db.insert(linkClick).values({
+          code: normalized,
+          referrer: request.headers.get("referer"),
+          userAgent: request.headers.get("user-agent")?.slice(0, 300) ?? null,
+        });
+      } catch (err) {
+        console.error("[r] click log failed:", err);
+      }
+    });
+
+    return response;
+  }
 
   after(async () => {
     try {
