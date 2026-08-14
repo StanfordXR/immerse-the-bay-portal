@@ -51,7 +51,9 @@ export async function saveDraft(raw: unknown): Promise<SaveResult> {
   const authz = await getAuthorizedUser();
   if (!authz) return { ok: false, error: "signed-out" };
   if (applicationsAreClosed()) return { ok: false, error: "closed" };
-  if (JSON.stringify(raw).length > MAX_PAYLOAD_CHARS) {
+  // JSON.stringify(undefined) is undefined; a crafted call must degrade to
+  // "invalid", not throw.
+  if ((JSON.stringify(raw) ?? "").length > MAX_PAYLOAD_CHARS) {
     return { ok: false, error: "invalid" };
   }
 
@@ -81,7 +83,7 @@ export async function submitApplication(raw: unknown): Promise<SubmitResult> {
   if (applicationsAreClosed()) {
     return { ok: false, error: "Applications have closed." };
   }
-  if (JSON.stringify(raw).length > MAX_PAYLOAD_CHARS) {
+  if ((JSON.stringify(raw) ?? "").length > MAX_PAYLOAD_CHARS) {
     return { ok: false, error: "Some answers are too long." };
   }
 

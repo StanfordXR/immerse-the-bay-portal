@@ -91,34 +91,63 @@ export function ApplyForm({
   }, []);
 
   // ── autosave: debounced, tolerant, honest about state ──────────────────────
+  // Every save sends the *latest* answers and carries a sequence number: a
+  // slow older request can neither report state over a newer one nor clobber
+  // newer keystrokes with a stale payload.
+  const answersRef = useRef(answers);
+  useEffect(() => {
+    answersRef.current = answers;
+  });
+  const saveSeq = useRef(0);
+  const retryCount = useRef(0);
+
   useEffect(() => {
     if (!dirty.current || preview) return;
     setSaveState("saving");
     const timer = setTimeout(async () => {
+      const seq = ++saveSeq.current;
       try {
-        const result = await saveDraft(answers);
+        const result = await saveDraft(answersRef.current);
+        if (seq !== saveSeq.current) return; // a newer save superseded this one
+        if (result.ok) retryCount.current = 0;
         setSaveState(result.ok ? "saved" : stateFromSaveError(result.error));
       } catch {
-        setSaveState("offline");
+        if (seq === saveSeq.current) setSaveState("offline");
       }
     }, 900);
     return () => clearTimeout(timer);
   }, [answers, preview]);
 
-  // Real retry while offline: another attempt every 5 seconds until one lands.
+  // Real retry while offline: up to 5 attempts, 5 seconds apart. The tick
+  // bumps on every failure so the effect always re-arms (a same-value
+  // setSaveState alone would not re-render). Any successful edit-save resets
+  // the budget.
   const [retryTick, setRetryTick] = useState(0);
   useEffect(() => {
     if (saveState !== "offline" || preview) return;
+    if (retryCount.current >= 5) return; // give up; the next edit retries
     const timer = setTimeout(async () => {
+      retryCount.current += 1;
+      const seq = ++saveSeq.current;
       try {
-        const result = await saveDraft(answers);
-        setSaveState(result.ok ? "saved" : stateFromSaveError(result.error));
+        const result = await saveDraft(answersRef.current);
+        if (seq !== saveSeq.current) return;
+        if (result.ok) {
+          retryCount.current = 0;
+          setSaveState("saved");
+        } else {
+          setSaveState(stateFromSaveError(result.error));
+          setRetryTick((t) => t + 1);
+        }
       } catch {
-        setRetryTick((t) => t + 1); // still offline; re-arm this effect
+        if (seq === saveSeq.current) {
+          setSaveState("offline");
+          setRetryTick((t) => t + 1);
+        }
       }
     }, 5000);
     return () => clearTimeout(timer);
-  }, [saveState, retryTick, answers, preview]);
+  }, [saveState, retryTick, preview]);
 
   function goTo(next: StepIndex) {
     setStep(next);
@@ -823,7 +852,7 @@ function SaveBadge({ state, preview }: { state: SaveState; preview: boolean }) {
     invalid: "Draft not saved, an answer is too long",
     "signed-out": "Signed out, sign in to keep saving",
     closed: "Applications closed",
-    offline: "Not saved, retrying…",
+    offline: "Not saved, check your connection",
   };
   const label = LABELS[state];
   if (!label) return null;

@@ -313,17 +313,29 @@ export const submitSchema = baseSchema.superRefine((data, ctx) => {
 });
 
 /**
- * Drafts accept anything partially filled. Fields with minimums, word counts,
- * or shape refines relax to bare char caps here: a half-typed essay or URL
- * must autosave cleanly, not flip the badge to an error. submitSchema still
- * enforces everything at submission.
+ * Drafts accept anything partially filled. Everything relaxes to bare char
+ * caps here — no minimums, no word counts, no enums: a half-typed essay, a
+ * cleared name, or an option label from an older deploy must all autosave
+ * cleanly. The draft schema also guards reads, where one stale value must
+ * never collapse a whole stored answers object (a failed parse falls back to
+ * {}, and the next autosave would overwrite the real draft). submitSchema
+ * still enforces everything at submission.
  */
 export const draftSchema = baseSchema.partial().extend({
+  firstName: z.string().trim().max(100).optional(),
+  lastName: z.string().trim().max(100).optional(),
+  dateOfBirth: z.string().max(10).optional(),
   schoolName: z.string().trim().max(200).optional(),
+  schoolCountry: z.string().trim().max(80).optional(),
+  gradYear: z.string().max(20).optional(),
+  hackathonsBucket: z.string().max(10).optional(),
+  priorAttendance: z.string().max(5).optional(),
+  primarySkill: z.string().max(60).optional(),
   portfolioUrl: z.string().trim().max(600).optional(),
   whyParticipate: z.string().trim().max(3000).optional(),
   ceoQuestion: z.string().trim().max(800).optional(),
-  dateOfBirth: z.string().max(10).optional(),
+  tshirtSize: z.string().max(10).optional(),
+  heardAboutUs: z.string().max(60).optional(),
 });
 
 export type Answers = z.infer<typeof draftSchema>;
@@ -422,12 +434,10 @@ export function answersToColumns(a: Answers) {
   return {
     firstName: a.firstName ?? null,
     lastName: a.lastName ?? null,
-    // Drafts may carry a partial date; only a complete value reaches the
-    // date-typed column.
+    // Drafts may carry a partial or garbage date; only a real calendar date
+    // reaches the date-typed column, or Postgres throws mid-autosave.
     dateOfBirth:
-      a.dateOfBirth && /^\d{4}-\d{2}-\d{2}$/.test(a.dateOfBirth)
-        ? a.dateOfBirth
-        : null,
+      a.dateOfBirth && isPlausibleDob(a.dateOfBirth) ? a.dateOfBirth : null,
     schoolName: a.schoolName ?? null,
     schoolCountry: a.schoolCountry ?? null,
     schoolRegion: a.schoolRegion || null,

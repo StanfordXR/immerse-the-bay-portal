@@ -58,6 +58,7 @@ export function SchoolCombobox({
   function onKeyDown(e: React.KeyboardEvent) {
     if (!open && ["ArrowDown", "ArrowUp"].includes(e.key)) {
       setOpen(true);
+      setActive(0);
       e.preventDefault();
       return;
     }
@@ -69,7 +70,9 @@ export function SchoolCombobox({
       setActive((a) => Math.max(a - 1, 0));
       e.preventDefault();
     } else if (e.key === "Enter") {
-      if (rows[active] !== undefined) {
+      // Only commit a highlight the user actually created by typing or
+      // arrowing; Enter right after focus must not overwrite their school.
+      if (active >= 0 && rows[active] !== undefined) {
         choose(rows[active]);
         e.preventDefault();
       }
@@ -87,7 +90,9 @@ export function SchoolCombobox({
         aria-expanded={open}
         aria-controls={listId}
         aria-autocomplete="list"
-        aria-activedescendant={open ? `${listId}-${active}` : undefined}
+        aria-activedescendant={
+          open && active >= 0 ? `${listId}-${active}` : undefined
+        }
         aria-describedby={describedBy}
         aria-invalid={invalid || undefined}
         autoComplete="off"
@@ -102,6 +107,7 @@ export function SchoolCombobox({
         }}
         onFocus={() => {
           setTyped(false);
+          setActive(-1); // nothing highlighted until they type or arrow
           setOpen(true);
         }}
         onKeyDown={onKeyDown}
@@ -124,10 +130,13 @@ export function SchoolCombobox({
                 className={`cursor-pointer rounded-lg px-3 py-2 text-[14px] ${
                   i === active ? "bg-surface-2 text-moonlit" : "text-moonlit/85"
                 }`}
+                // Commit on click, not pointerdown: a touch scroll gesture
+                // starts with pointerdown on some row, and committing there
+                // both mis-selects and blocks scrolling the list.
                 onPointerDown={(e) => {
-                  e.preventDefault(); // keep focus in the input
-                  choose(row);
+                  if (e.pointerType === "mouse") e.preventDefault(); // keep input focus
                 }}
+                onClick={() => choose(row)}
                 onMouseEnter={() => setActive(i)}
               >
                 {isCustom ? (

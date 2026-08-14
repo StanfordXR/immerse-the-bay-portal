@@ -61,10 +61,12 @@ export default async function ApplyPage() {
           <h1 className="font-display text-3xl font-bold">
             {row?.submittedAt ? "Edit your application" : "Your metamorphosis begins"}
           </h1>
-          <p className="mt-2 text-[13.5px] text-faint">
-            Priority round closes {priorityDeadlineLabel()}. Final deadline{" "}
-            {closeDateLabel()}.
-          </p>
+          {!closed && (
+            <p className="mt-2 text-[13.5px] text-faint">
+              Priority round closes {priorityDeadlineLabel()}. Final deadline{" "}
+              {closeDateLabel()}.
+            </p>
+          )}
         </div>
 
         {closed ? (
