@@ -7,7 +7,13 @@ import posthog from "posthog-js";
  * Before recording real applicants: verify input masking on the actual form
  * and keep IP anonymization on. This form collects PII.
  */
-if (process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+// Only the real portal host: localhost and preview-deploy sessions were
+// polluting production analytics.
+const isProductionHost =
+  typeof window !== "undefined" &&
+  /(^|\.)immersethebay\.org$/.test(window.location.hostname);
+
+if (process.env.NEXT_PUBLIC_POSTHOG_KEY && isProductionHost) {
   posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
     api_host:
       process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
