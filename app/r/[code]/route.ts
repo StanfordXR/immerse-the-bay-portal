@@ -50,6 +50,15 @@ const LINKS: Record<string, string> = {
   ml: "/apply?utm_source=email",
   // partner clubs — one code per partner
   bx: "/apply?utm_source=berkeley-xr",
+  // uc berkeley outreach — cold audience at another campus, so these land on
+  // the marketing site (same rationale as the discord-server codes above).
+  // Channel codes carry utm_content=ucb; the bare code is the catch-all for
+  // flyers/QR/word-of-mouth and uses utm_source=ucb since it has no channel.
+  ucb: "https://immersethebay.org/?utm_source=ucb",
+  ucbe: "https://immersethebay.org/?utm_source=email&utm_content=ucb",
+  ucbig: "https://immersethebay.org/?utm_source=ig&utm_content=ucb",
+  ucbli: "https://immersethebay.org/?utm_source=li&utm_content=ucb",
+  ucbdc: "https://immersethebay.org/?utm_source=dc&utm_content=ucb",
 };
 
 export async function GET(
