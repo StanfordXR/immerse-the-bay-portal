@@ -25,6 +25,10 @@ import {
  *
  * Master list of codes lives in Notion (owner: Victor). Add codes BEFORE
  * anything ships — printed QR codes are unfixable.
+ *
+ * Listserv codes are the one exception to "add a row here": `l-<slug>` is
+ * resolved by pattern (see LISTSERV_CODE below), so email outreach to dozens of
+ * lists needs no map entry and no deploy per list.
  */
 const LINKS: Record<string, string> = {
   // flyers — one code per physical location
@@ -46,7 +50,8 @@ const LINKS: Record<string, string> = {
   // a/b creative tests — same source, variant in utm_content
   li1: "/apply?utm_source=li&utm_content=a",
   li2: "/apply?utm_source=li&utm_content=b",
-  // mailing lists
+  // mailing lists — `ml` is the catch-all; per-listserv codes are `l-<slug>`,
+  // resolved by pattern rather than listed here.
   ml: "/apply?utm_source=email",
   // partner clubs — one code per partner
   bx: "/apply?utm_source=berkeley-xr",
@@ -61,6 +66,25 @@ const LINKS: Record<string, string> = {
   ucbdc: "https://immersethebay.org/?utm_source=dc&utm_content=ucb",
 };
 
+/**
+ * One code per listserv, without a map entry per listserv: `/r/l-<slug>` where
+ * the slug is the list's own name, carried through as utm_content — so
+ * `l-cs-dept` reports as `email / cs-dept`.
+ *
+ * Underscores are accepted but canonicalized to hyphens, and repeated
+ * separators collapse, so `l-cs_dept`, `l-cs--dept` and `l-cs-dept` are one
+ * bucket rather than three. A mass send is assembled once and cannot be
+ * corrected after the fact: forgiving input, single canonical output.
+ */
+const LISTSERV_CODE = /^l-([a-z0-9][a-z0-9_-]{0,30})$/;
+
+function listservSlug(code: string): string | null {
+  const m = LISTSERV_CODE.exec(code);
+  if (!m) return null;
+  const slug = m[1].replace(/_/g, "-").replace(/-+/g, "-").replace(/-$/, "");
+  return slug || null;
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ code: string }> },
@@ -68,6 +92,21 @@ export async function GET(
   const { code } = await params;
   const normalized = code.toLowerCase();
   let destination = LINKS[normalized];
+
+  // Listserv outreach. Cold-ish audiences — someone else's mailing list — see
+  // what the event is before an application form, same as the Discord and UCB
+  // codes above. Checked before the referral lookup to skip a DB round trip.
+  //
+  // A malformed `l-…` code still lands on the marketing site rather than
+  // falling through to the portal home: the recipient is a real lead either
+  // way, and `utm_content=other` makes the bad link visible in the report
+  // instead of silently costing us the click.
+  if (!destination && normalized.startsWith("l-")) {
+    const slug = listservSlug(normalized);
+    destination =
+      "https://immersethebay.org/?utm_source=email&utm_content=" +
+      (slug ?? "other");
+  }
 
   // Personal referral codes are minted per applicant at submit time.
   if (!destination && /^[a-z2-9]{6}$/.test(normalized)) {
