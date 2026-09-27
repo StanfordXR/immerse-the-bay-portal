@@ -1,8 +1,11 @@
 # Immerse the Bay 2026 — Application Portal
 
 Application portal for Stanford XR's Immerse the Bay hackathon, 13–15 November 2026.
-Separate from the marketing site ([`StanfordXR/immerse-the-bay-2026`](https://github.com/StanfordXR/immerse-the-bay-2026)),
-which stays public — this repo holds applicant PII.
+Separate from the marketing site ([`StanfordXR/immerse-the-bay-2026`](https://github.com/StanfordXR/immerse-the-bay-2026)).
+
+This repo is public so it can deploy from the Stanford XR team on Vercel. It holds no applicant
+data: applications live in Neon Postgres and résumés in Vercel Blob, reached only through
+environment variables set in Vercel. Never commit `.env*` files, database exports or CSVs.
 
 **Applications open 14 August 2026.**
 
