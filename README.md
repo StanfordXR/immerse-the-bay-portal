@@ -52,6 +52,8 @@ lib/permissions.ts       applicant / reviewer / admin access control
 lib/role-allowlist.ts    Promotes staff on sign-in from ADMIN_EMAILS / REVIEWER_EMAILS
 lib/dal.ts               Data Access Layer — the ONLY place authz is decided
 lib/attribution.ts       UTM normalization + cookie shape
+lib/review.ts            Review rubric, weights and the accept/reject rule
+lib/actions/review.ts    Review queue: claim, score, release
 lib/db/
   index.ts               Drizzle client (pooled connection)
   auth-schema.ts         GENERATED — do not hand-edit

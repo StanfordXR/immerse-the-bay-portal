@@ -68,3 +68,16 @@ export function priorityDecisionsLabel(): string {
 export function finalDecisionsLabel(): string {
   return plusOneWeekLabel(applicationsClose());
 }
+
+/**
+ * Age on the event's first day — the eligibility rule (18+ on day one).
+ * Compared as calendar dates, so no timezone can shift a birthday by a day.
+ */
+export function ageAtEvent(dob: string | null): number | null {
+  const parse = (d: string) => d.split("-").map(Number);
+  if (!dob || !/^\d{4}-\d{2}-\d{2}$/.test(dob)) return null;
+  const [by, bm, bd] = parse(dob);
+  const [ey, em, ed] = parse(process.env.NEXT_PUBLIC_EVENT_START ?? "2026-11-13");
+  const beforeBirthday = em < bm || (em === bm && ed < bd);
+  return ey - by - (beforeBirthday ? 1 : 0);
+}
