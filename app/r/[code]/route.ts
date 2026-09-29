@@ -15,6 +15,18 @@ import {
  * Self-hosted short links for QR codes and campaign posts. Clicks land in our
  * own Postgres, joinable against submissions and acceptances.
  *
+ * HAND OUT `immersethebay.org/r/<code>`, NEVER `portal.immersethebay.org/...`
+ * and never a raw `?utm_source=…` URL. The marketing site forwards /r/* here,
+ * so this table still resolves the code, but the printed link stays on the
+ * marketing domain. A raw UTM URL on the marketing site sets NO itb_attr
+ * cookie — that repo has no middleware — so it looks tracked in PostHog while
+ * `application.utm_source` stays null. Only this hop writes first touch.
+ * See CLAUDE.md.
+ *
+ * An unresolved code falls through to redirect("/") — the PORTAL home, with no
+ * attribution. Deploy and curl a code BEFORE it is printed; a QR cannot be
+ * fixed after the print run.
+ *
  * Tagging scheme (deliberately condensed — short URLs beat taxonomy purity):
  *   utm_source  = where, in the shortest unambiguous token (ig, li, dc, flyer…)
  *   utm_content = placement within the source, when there's more than one
