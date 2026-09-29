@@ -5,6 +5,7 @@ import { admin as adminPlugin } from "better-auth/plugins";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { ac, roles } from "@/lib/permissions";
+import { applyRoleAllowlist } from "@/lib/role-allowlist";
 
 function required(name: string): string {
   const value = process.env[name];
@@ -94,8 +95,10 @@ export const auth = betterAuth({
     // created — never on a mere attempt. Server-set, so it also survives
     // Safari's 7-day cap on JS-written cookies. Read by the sign-in card
     // (badge) and the proxy (returning-user detection); pure UX hint.
+    // The same moment promotes allowlisted staff (see lib/role-allowlist.ts).
     after: createAuthMiddleware(async (ctx) => {
       if (!ctx.context.newSession) return;
+      await applyRoleAllowlist(ctx.context.newSession.user);
       let method: string | null = null;
       if (ctx.path.startsWith("/callback/")) {
         method = ctx.path.split("/")[2] ?? null; // "google" | "github"

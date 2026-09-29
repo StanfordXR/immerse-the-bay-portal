@@ -61,6 +61,11 @@ if (process.env.VERCEL_ENV === "production") {
         "site won't carry to this subdomain — set it to `.immersethebay.org`.",
     );
   }
+  if (!process.env.ADMIN_EMAILS && !process.env.REVIEWER_EMAILS) {
+    warnings.push(
+      "ADMIN_EMAILS and REVIEWER_EMAILS are unset — staff must be promoted by hand in /admin/users.",
+    );
+  }
   if (!process.env.RESEND_API_KEY) {
     warnings.push("RESEND_API_KEY is unset — confirmation emails will not send.");
   }
