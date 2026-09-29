@@ -38,12 +38,13 @@ import {
  * Master list of codes lives in Notion (owner: Victor). Add codes BEFORE
  * anything ships — printed QR codes are unfixable.
  *
- * Listserv codes are the one exception to "add a row here": `l-<slug>` is
- * resolved by pattern (see LISTSERV_CODE below), so email outreach to dozens of
- * lists needs no map entry and no deploy per list.
+ * Listserv and flyer codes are the exception to "add a row here": `l-<slug>`
+ * and `f-<slug>` resolve by pattern (see PATTERN_SOURCES below), so dozens of
+ * mailing lists or poster locations need no map entry and no deploy each.
  */
 const LINKS: Record<string, string> = {
-  // flyers — one code per physical location
+  // flyers — legacy hardcoded locations. New poster sites use the `f-<slug>`
+  // pattern instead, which lands on the marketing site rather than /apply.
   f1: "/apply?utm_source=flyer&utm_content=huang",
   f2: "/apply?utm_source=flyer&utm_content=tress",
   f3: "/apply?utm_source=flyer&utm_content=dschool",
@@ -88,14 +89,28 @@ const LINKS: Record<string, string> = {
  * bucket rather than three. A mass send is assembled once and cannot be
  * corrected after the fact: forgiving input, single canonical output.
  */
-const LISTSERV_CODE = /^l-([a-z0-9][a-z0-9_-]{0,30})$/;
+const PATTERN_CODE = /^[a-z]-([a-z0-9][a-z0-9_-]{0,30})$/;
 
-function listservSlug(code: string): string | null {
-  const m = LISTSERV_CODE.exec(code);
+function patternSlug(code: string): string | null {
+  const m = PATTERN_CODE.exec(code);
   if (!m) return null;
   const slug = m[1].replace(/_/g, "-").replace(/-+/g, "-").replace(/-$/, "");
   return slug || null;
 }
+
+/**
+ * Prefixes resolved by pattern instead of by a map entry: `<prefix>-<slug>`
+ * lands on the marketing site tagged with that source, and the slug carries
+ * through as utm_content. `l-cs-dept` reports as `email / cs-dept`,
+ * `f-treefest` as `flyer / treefest`.
+ *
+ * Flyers are the reason this matters most: one code per physical location, and
+ * a print run is committed the moment it leaves the printer.
+ */
+const PATTERN_SOURCES: Record<string, string> = {
+  l: "email", // listservs — one code per mailing list
+  f: "flyer", // physical locations — one code per poster site
+};
 
 export async function GET(
   request: Request,
@@ -105,18 +120,21 @@ export async function GET(
   const normalized = code.toLowerCase();
   let destination = LINKS[normalized];
 
-  // Listserv outreach. Cold-ish audiences — someone else's mailing list — see
-  // what the event is before an application form, same as the Discord and UCB
-  // codes above. Checked before the referral lookup to skip a DB round trip.
+  // Pattern-resolved campaigns: listservs (l-) and flyer locations (f-).
+  // Both are cold audiences — someone else's mailing list, or a stranger at a
+  // festival — so they see what the event is before an application form, same
+  // as the Discord and UCB codes. Checked before the referral lookup to skip a
+  // DB round trip.
   //
   // A malformed `l-…` code still lands on the marketing site rather than
   // falling through to the portal home: the recipient is a real lead either
   // way, and `utm_content=other` makes the bad link visible in the report
   // instead of silently costing us the click.
-  if (!destination && normalized.startsWith("l-")) {
-    const slug = listservSlug(normalized);
+  const patternSource = PATTERN_SOURCES[normalized.slice(0, 1)];
+  if (!destination && patternSource && normalized[1] === "-") {
+    const slug = patternSlug(normalized);
     destination =
-      "https://immersethebay.org/?utm_source=email&utm_content=" +
+      `https://immersethebay.org/?utm_source=${patternSource}&utm_content=` +
       (slug ?? "other");
   }
 
