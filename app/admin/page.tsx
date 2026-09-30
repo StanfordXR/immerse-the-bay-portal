@@ -82,6 +82,9 @@ export default async function AdminPage() {
           <Link href="/admin/tags" className="btn-ghost !py-2 text-[14px]">
             Tags
           </Link>
+          <Link href="/admin/review" className="btn-ghost !py-2 text-[14px]">
+            Scores
+          </Link>
           <Link href="/review" className="btn-ghost !py-2 text-[14px]">
             Review
           </Link>
@@ -281,11 +284,6 @@ export default async function AdminPage() {
           )}
         </section>
 
-        <p className="text-[13px] text-faint">
-          Review tooling (two-round scoring, assignment queue, tagging) ships in
-          September, before the review window opens. Until then, the CSV export
-          is the escape hatch.
-        </p>
       </div>
     </main>
   );

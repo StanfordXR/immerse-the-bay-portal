@@ -1,5 +1,6 @@
 import {
   boolean,
+  check,
   date,
   doublePrecision,
   index,
@@ -284,4 +285,53 @@ export const applicationEvent = pgTable(
     index("application_event_app_idx").on(t.applicationId, t.at),
     index("application_event_kind_idx").on(t.kind, t.at),
   ],
+);
+
+/**
+ * One reviewer's read of one application. A row with `submittedAt` null is an
+ * open claim: the reviewer pulled the application from the queue and hasn't
+ * scored it yet (claims go stale after CLAIM_TTL_MINUTES, see lib/review.ts).
+ * Scores are the raw 1–5 rubric; weighting lives in lib/review.ts so the
+ * weights can change without rewriting rows.
+ */
+export const review = pgTable(
+  "review",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    applicationId: uuid("application_id")
+      .notNull()
+      .references(() => application.id, { onDelete: "cascade" }),
+    // Set null rather than cascade: deleting a reviewer's account must not
+    // silently change applicants' scores.
+    reviewerId: text("reviewer_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    skills: smallint("skills"),
+    interest: smallint("interest"),
+    personality: smallint("personality"),
+    comment: text("comment"),
+    claimedAt: timestamp("claimed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+  },
+  (t) => [
+    // Nobody reads the same application twice.
+    uniqueIndex("review_app_reviewer_unique").on(t.applicationId, t.reviewerId),
+    index("review_reviewer_idx").on(t.reviewerId, t.submittedAt),
+  ],
+);
+
+/** Review settings, edited from /admin/review. Exactly one row (id = 1). */
+export const reviewConfig = pgTable(
+  "review_config",
+  {
+    id: smallint("id").primaryKey().default(1),
+    readsPerApplication: smallint("reads_per_application").notNull().default(2),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [check("review_config_singleton", sql`${t.id} = 1`)],
 );

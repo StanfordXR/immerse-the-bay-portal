@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { desc, eq } from "drizzle-orm";
+import { asc, desc, eq, sql } from "drizzle-orm";
 import { Brand } from "@/components/brand";
 import { DecisionPanel, TagToggles } from "@/components/application-admin-panel";
 import { db } from "@/lib/db";
@@ -9,27 +9,17 @@ import {
   application,
   applicationEvent,
   applicationTag,
+  review,
   tag,
   user,
 } from "@/lib/db/schema";
+import { reviewScoreSql } from "@/lib/db/review-sql";
+import { RUBRIC } from "@/lib/review";
 import { requireAdmin } from "@/lib/dal";
 import { draftSchema } from "@/lib/form-schema";
+import { ageAtEvent } from "@/lib/config";
 
 export const metadata: Metadata = { title: "Application" };
-
-/** Age on the event's first day, the eligibility rule (18+ on Nov 13, 2026). */
-function ageAtEvent(dob: string | null): number | null {
-  if (!dob) return null;
-  const event = new Date("2026-11-13T00:00:00");
-  const birth = new Date(`${dob}T00:00:00`);
-  if (Number.isNaN(birth.getTime())) return null;
-  let age = event.getFullYear() - birth.getFullYear();
-  const beforeBirthday =
-    event.getMonth() < birth.getMonth() ||
-    (event.getMonth() === birth.getMonth() && event.getDate() < birth.getDate());
-  if (beforeBirthday) age -= 1;
-  return age;
-}
 
 export default async function AdminApplicationDetail({
   params,
@@ -53,7 +43,7 @@ export default async function AdminApplicationDetail({
     .where(eq(user.id, row.userId))
     .limit(1);
 
-  const [allTags, appliedTags, events] = await Promise.all([
+  const [allTags, appliedTags, events, reviews] = await Promise.all([
     db
       .select({ id: tag.id, name: tag.name })
       .from(tag)
@@ -74,6 +64,20 @@ export default async function AdminApplicationDetail({
       .where(eq(applicationEvent.applicationId, id))
       .orderBy(desc(applicationEvent.at))
       .limit(30),
+    db
+      .select({
+        reviewer: user.name,
+        skills: review.skills,
+        interest: review.interest,
+        personality: review.personality,
+        comment: review.comment,
+        score: sql<number | null>`${reviewScoreSql}::float8`,
+        submittedAt: review.submittedAt,
+      })
+      .from(review)
+      .leftJoin(user, eq(user.id, review.reviewerId))
+      .where(eq(review.applicationId, id))
+      .orderBy(asc(review.claimedAt)),
   ]);
 
   const parsed = draftSchema.safeParse(row.answers ?? {});
@@ -145,6 +149,39 @@ export default async function AdminApplicationDetail({
             initialDecision={row.decision}
             initialNote={row.decisionNote ?? ""}
           />
+        </section>
+
+        {/* reviews */}
+        <section className="card p-6 sm:p-7">
+          <h2 className="font-display mb-4 text-[15px] font-semibold">
+            Reviews
+          </h2>
+          {reviews.length === 0 ? (
+            <p className="text-[13.5px] text-faint">Not reviewed yet.</p>
+          ) : (
+            <ul className="flex flex-col gap-4">
+              {reviews.map((r, i) => (
+                <li key={i} className="text-[14px]">
+                  <p className="flex flex-wrap items-baseline gap-x-3">
+                    <span className="font-medium">{r.reviewer ?? "deleted user"}</span>
+                    {r.submittedAt ? (
+                      <>
+                        <span className="tabular-nums">{r.score?.toFixed(2)}</span>
+                        <span className="font-mono text-[12.5px] text-faint">
+                          {RUBRIC.map((c) => `${c.key} ${r[c.key]}`).join(" · ")}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-[13px] text-faint">reading now</span>
+                    )}
+                  </p>
+                  {r.comment && (
+                    <p className="mt-1 whitespace-pre-wrap text-moonlit/90">{r.comment}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         {/* background */}
