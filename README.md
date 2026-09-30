@@ -49,6 +49,7 @@ proxy.ts                 First-touch UTM capture. NOT an auth boundary.
 lib/auth.ts              Better Auth server config
 lib/auth-client.ts       Browser client
 lib/permissions.ts       applicant / reviewer / admin access control
+lib/role-allowlist.ts    Promotes staff on sign-in from ADMIN_EMAILS / REVIEWER_EMAILS
 lib/dal.ts               Data Access Layer — the ONLY place authz is decided
 lib/attribution.ts       UTM normalization + cookie shape
 lib/db/
