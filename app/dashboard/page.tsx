@@ -9,6 +9,7 @@ import { closeDateLabel, finalDecisionsLabel, priorityDeadlineLabel, priorityDec
 import { draftSchema, STEPS, stepStatus } from "@/lib/form-schema";
 import { ensureReferralCode, getLeaderboard } from "@/lib/referral";
 import { ReferralCard } from "@/components/referral-card";
+import { DecisionCard } from "@/components/decision-card";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -27,6 +28,10 @@ export default async function DashboardPage({
       submittedAt: application.submittedAt,
       firstName: application.firstName,
       referralAnonymous: application.referralAnonymous,
+      stage: application.stage,
+      decision: application.decision,
+      rsvp: application.rsvp,
+      rsvpDeadline: application.rsvpDeadline,
     })
     .from(application)
     .where(eq(application.userId, user.id))
@@ -39,9 +44,11 @@ export default async function DashboardPage({
   const referralCode = row?.submittedAt
     ? await ensureReferralCode(user.id)
     : null;
-  // Applicants see the leaderboard once submitted; staff see it always.
+  // Applicants see the leaderboard once submitted, until their decision is
+  // out (referring is over by then); staff see it always.
+  const decided = row?.stage === "decided";
   const leaderboard =
-    referralCode || isStaff ? await getLeaderboard(referralCode) : null;
+    (referralCode && !decided) || isStaff ? await getLeaderboard(referralCode) : null;
   // Share links read as the marketing site; its /r/ redirect hands them to
   // this app's tracker. Locally there is no apex site, so use our own host.
   const portalBase =
@@ -98,7 +105,14 @@ export default async function DashboardPage({
 
         {/* staff dashboards drop the application card entirely */}
         {!isStaff &&
-          (row?.submittedAt ? (
+          (row?.stage === "decided" && row.decision ? (
+          <DecisionCard
+            firstName={firstName}
+            decision={row.decision}
+            rsvp={row.rsvp}
+            rsvpDeadline={row.rsvpDeadline}
+          />
+        ) : row?.submittedAt ? (
           <section className="card overflow-hidden">
             <div
               className="flex items-start gap-4 border-b border-line p-6 sm:p-8"

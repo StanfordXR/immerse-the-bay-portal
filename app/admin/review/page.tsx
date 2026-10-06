@@ -1,16 +1,33 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Brand } from "@/components/brand";
-import { ReadsPerApplication, ThresholdPanel } from "@/components/review-admin";
+import { ReadsPerApplication, ReleasePanel, ThresholdPanel, type UnreleasedCounts } from "@/components/review-admin";
 import { getReadsPerApplication, getReviewResults } from "@/lib/db/review-sql";
 import { requireAdmin } from "@/lib/dal";
+import { sql } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { application } from "@/lib/db/schema";
+import { unreleasedDecision } from "@/lib/db/applicant-filter";
 
 export const metadata: Metadata = { title: "Scores" };
+
+// Releasing decisions emails one hacker every ~half second.
+export const maxDuration = 300;
 
 /** Review results: queue settings, the acceptance cutoff, and the ranked list. */
 export default async function AdminReviewPage() {
   await requireAdmin();
-  const [reads, results] = await Promise.all([getReadsPerApplication(), getReviewResults()]);
+  const [reads, results, unreleased] = await Promise.all([
+    getReadsPerApplication(),
+    getReviewResults(),
+    db
+      .select({ decision: application.decision, n: sql<number>`count(*)::int` })
+      .from(application)
+      .where(unreleasedDecision)
+      .groupBy(application.decision),
+  ]);
+  const unreleasedCounts: UnreleasedCounts = { accepted: 0, waitlisted: 0, rejected: 0 };
+  for (const { decision, n } of unreleased) if (decision) unreleasedCounts[decision] = n;
 
   const complete = results.filter((r) => r.reads >= reads).length;
 
@@ -39,6 +56,8 @@ export default async function AdminReviewPage() {
           </div>
           <ReadsPerApplication initial={reads} />
         </div>
+
+        <ReleasePanel counts={unreleasedCounts} />
 
         <ThresholdPanel
           reads={reads}

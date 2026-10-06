@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { setReadsPerApplication } from "@/lib/actions/review";
+import { releaseDecisions } from "@/lib/actions/decision";
 import { MAX_READS_PER_APPLICATION, outcome, type Outcome } from "@/lib/review";
 
 /** Reads-per-application picker on /admin/review. Saves on change. */
@@ -72,7 +73,8 @@ const OUTCOME_STYLE: Record<Outcome, string> = {
 /**
  * Acceptance cutoff. Drag to see how many applications land on each side;
  * the export downloads exactly what's shown. Nothing is written to the
- * database — decisions are sent from the CSV.
+ * database: decisions are marked per application and published with the
+ * release panel.
  */
 export function ThresholdPanel({ rows, reads }: { rows: ThresholdRow[]; reads: number }) {
   const [threshold, setThreshold] = useState(3);
@@ -190,6 +192,90 @@ export function ThresholdPanel({ rows, reads }: { rows: ThresholdRow[]; reads: n
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+export type UnreleasedCounts = { accepted: number; waitlisted: number; rejected: number };
+
+/**
+ * Publish marked decisions to hackers' dashboards and send each a
+ * status-update email. Irreversible, so it takes a second click.
+ */
+export function ReleasePanel({ counts }: { counts: UnreleasedCounts }) {
+  const [confirming, setConfirming] = useState(false);
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, startTransition] = useTransition();
+  const total = counts.accepted + counts.waitlisted + counts.rejected;
+
+  function release() {
+    setMessage(null);
+    startTransition(async () => {
+      const result = await releaseDecisions().catch(() => ({
+        ok: false as const,
+        error: "Lost the connection mid-release. Click again to finish the rest.",
+      }));
+      setConfirming(false);
+      setMessage(
+        result.ok
+          ? {
+              ok: result.emailFailures === 0,
+              text:
+                `Released ${result.released} decision${result.released === 1 ? "" : "s"}.` +
+                (result.emailFailures ? ` ${result.emailFailures} email(s) failed; see the logs.` : ""),
+            }
+          : { ok: false, text: result.error },
+      );
+    });
+  }
+
+  return (
+    <div className="card flex flex-col gap-4 p-6 sm:p-7">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="font-display text-[15px] font-semibold">Release decisions</h2>
+          <p className="mt-1 max-w-xl text-[13.5px] text-muted">
+            Publishes every decision marked on an application to that hacker&apos;s dashboard
+            and emails them a status update. Accepted hackers get a week to RSVP. Released
+            decisions are locked.
+          </p>
+        </div>
+        {total > 0 &&
+          (confirming ? (
+            <div className="flex items-center gap-2">
+              <button type="button" className="btn-primary !py-2 text-[14px]" disabled={pending} onClick={release}>
+                {pending ? "Releasing…" : `Yes, email ${total}`}
+              </button>
+              <button
+                type="button"
+                className="btn-ghost !py-2 text-[14px]"
+                disabled={pending}
+                onClick={() => setConfirming(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button type="button" className="btn-ghost !py-2 text-[14px]" onClick={() => setConfirming(true)}>
+              Release {total} →
+            </button>
+          ))}
+      </div>
+      <dl className="grid grid-cols-3 gap-3">
+        {(Object.entries(counts) as [keyof UnreleasedCounts, number][]).map(([label, value]) => (
+          <div key={label}>
+            <dt className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
+              {label}, unreleased
+            </dt>
+            <dd className="font-display mt-1 text-2xl font-semibold tabular-nums">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      {message && (
+        <p className={`text-[13.5px] ${message.ok ? "text-ok" : "text-danger"}`} role="status">
+          {message.text}
+        </p>
+      )}
     </div>
   );
 }

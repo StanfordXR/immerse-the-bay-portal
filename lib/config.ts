@@ -81,3 +81,6 @@ export function ageAtEvent(dob: string | null): number | null {
   const beforeBirthday = em < bm || (em === bm && ed < bd);
   return ey - by - (beforeBirthday ? 1 : 0);
 }
+
+/** Accepted hackers have this long after their decision is released to RSVP. */
+export const RSVP_WINDOW_DAYS = 7;

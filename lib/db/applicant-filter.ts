@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { and, isNotNull, ne, sql } from "drizzle-orm";
 import { application } from "./app-schema";
 
 /**
@@ -15,3 +15,11 @@ export const applicantOwnedOnly = sql`not exists (
   where staff.id = ${application.userId}
     and coalesce(staff.role, 'applicant') <> 'applicant'
 )`;
+
+/** Decision marked but not yet released: what the next release will publish. */
+export const unreleasedDecision = and(
+  isNotNull(application.decision),
+  isNotNull(application.submittedAt),
+  ne(application.stage, "decided"),
+  applicantOwnedOnly,
+);

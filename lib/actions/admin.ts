@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { application, applicationEvent, applicationTag, tag } from "@/lib/db/schema";
 import { getAuthorizedUser } from "@/lib/dal";
 import { isRole } from "@/lib/permissions";
+import { acceptFromWaitlist } from "@/lib/decisions";
 
 type Result = { ok: boolean; error?: string };
 
@@ -133,8 +134,10 @@ type Decision = (typeof DECISIONS)[number];
 
 /**
  * Record a decision on one application. This only *marks* the decision;
- * nothing is emailed. Release (the irreversible send) is a separate flow
- * that doesn't exist yet, by design.
+ * nothing is emailed until an admin releases decisions (see
+ * lib/actions/decision.ts). A released decision is locked, with one
+ * exception: accepting someone off the waitlist, which opens their RSVP and
+ * sends them a status-update email straight away.
  */
 export async function setDecision(
   applicationId: string,
@@ -149,6 +152,21 @@ export async function setDecision(
     return { ok: false, error: "Unknown decision." };
   }
   const trimmedNote = note.trim().slice(0, 2000);
+
+  const [current] = await db
+    .select({ stage: application.stage, decision: application.decision })
+    .from(application)
+    .where(eq(application.id, applicationId))
+    .limit(1);
+  if (!current) return { ok: false, error: "No such application." };
+
+  if (current.stage === "decided") {
+    // The hacker has already seen it (and may have RSVPed).
+    if (current.decision !== "waitlisted" || decision !== "accepted") {
+      return { ok: false, error: "Released decisions are locked, except accepting from the waitlist." };
+    }
+    return acceptFromWaitlist(applicationId, authz.user.id, trimmedNote);
+  }
 
   await db
     .update(application)
