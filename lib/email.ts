@@ -87,7 +87,7 @@ export function submissionConfirmationHtml(
     <p style="margin: 0 0 2px 0;">2. Decisions go out by email:</p>
     <p style="margin: 0 0 2px 18px;">• Priority round by ${escapeHtml(priorityDecisionsLabel())}</p>
     <p style="margin: 0 0 4px 18px;">• Final round by ${escapeHtml(finalDecisionsLabel())}</p>
-    <p style="margin: 0;">3. The hackathon runs November 13 to 15, 2026 at Stanford.*</p>
+    <p style="margin: 0;">3. The hackathon runs November 13 to 15, 2026 at Stanford.</p>
   </div>
 
   <div style="text-align: center; margin: 26px 0;">
@@ -98,8 +98,6 @@ export function submissionConfirmationHtml(
   <p style="margin: 20px 0 0 0;">Bring your friends along too: share your referral link from your dashboard and climb the leaderboard. If you have any questions, please feel free to reach out to <a href="mailto:admin@stanfordxr.org" style="color: #6c5ce7; text-decoration: none;">admin@stanfordxr.org</a>.</p>
 
   <p style="margin: 20px 0 0 0;"><strong>Warmly,</strong><br>The Stanford XR team</p>
-
-  <p style="margin: 24px 0 0 0; font-size: 11px; color: #aaa;">*Dates to be finalized</p>
 
   <div style="text-align: center; margin-top: 16px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #aaa;">
     <a href="https://immersethebay.org" style="color: #aaa; text-decoration: none;">immersethebay.org</a> · <a href="https://stanfordxr.org" style="color: #aaa; text-decoration: none;">stanfordxr.org</a>
@@ -127,7 +125,7 @@ export async function sendSubmissionConfirmation(
       "  2. Decisions go out by email:",
       `     - Priority round by ${priorityDecisionsLabel()}`,
       `     - Final round by ${finalDecisionsLabel()}`,
-      "  3. The hackathon runs November 13 to 15, 2026 at Stanford.*",
+      "  3. The hackathon runs November 13 to 15, 2026 at Stanford.",
       "",
       "View your application:",
       `${process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org"}/dashboard`,
@@ -138,7 +136,6 @@ export async function sendSubmissionConfirmation(
       "Warmly,",
       "The Stanford XR team",
       "",
-      "*Dates to be finalized",
       "https://immersethebay.org",
     ].join("\n"),
   });
