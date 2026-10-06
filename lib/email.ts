@@ -140,3 +140,60 @@ export async function sendSubmissionConfirmation(
     ].join("\n"),
   });
 }
+
+/**
+ * "Your application has a status update." Deliberately says nothing about
+ * the decision itself: the portal is where hackers read it (and RSVP), so a
+ * forwarded or misdelivered email reveals nothing.
+ */
+export function decisionReleasedHtml(firstName: string): string {
+  const portal = process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org";
+  const name = escapeHtml(firstName);
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
+  <div style="background-color: #0a0514; border-radius: 8px; padding: 26px 24px; margin-bottom: 24px; text-align: center;">
+    <img src="${portal}/itb-wordmark.png" alt="Immerse the Bay" width="250" style="max-width: 250px; height: auto;">
+  </div>
+
+  <p>Hi ${name},</p>
+
+  <p>There's an update on your <strong>Immerse the Bay 2026</strong> application. Sign in to the portal to see it.</p>
+
+  <div style="text-align: center; margin: 26px 0;">
+    <a href="${portal}/dashboard" style="display: inline-block; background-color: #8b5cf6; color: #ffffff !important; padding: 14px 0; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px; width: 260px; text-align: center;">View your portal</a>
+  </div>
+
+  <p style="margin: 20px 0 0 0;">If you have any questions, please feel free to reach out to <a href="mailto:admin@stanfordxr.org" style="color: #6c5ce7; text-decoration: none;">admin@stanfordxr.org</a>.</p>
+
+  <p style="margin: 20px 0 0 0;"><strong>Warmly,</strong><br>The Stanford XR team</p>
+
+  <div style="text-align: center; margin-top: 16px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #aaa;">
+    <a href="https://immersethebay.org" style="color: #aaa; text-decoration: none;">immersethebay.org</a> · <a href="https://stanfordxr.org" style="color: #aaa; text-decoration: none;">stanfordxr.org</a>
+  </div>
+</body>
+</html>`;
+}
+
+export async function sendDecisionReleased(to: string, firstName: string): Promise<void> {
+  const portal = process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org";
+  await sendEmail({
+    to,
+    subject: "Your Immerse the Bay application has a status update",
+    html: decisionReleasedHtml(firstName),
+    text: [
+      `Hi ${firstName},`,
+      "",
+      "There's an update on your Immerse the Bay 2026 application. Sign in to the portal to see it:",
+      `${portal}/dashboard`,
+      "",
+      "If you have any questions, please feel free to reach out to admin@stanfordxr.org.",
+      "",
+      "Warmly,",
+      "The Stanford XR team",
+      "",
+      "https://immersethebay.org",
+    ].join("\n"),
+  });
+}
