@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { getAuthorizedUser } from "@/lib/dal";
+import { toCsv } from "@/lib/csv";
 import { getReviewResults } from "@/lib/db/review-sql";
 import { outcome } from "@/lib/review";
 
@@ -21,30 +22,20 @@ export async function GET(req: NextRequest): Promise<Response> {
   const order = { accepted: 0, rejected: 1, unscored: 2 } as const;
   rows.sort((a, b) => order[a.outcome] - order[b.outcome]);
 
-  const esc = (v: unknown): string => {
-    if (v === null || v === undefined) return "";
-    const s = String(v);
-    return /[",\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
-  };
-
   const header = [
     "outcome", "score", "reads", "spread", "first_name", "last_name", "email",
     "school", "age_at_event", "under_18", "reviewer_comments",
   ];
-  const lines = [header.join(",")];
-  for (const r of rows) {
-    lines.push(
-      [
-        r.outcome, r.score?.toFixed(3), r.reads, r.spread?.toFixed(3),
-        r.firstName, r.lastName, r.email, r.schoolName, r.age,
-        r.under18 ? "yes" : "no", r.comments.join(" | "),
-      ]
-        .map(esc)
-        .join(","),
-    );
-  }
+  const csv = toCsv(
+    header,
+    rows.map((r) => [
+      r.outcome, r.score?.toFixed(3), r.reads, r.spread?.toFixed(3),
+      r.firstName, r.lastName, r.email, r.schoolName, r.age,
+      r.under18 ? "yes" : "no", r.comments.join(" | "),
+    ]),
+  );
 
-  return new Response(lines.join("\n"), {
+  return new Response(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="itb-2026-decisions-min${threshold.toFixed(2)}-${new Date().toISOString().slice(0, 10)}.csv"`,

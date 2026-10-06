@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { application, user } from "@/lib/db/schema";
 import { applicantOwnedOnly } from "@/lib/db/applicant-filter";
 import { getAuthorizedUser } from "@/lib/dal";
+import { toCsv } from "@/lib/csv";
 import { eq } from "drizzle-orm";
 
 /** Full CSV export — admin only. The escape hatch until review tooling ships. */
@@ -55,17 +56,11 @@ export async function GET(): Promise<Response> {
     "why_participate", "ceo_question", "skills",
   ];
 
-  const esc = (v: unknown): string => {
-    if (v === null || v === undefined) return "";
-    const s = String(v);
-    return /[",\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
-  };
-
-  const lines = [header.join(",")];
-  for (const r of rows) {
-    const answers = (r.answers ?? {}) as Record<string, unknown>;
-    lines.push(
-      [
+  const csv = toCsv(
+    header,
+    rows.map((r) => {
+      const answers = (r.answers ?? {}) as Record<string, unknown>;
+      return [
         r.submittedAt?.toISOString() ?? "",
         r.createdAt.toISOString(),
         r.firstName, r.lastName, r.email, r.dateOfBirth,
@@ -79,13 +74,11 @@ export async function GET(): Promise<Response> {
         r.referrer,
         answers.whyParticipate, answers.ceoQuestion,
         Array.isArray(answers.skills) ? answers.skills.join("; ") : "",
-      ]
-        .map(esc)
-        .join(","),
-    );
-  }
+      ];
+    }),
+  );
 
-  return new Response(lines.join("\n"), {
+  return new Response(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="itb-2026-applications-${new Date().toISOString().slice(0, 10)}.csv"`,

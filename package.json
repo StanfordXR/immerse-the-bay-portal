@@ -13,7 +13,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "preflight": "node --env-file=.env.local scripts/preflight.mjs"
+    "preflight": "node --env-file=.env.local scripts/preflight.mjs",
+    "test": "bun test"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

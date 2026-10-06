@@ -13,6 +13,11 @@ const isProductionHost =
   typeof window !== "undefined" &&
   /(^|\.)immersethebay\.org$/.test(window.location.hostname);
 
+// Staff pages show applicant names, emails, DOBs and essays on screen, and the
+// funnel doesn't need them. Drop every event there, replay snapshots included
+// (they go through capture too), even after a client-side nav from a public page.
+const isStaffPath = () => /^\/(admin|review)(\/|$)/.test(window.location.pathname);
+
 if (process.env.NEXT_PUBLIC_POSTHOG_KEY && isProductionHost) {
   posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
     api_host:
@@ -20,5 +25,6 @@ if (process.env.NEXT_PUBLIC_POSTHOG_KEY && isProductionHost) {
     defaults: "2025-05-24",
     // Replay masks all inputs — do not loosen on a form full of PII.
     session_recording: { maskAllInputs: true },
+    before_send: (event) => (isStaffPath() ? null : event),
   });
 }

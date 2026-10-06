@@ -240,6 +240,20 @@ function isPlausibleDob(value: string): boolean {
 
 const looksLikeLink = (v: string) => v === "" || v.includes(".");
 
+/**
+ * Résumé links are only ever written by our own upload flow, so anything not
+ * on our Vercel Blob store is dropped. Reviewers click this link, so it can't
+ * be allowed to point at an arbitrary site.
+ */
+function isOurBlobUrl(v: string): boolean {
+  try {
+    const url = new URL(v);
+    return url.protocol === "https:" && url.hostname.endsWith(".public.blob.vercel-storage.com");
+  } catch {
+    return false;
+  }
+}
+
 const baseSchema = z.object({
   // stage 1 — identity
   firstName: z.string().trim().min(1, "Required").max(100),
@@ -289,7 +303,13 @@ const baseSchema = z.object({
   tshirtSize: z.enum(TSHIRT_SIZES, { message: "Required" }),
   dietaryNeeds: z.string().trim().max(300).optional().default(""),
   accessibilityNeeds: z.string().trim().max(500).optional().default(""),
-  resumeUrl: z.string().trim().max(500).optional().default(""),
+  resumeUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .transform((v) => (isOurBlobUrl(v) ? v : ""))
+    .optional()
+    .default(""),
   heardAboutUs: z.enum(HEARD_OPTIONS, { message: "Required" }),
   heardAboutUsName: z.string().trim().max(100).optional().default(""),
   sponsorShareOk: z.boolean().optional().default(false),

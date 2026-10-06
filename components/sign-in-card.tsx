@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { track } from "@/lib/analytics";
+import { safeNext } from "@/lib/safe-next";
 
 type Mode = "sign-in" | "sign-up";
 type Method = "google" | "github" | "email";
@@ -40,17 +41,6 @@ const highlightStyle = {
   borderColor: "var(--color-cyan-2)",
   boxShadow: "0 0 12px color-mix(in oklab, var(--color-cyan) 18%, transparent)",
 } as const;
-
-/**
- * Only ever bounce to our own paths — never to an absolute URL from the query
- * string. The default (and plain /apply) goes through /continue, which sends
- * submitted applicants to the dashboard and everyone else to the form.
- */
-function safeNext(raw: string | null): string {
-  const next =
-    raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/continue";
-  return next === "/apply" ? "/continue" : next;
-}
 
 export function SignInCard() {
   const router = useRouter();
