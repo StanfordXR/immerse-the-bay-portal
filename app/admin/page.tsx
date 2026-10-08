@@ -34,7 +34,11 @@ export default async function AdminPage() {
   const firstTouchSource = sql<string>`coalesce(
     ${application.utmSource},
     ${userAttribution.utmSource},
-    'site: ' || nullif(substring(coalesce(${application.referrer}, ${userAttribution.referrer}) from '^https?://(?:www\.)?([^/]+)'), ''),
+    -- accounts.google.* is the OAuth sign-in bounce, not a real referrer
+    'site: ' || nullif(regexp_replace(
+      substring(coalesce(${application.referrer}, ${userAttribution.referrer}) from '^https?://(?:www\\.)?([^/]+)'),
+      '^accounts\\.google\\..*$', ''
+    ), ''),
     'direct / unknown'
   )`;
   const firstTouchDetail = sql<string>`coalesce(
