@@ -68,6 +68,8 @@ const LINKS: Record<string, string> = {
   ml: "/apply?utm_source=email",
   // partner clubs — one code per partner
   bx: "/apply?utm_source=berkeley-xr",
+  // reality hack — partner hackathon's audience, so the marketing site first
+  rh: "https://immersethebay.org/?utm_source=realityhack",
   // uc berkeley outreach — cold audience at another campus, so these land on
   // the marketing site (same rationale as the discord-server codes above).
   // Channel codes carry utm_content=ucb; the bare code is the catch-all for

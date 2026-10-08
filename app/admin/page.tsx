@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import type { Metadata } from "next";
-import { desc, isNotNull, sql } from "drizzle-orm";
+import { desc, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { application, feedback, user } from "@/lib/db/schema";
+import {
+  application,
+  feedback,
+  linkClick,
+  user,
+  userAttribution,
+} from "@/lib/db/schema";
 import { applicantOwnedOnly } from "@/lib/db/applicant-filter";
 import { requireAdmin } from "@/lib/dal";
 
@@ -21,17 +27,46 @@ export default async function AdminPage() {
     .from(application)
     .where(applicantOwnedOnly);
 
+  // First touch for every application, drafts included. The application row
+  // is only stamped at submit, so drafts fall back to user_attribution (written
+  // on first draft save). Arrivals with no UTM but an external referrer report
+  // that referrer's host instead of collapsing into "direct / unknown".
+  const firstTouchSource = sql<string>`coalesce(
+    ${application.utmSource},
+    ${userAttribution.utmSource},
+    'site: ' || nullif(substring(coalesce(${application.referrer}, ${userAttribution.referrer}) from '^https?://(?:www\.)?([^/]+)'), ''),
+    'direct / unknown'
+  )`;
+  const firstTouchDetail = sql<string>`coalesce(
+    ${application.utmContent}, ${userAttribution.utmContent},
+    ${application.utmMedium}, ${userAttribution.utmMedium}, '—'
+  )`;
   const sources = await db
     .select({
-      source: sql<string>`coalesce(${application.utmSource}, 'direct / unknown')`,
-      medium: sql<string>`coalesce(${application.utmMedium}, '—')`,
+      source: firstTouchSource,
+      detail: firstTouchDetail,
       total: sql<number>`count(*)::int`,
       submitted: sql<number>`count(*) filter (where ${application.submittedAt} is not null)::int`,
     })
     .from(application)
+    .leftJoin(userAttribution, eq(userAttribution.userId, application.userId))
     .where(applicantOwnedOnly)
-    .groupBy(application.utmSource, application.utmMedium)
-    .orderBy(desc(sql`count(*)`));
+    .groupBy(firstTouchSource, firstTouchDetail)
+    .orderBy(desc(sql`count(*) filter (where ${application.submittedAt} is not null)`), desc(sql`count(*)`));
+
+  // Short-link clicks per /r/ code. Six-character codes are personal referral
+  // links, rolled up into one row so the table stays readable.
+  const clickCode = sql<string>`case when ${linkClick.code} ~ '^[a-z2-9]{6}$' then 'personal referral links' else ${linkClick.code} end`;
+  const clicks = await db
+    .select({
+      code: clickCode,
+      clicks: sql<number>`count(*)::int`,
+      last7d: sql<number>`count(*) filter (where ${linkClick.at} > now() - interval '7 days')::int`,
+    })
+    .from(linkClick)
+    .groupBy(clickCode)
+    .orderBy(desc(sql`count(*)`))
+    .limit(20);
 
   const recent = await db
     .select({
@@ -127,7 +162,7 @@ export default async function AdminPage() {
               Where applicants come from
             </h2>
             <span className="text-[12.5px] text-faint">
-              first-touch attribution · self-reported cross-check in the CSV
+              first-touch attribution, drafts included · self-reported cross-check in the CSV
             </span>
           </div>
           <div className="card overflow-x-auto">
@@ -135,8 +170,8 @@ export default async function AdminPage() {
               <thead>
                 <tr className="border-b border-line text-left">
                   <Th>Source</Th>
-                  <Th>Medium</Th>
-                  <Th right>Accounts</Th>
+                  <Th>Detail</Th>
+                  <Th right>Started</Th>
                   <Th right>Submitted</Th>
                   <Th right>Conversion</Th>
                 </tr>
@@ -151,7 +186,7 @@ export default async function AdminPage() {
                 )}
                 {sources.map((s) => (
                   <tr
-                    key={`${s.source}/${s.medium}`}
+                    key={`${s.source}/${s.detail}`}
                     className="border-b border-line/50 last:border-0"
                   >
                     <Td>
@@ -159,7 +194,7 @@ export default async function AdminPage() {
                     </Td>
                     <Td>
                       <span className="font-mono text-[13px] text-muted">
-                        {s.medium}
+                        {s.detail}
                       </span>
                     </Td>
                     <Td right>{s.total}</Td>
@@ -169,6 +204,50 @@ export default async function AdminPage() {
                         ? `${Math.round((s.submitted / s.total) * 100)}%`
                         : "—"}
                     </Td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* short-link clicks — reach, before anyone signs up */}
+        <section>
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 className="font-display text-lg font-semibold">
+              Short-link clicks
+            </h2>
+            <span className="text-[12.5px] text-faint">
+              immersethebay.org/r/&lt;code&gt; · top 20
+            </span>
+          </div>
+          <div className="card overflow-x-auto">
+            <table className="w-full min-w-120 text-[14px]">
+              <thead>
+                <tr className="border-b border-line text-left">
+                  <Th>Code</Th>
+                  <Th right>Clicks</Th>
+                  <Th right>Last 7 days</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {clicks.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-8 text-center text-faint">
+                      No short-link clicks yet.
+                    </td>
+                  </tr>
+                )}
+                {clicks.map((c) => (
+                  <tr
+                    key={c.code}
+                    className="border-b border-line/50 last:border-0"
+                  >
+                    <Td>
+                      <span className="font-mono text-[13px]">{c.code}</span>
+                    </Td>
+                    <Td right>{c.clicks}</Td>
+                    <Td right>{c.last7d}</Td>
                   </tr>
                 ))}
               </tbody>
