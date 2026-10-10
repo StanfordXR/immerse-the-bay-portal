@@ -27,6 +27,7 @@ export default async function AdminPage() {
       confirmed: sql<number>`count(*) filter (where ${application.rsvp} = 'confirmed')::int`,
       pendingRsvp: sql<number>`count(*) filter (where ${application.rsvp} = 'pending')::int`,
       declined: sql<number>`count(*) filter (where ${application.rsvp} = 'declined')::int`,
+      expired: sql<number>`count(*) filter (where ${application.rsvp} = 'expired')::int`,
     })
     .from(application)
     .where(applicantOwnedOnly);
@@ -157,13 +158,14 @@ export default async function AdminPage() {
               View accepted applicants →
             </Link>
           </div>
-          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             {(
               [
                 ["Accepted offers", counts.accepted, "admission decision"],
                 ["Confirmed attendance", counts.confirmed, "coming to ITB"],
                 ["Awaiting RSVP", counts.pendingRsvp, "no response yet"],
                 ["Declined attendance", counts.declined, "gave up their spot"],
+                ["Expired offers", counts.expired, "deadline passed"],
               ] as const
             ).map(([label, value, sub]) => (
               <div key={label} className="card p-5">
