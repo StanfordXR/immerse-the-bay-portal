@@ -30,6 +30,11 @@ export async function GET(): Promise<Response> {
       tshirtSize: application.tshirtSize,
       dietaryNeeds: application.dietaryNeeds,
       accessibilityNeeds: application.accessibilityNeeds,
+      decision: application.decision,
+      decidedAt: application.decidedAt,
+      rsvp: application.rsvp,
+      rsvpDeadline: application.rsvpDeadline,
+      rsvpAt: application.rsvpAt,
       resumeUrl: application.resumeUrl,
       sponsorShareOk: application.sponsorShareOk,
       heardAboutUs: application.heardAboutUs,
@@ -53,6 +58,7 @@ export async function GET(): Promise<Response> {
     "accessibility", "resume_url", "sponsor_share_ok", "heard_about_us",
     "heard_name", "utm_source",
     "utm_medium", "utm_campaign", "utm_content", "referrer",
+    "decision", "decided_at", "rsvp", "rsvp_deadline", "rsvp_at",
     "why_participate", "ceo_question", "skills",
   ];
 
@@ -72,6 +78,8 @@ export async function GET(): Promise<Response> {
         r.heardAboutUs, r.heardAboutUsName,
         r.utmSource, r.utmMedium, r.utmCampaign, r.utmContent,
         r.referrer,
+        r.decision, r.decidedAt?.toISOString(), r.rsvp,
+        r.rsvpDeadline?.toISOString(), r.rsvpAt?.toISOString(),
         answers.whyParticipate, answers.ceoQuestion,
         Array.isArray(answers.skills) ? answers.skills.join("; ") : "",
       ];

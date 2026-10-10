@@ -23,6 +23,10 @@ export default async function AdminPage() {
       total: sql<number>`count(*)::int`,
       submitted: sql<number>`count(*) filter (where ${application.submittedAt} is not null)::int`,
       last24h: sql<number>`count(*) filter (where ${application.submittedAt} > now() - interval '24 hours')::int`,
+      accepted: sql<number>`count(*) filter (where ${application.decision} = 'accepted')::int`,
+      confirmed: sql<number>`count(*) filter (where ${application.rsvp} = 'confirmed')::int`,
+      pendingRsvp: sql<number>`count(*) filter (where ${application.rsvp} = 'pending')::int`,
+      declined: sql<number>`count(*) filter (where ${application.rsvp} = 'declined')::int`,
     })
     .from(application)
     .where(applicantOwnedOnly);
@@ -137,6 +141,44 @@ export default async function AdminPage() {
       </header>
 
       <div className="flex flex-col gap-8 pb-20 pt-2">
+        {/* attendance response — distinct from the admission decision */}
+        <section>
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+            <div>
+              <h2 className="font-display text-lg font-semibold">Attendance</h2>
+              <p className="mt-0.5 text-[12.5px] text-faint">
+                Accepted offers and each hacker&apos;s RSVP response
+              </p>
+            </div>
+            <Link
+              href="/admin/applications?status=submitted&decision=accepted"
+              className="text-[13px] text-cyan underline-offset-2 hover:underline"
+            >
+              View accepted applicants →
+            </Link>
+          </div>
+          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {(
+              [
+                ["Accepted offers", counts.accepted, "admission decision"],
+                ["Confirmed attendance", counts.confirmed, "coming to ITB"],
+                ["Awaiting RSVP", counts.pendingRsvp, "no response yet"],
+                ["Declined attendance", counts.declined, "gave up their spot"],
+              ] as const
+            ).map(([label, value, sub]) => (
+              <div key={label} className="card p-5">
+                <dt className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
+                  {label}
+                </dt>
+                <dd className="font-display mt-1.5 text-3xl font-semibold tabular-nums">
+                  {value}
+                </dd>
+                <p className="mt-1 text-[12px] text-faint">{sub}</p>
+              </div>
+            ))}
+          </dl>
+        </section>
+
         {/* stat tiles */}
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {(

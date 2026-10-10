@@ -159,6 +159,39 @@ export default async function AdminApplicationDetail({
             initialDecision={row.decision}
             initialNote={row.decisionNote ?? ""}
           />
+          {row.decision === "accepted" && row.rsvp ? (
+            <div className="mt-6 border-t border-line pt-5">
+              <h2 className="font-display mb-3 text-[15px] font-semibold">
+                Attendance
+              </h2>
+              <dl className="grid gap-x-6 gap-y-2 text-[14px] sm:grid-cols-[9rem_minmax(0,1fr)]">
+                <dt className="text-faint">RSVP</dt>
+                <dd
+                  className={
+                    row.rsvp === "confirmed"
+                      ? "font-medium text-ok"
+                      : row.rsvp === "declined"
+                        ? "font-medium text-danger"
+                        : row.rsvp === "pending"
+                          ? "font-medium text-cyan"
+                          : "text-muted"
+                  }
+                >
+                  {row.rsvp === "confirmed"
+                    ? "Confirmed attendance"
+                    : row.rsvp === "declined"
+                      ? "Declined attendance"
+                      : row.rsvp === "pending"
+                        ? "Awaiting response"
+                        : "RSVP expired"}
+                </dd>
+                <dt className="text-faint">Responded</dt>
+                <dd className="text-moonlit/90">{fmt(row.rsvpAt)}</dd>
+                <dt className="text-faint">Deadline</dt>
+                <dd className="text-moonlit/90">{fmt(row.rsvpDeadline)}</dd>
+              </dl>
+            </div>
+          ) : null}
         </section>
 
         {/* reviews */}
