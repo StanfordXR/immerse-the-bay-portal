@@ -277,7 +277,7 @@ function Confetti() {
           left: `${(i * 37) % 100}%`,
           background: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
           animationDelay: `${(i % 10) * 0.08}s`,
-          animationDuration: `${2.2 + (i % 7) * 0.25}s`,
+          animationDuration: `${(2.2 + (i % 7) * 0.25) * 1.5}s`,
           "--drift": `${((i * 53) % 160) - 80}px`,
         };
         return (
