@@ -17,6 +17,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { user } from "./auth-schema";
+import type { RsvpDetails } from "../rsvp";
 
 /**
  * Application tables. Kept separate from auth-schema.ts because that file is
@@ -142,6 +143,9 @@ export const application = pgTable(
     rsvp: rsvpState("rsvp"),
     rsvpDeadline: timestamp("rsvp_deadline", { withTimezone: true }),
     rsvpAt: timestamp("rsvp_at", { withTimezone: true }),
+    // Filled when an accepted hacker confirms (/rsvp): emergency contact,
+    // optional day-of details, and when each agreement was accepted.
+    rsvpDetails: jsonb("rsvp_details").$type<RsvpDetails>(),
     checkedInAt: timestamp("checked_in_at", { withTimezone: true }),
 
     submittedAt: timestamp("submitted_at", { withTimezone: true }),

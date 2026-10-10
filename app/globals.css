@@ -251,6 +251,28 @@
   }
 }
 
+/* ── acceptance confetti (components/decision-card.tsx) ──────────────────── */
+@keyframes confetti-fall {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--drift, 0px), 105vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+.confetti-piece {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .confetti-piece {
+    animation-name: confetti-fall;
+    animation-timing-function: cubic-bezier(0.25, 0.6, 0.5, 1);
+    animation-fill-mode: forwards;
+  }
+}
+
 @layer utilities {
   .font-display {
     font-family: var(--font-display);

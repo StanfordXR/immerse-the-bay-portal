@@ -6,8 +6,9 @@ import { outcome } from "@/lib/review";
 
 /**
  * Decisions CSV at a score cutoff (`?min=3.25`), one row per submitted
- * application. This is what goes to whoever sends decision emails; the
- * rejected rows carry reviewer comments for the spot-check pass.
+ * application. This is what goes to whoever sends decision emails: send from
+ * the `decision` column once released. Rejected rows carry reviewer comments
+ * for the spot-check pass.
  */
 export async function GET(req: NextRequest): Promise<Response> {
   const authz = await getAuthorizedUser("admin");
@@ -22,16 +23,19 @@ export async function GET(req: NextRequest): Promise<Response> {
   const order = { accepted: 0, rejected: 1, unscored: 2 } as const;
   rows.sort((a, b) => order[a.outcome] - order[b.outcome]);
 
+  // `outcome` is the score at this cutoff; `decision` is what's actually
+  // marked (hand edits included) and whether hackers can see it yet.
   const header = [
-    "outcome", "score", "reads", "spread", "first_name", "last_name", "email",
-    "school", "age_at_event", "under_18", "reviewer_comments",
+    "outcome", "decision", "released", "score", "reads", "spread", "first_name",
+    "last_name", "email", "school", "age_at_event", "under_18", "submitted_at",
+    "reviewer_comments",
   ];
   const csv = toCsv(
     header,
     rows.map((r) => [
-      r.outcome, r.score?.toFixed(3), r.reads, r.spread?.toFixed(3),
-      r.firstName, r.lastName, r.email, r.schoolName, r.age,
-      r.under18 ? "yes" : "no", r.comments.join(" | "),
+      r.outcome, r.decision, r.released ? "yes" : "no", r.score?.toFixed(3), r.reads,
+      r.spread?.toFixed(3), r.firstName, r.lastName, r.email, r.schoolName, r.age,
+      r.under18 ? "yes" : "no", r.submittedAt?.toISOString(), r.comments.join(" | "),
     ]),
   );
 

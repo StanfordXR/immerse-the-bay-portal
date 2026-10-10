@@ -55,7 +55,7 @@ export function outcome(
   r: { score: number | null; under18: boolean },
   threshold: number,
 ): Outcome {
-  if (r.score === null) return "unscored";
   if (r.under18) return "rejected";
+  if (r.score === null) return "unscored";
   return r.score >= threshold ? "accepted" : "rejected";
 }

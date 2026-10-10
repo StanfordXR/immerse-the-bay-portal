@@ -10,7 +10,7 @@ import { requireAdmin } from "@/lib/dal";
 export const metadata: Metadata = { title: "Applications" };
 
 const STATUS_OPTIONS = ["all", "submitted", "draft"] as const;
-const DECISION_OPTIONS = ["any", "undecided", "accepted", "waitlisted", "rejected"] as const;
+const DECISION_OPTIONS = ["any", "undecided", "accepted", "rejected"] as const;
 
 export default async function AdminApplicationsPage({
   searchParams,

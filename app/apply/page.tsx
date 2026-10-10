@@ -16,13 +16,20 @@ import { ApplyForm } from "@/components/apply-form";
 
 export const metadata: Metadata = { title: "Apply" };
 
-export default async function ApplyPage() {
+export default async function ApplyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ revise?: string }>;
+}) {
   const user = await requireUser();
+  // Set by reviseApplication: a rejected hacker reopening their application.
+  const revising = (await searchParams).revise === "1";
 
   const [row] = await db
     .select({
       answers: application.answers,
       submittedAt: application.submittedAt,
+      stage: application.stage,
     })
     .from(application)
     .where(eq(application.userId, user.id))
@@ -63,7 +70,11 @@ export default async function ApplyPage() {
         <div className="mb-8">
           <p className="eyebrow mb-2">Application · 2026</p>
           <h1 className="font-display text-3xl font-bold">
-            {row?.submittedAt ? "Edit your application" : "Your metamorphosis begins"}
+            {revising
+              ? "Revise your application"
+              : row?.submittedAt
+                ? "Edit your application"
+                : "Your metamorphosis begins"}
           </h1>
           {!closed && (
             <p className="mt-2 text-[13.5px] text-faint">
@@ -75,7 +86,17 @@ export default async function ApplyPage() {
           )}
         </div>
 
-        {closed ? (
+        {row?.stage === "decided" ? (
+          <div className="card p-8 text-center">
+            <p className="font-display text-lg font-semibold">Your decision is out</p>
+            <p className="mt-2 text-[14.5px] text-muted">
+              Your application is locked now. See your dashboard for your status.
+            </p>
+            <Link href="/dashboard" className="btn-primary mt-5 inline-flex">
+              Go to dashboard
+            </Link>
+          </div>
+        ) : closed ? (
           <div className="card p-8 text-center">
             <p className="font-display text-lg font-semibold">
               Applications have closed

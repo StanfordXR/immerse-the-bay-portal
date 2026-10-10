@@ -1,82 +1,60 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { respondToInvite } from "@/lib/actions/decision";
+import { declineSpot } from "@/lib/actions/decision";
 import { track } from "@/lib/analytics";
 
 /**
- * Confirm / decline buttons on an accepted hacker's decision card. Declining
- * is final, so it takes a second click. `confirmed` shows only the decline
- * path, for a confirmed hacker whose plans changed.
+ * Decline button on an accepted hacker's decision card. Declining is final,
+ * so it takes a second click. `subtle` is the small link shown once they've
+ * already confirmed.
  */
-export function RsvpActions({ confirmed = false }: { confirmed?: boolean }) {
+export function DeclineSpot({ subtle = false }: { subtle?: boolean }) {
   const [pending, startTransition] = useTransition();
-  const [confirmingDecline, setConfirmingDecline] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function respond(choice: "confirmed" | "declined") {
+  function decline() {
     setError(null);
     startTransition(async () => {
-      const result = await respondToInvite(choice).catch(() => ({
+      const result = await declineSpot().catch(() => ({
         ok: false as const,
         error: "Network hiccup. Try again.",
       }));
-      if (result.ok) track("rsvp_submitted", { choice });
+      if (result.ok) track("rsvp_submitted", { choice: "declined" });
       else setError(result.error);
     });
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {confirmingDecline ? (
+    <div className="flex flex-col gap-2">
+      {confirming ? (
         <div className="flex flex-wrap items-center gap-3">
-          <p className="text-[14px] text-muted">
-            Give up your spot? This can&apos;t be undone.
-          </p>
-          <button
-            type="button"
-            className="btn-ghost !py-2 text-[14px] !text-danger"
-            disabled={pending}
-            onClick={() => respond("declined")}
-          >
+          <p className="text-[14px] text-muted">Give up your spot? This can&apos;t be undone.</p>
+          <button type="button" className="btn-ghost !py-2 text-[14px] !text-danger" disabled={pending} onClick={decline}>
             {pending ? "One moment…" : "Yes, decline"}
           </button>
           <button
             type="button"
             className="text-[14px] text-muted underline-offset-2 hover:underline"
             disabled={pending}
-            onClick={() => setConfirmingDecline(false)}
+            onClick={() => setConfirming(false)}
           >
             Keep my spot
           </button>
         </div>
-      ) : confirmed ? (
+      ) : subtle ? (
         <button
           type="button"
           className="self-start text-[13.5px] text-faint underline-offset-2 hover:text-muted hover:underline"
-          onClick={() => setConfirmingDecline(true)}
+          onClick={() => setConfirming(true)}
         >
           Plans changed? Give up your spot
         </button>
       ) : (
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            className="btn-primary"
-            disabled={pending}
-            onClick={() => respond("confirmed")}
-          >
-            {pending ? "One moment…" : "Confirm my spot"}
-          </button>
-          <button
-            type="button"
-            className="btn-ghost"
-            disabled={pending}
-            onClick={() => setConfirmingDecline(true)}
-          >
-            I can&apos;t make it
-          </button>
-        </div>
+        <button type="button" className="btn-ghost" onClick={() => setConfirming(true)}>
+          I can&apos;t make it
+        </button>
       )}
       {error && (
         <p className="text-[13.5px] text-danger" role="alert">

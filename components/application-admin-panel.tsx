@@ -107,7 +107,6 @@ export function DecisionPanel({
         >
           <option value="none">No decision</option>
           <option value="accepted">Accepted</option>
-          <option value="waitlisted">Waitlisted</option>
           <option value="rejected">Rejected</option>
         </select>
         <button
