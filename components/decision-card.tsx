@@ -240,12 +240,12 @@ function VibeLabInvite() {
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan">
-            PICO · Diamond sponsor opportunity
+            Diamond sponsor opportunity
           </p>
           <h3 className="font-display mt-2 text-xl font-semibold">Build with PICO in VibeLab</h3>
           <p className="mt-2 max-w-lg text-[14px] leading-relaxed text-moonlit/80">
-            Join PICO&apos;s month-long VibeLab program, get technical support, and earn up to
-            $1,000 for a qualifying spatial app.
+            Get exclusive early access to working with the upcoming PICO Space Pro (Project
+            Swan), receive technical support, and earn up to $1,000 for a qualifying spatial app.
           </p>
           <p className="mt-3 text-[14px] font-semibold text-moonlit">
             Apply by Friday, October 16 at 11:59 PM PDT.
