@@ -94,13 +94,20 @@ export function DecisionCard(props: DecisionCardProps) {
             <h2 className="font-display text-3xl font-bold sm:text-4xl">
               You&apos;re in, {firstName}.
             </h2>
-            <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-moonlit/90">
-              Congratulations! You&apos;ve been accepted to <strong>Immerse the Bay 2026</strong>,
-              November 13–15 at Stanford. Confirm your spot to let us know you&apos;re coming.
-            </p>
-            <p className="mt-4 text-[14px] text-muted">
-              RSVP by <span className="font-semibold text-moonlit">{formatDeadline(rsvpDeadline)}</span>.
-            </p>
+            <div className="mt-4 max-w-xl space-y-3 text-[15px] leading-relaxed text-moonlit/90">
+              <p>
+                Congratulations! You&apos;ve been accepted to <strong>Immerse the Bay 2026</strong>,
+                November 13–15 at Stanford University.
+              </p>
+              <p>
+                Every application was manually reviewed by at least two human reviewers, and we
+                think you&apos;ll do great at Immerse the Bay.
+              </p>
+              <p>
+                Confirm your spot to let us know you&apos;re coming. Please respond by{" "}
+                <span className="font-semibold text-moonlit">{formatDeadline(rsvpDeadline)}</span>.
+              </p>
+            </div>
             <div className="mt-6 flex flex-wrap items-start gap-3">
               <Link href="/rsvp" className="btn-primary">
                 Confirm my spot
@@ -156,24 +163,35 @@ export function DecisionCard(props: DecisionCardProps) {
             <h2 className="font-display text-2xl font-semibold">
               We&apos;d like to consider your application again
             </h2>
-            <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-muted">
-              Hi {firstName}, we were unable to offer you a spot in our priority round.
-            </p>
             {canRevise ? (
               <>
-                <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted">
-                  We think you have a good chance of being accepted in the regular round, especially
-                  with a few thoughtful revisions. Revise and resubmit by{" "}
-                  <span className="font-semibold text-moonlit">{closeLabel} at 11:59 PM PDT</span>.
-                  We&apos;ll give your updated application a fresh review.
-                </p>
+                <div className="mt-4 max-w-xl space-y-3 text-[15px] leading-relaxed text-muted">
+                  <p>
+                    Hi {firstName}, unfortunately, we were unable to offer you a spot in our
+                    priority round. Every application was manually reviewed by at least two human
+                    reviewers, and we received many strong applications.
+                  </p>
+                  <p>
+                    That said, we enjoyed reading your application, and we think you have a good
+                    chance of being accepted in the regular round, especially with a few thoughtful
+                    revisions.
+                  </p>
+                  <p>
+                    You may revise and resubmit by{" "}
+                    <span className="font-semibold text-moonlit">{closeLabel} at 11:59 PM PDT</span>.
+                    We&apos;ll give your updated application a fresh review.
+                  </p>
+                </div>
                 <ReviseApplicationButton deadline={closeLabel} />
               </>
             ) : (
-              <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted">
-                Please don&apos;t let this stop you: we&apos;d love to see you at other Stanford XR
-                events, and to read your application next year.
-              </p>
+              <div className="mt-4 max-w-xl space-y-3 text-[15px] leading-relaxed text-muted">
+                <p>Hi {firstName}, we were unable to offer you a spot in our priority round.</p>
+                <p>
+                  Please don&apos;t let this stop you: we&apos;d love to see you at other Stanford XR
+                  events, and to read your application next year.
+                </p>
+              </div>
             )}
           </>
         )}
@@ -181,12 +199,19 @@ export function DecisionCard(props: DecisionCardProps) {
         {view === "under-18" && (
           <>
             <h2 className="font-display text-2xl font-semibold">Thank you for applying</h2>
-            <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-muted">
-              Hi {firstName}, thank you for your interest in Immerse the Bay. Stanford policy
-              requires every participant to be 18 or older on the first day of the event, so
-              we&apos;re unable to offer you a spot this year. We&apos;d love to have you apply
-              again once you turn 18. Questions? Email {mailto}.
-            </p>
+            <div className="mt-4 max-w-xl space-y-3 text-[15px] leading-relaxed text-muted">
+              <p>Hi {firstName}, thank you for your interest in Immerse the Bay.</p>
+              <p>
+                Unfortunately, Stanford policy requires all participants to be at least 18 years
+                old on the first day of the event. Because you will not yet meet this requirement,
+                we&apos;re unable to offer you a spot this year.
+              </p>
+              <p>
+                We&apos;d love to see you apply again once you&apos;re eligible. If you have any
+                questions, or if the birth date on your application is incorrect, please email{" "}
+                {mailto}.
+              </p>
+            </div>
           </>
         )}
         </div>
