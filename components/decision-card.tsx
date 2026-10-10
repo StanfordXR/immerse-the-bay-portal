@@ -154,21 +154,20 @@ export function DecisionCard(props: DecisionCardProps) {
         {view === "rejected" && (
           <>
             <h2 className="font-display text-2xl font-semibold">
-              We&apos;d like to read your application again
+              We&apos;d like to consider your application again
             </h2>
             <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-muted">
-              Hi {firstName}, we had more strong applicants than spots in the priority round, so we
-              can&apos;t offer you a spot in this round.
+              Hi {firstName}, we were unable to offer you a spot in our priority round.
             </p>
             {canRevise ? (
               <>
                 <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted">
-                  We still think you could be a strong candidate in the regular round, and we&apos;d
-                  love to see your application again with a few revisions. Revise and resubmit by{" "}
-                  <span className="font-semibold text-moonlit">{closeLabel}</span>; we&apos;ll review
-                  it again as a fresh read.
+                  We think you have a good chance of being accepted in the regular round, especially
+                  with a few thoughtful revisions. Revise and resubmit by{" "}
+                  <span className="font-semibold text-moonlit">{closeLabel} at 11:59 PM PDT</span>.
+                  We&apos;ll give your updated application a fresh review.
                 </p>
-                <ReviseApplicationButton />
+                <ReviseApplicationButton deadline={closeLabel} />
               </>
             ) : (
               <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted">
