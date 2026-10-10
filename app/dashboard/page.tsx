@@ -106,10 +106,12 @@ export default async function DashboardPage({
 
       <div className="flex flex-1 flex-col gap-6 pb-20 pt-4">
         <div>
-          <p className="eyebrow mb-2">Dashboard</p>
-          <h1 className="font-display text-3xl font-bold">
-            Hey, {firstName}.
-          </h1>
+          <p className={`eyebrow ${accepted ? "" : "mb-2"}`}>Dashboard</p>
+          {!accepted && (
+            <h1 className="font-display text-3xl font-bold">
+              Hey, {firstName}.
+            </h1>
+          )}
         </div>
 
         {/* staff dashboards drop the application card entirely */}

@@ -36,7 +36,7 @@ export function DeclineSpot({ subtle = false }: { subtle?: boolean }) {
           </button>
           <button
             type="button"
-            className="text-[14px] text-muted underline-offset-2 hover:underline"
+            className="btn-ghost !py-2 text-[14px]"
             disabled={pending}
             onClick={() => setConfirming(false)}
           >
@@ -44,13 +44,16 @@ export function DeclineSpot({ subtle = false }: { subtle?: boolean }) {
           </button>
         </div>
       ) : subtle ? (
-        <button
-          type="button"
-          className="self-start text-[13.5px] text-cyan/75 underline underline-offset-2 hover:text-cyan"
-          onClick={() => setConfirming(true)}
-        >
-          Plans changed? Give up your spot
-        </button>
+        <p className="self-start text-[13.5px] text-muted">
+          Plans changed?{" "}
+          <button
+            type="button"
+            className="text-cyan/75 underline underline-offset-2 hover:text-cyan"
+            onClick={() => setConfirming(true)}
+          >
+            Give up your spot
+          </button>
+        </p>
       ) : (
         <button type="button" className="btn-ghost" onClick={() => setConfirming(true)}>
           I can&apos;t make it
