@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { application, applicationEvent, review, reviewConfig, user } from "@/lib/db/schema";
 import { decisionPoolOnly } from "@/lib/db/applicant-filter";
 import { ageAtEvent, priorityDeadline } from "@/lib/config";
-import { isPriority } from "@/lib/rounds";
+import { isPriority, normalizeTimestamp } from "@/lib/rounds";
 import { DEFAULT_READS_PER_APPLICATION, RUBRIC } from "@/lib/review";
 
 /**
@@ -56,7 +56,7 @@ export async function getReviewResults() {
       score: sql<number | null>`avg(${reviewScoreSql})::float8`,
       spread: sql<number | null>`(max(${reviewScoreSql}) - min(${reviewScoreSql}))::float8`,
       comments: sql<string[]>`coalesce(array_agg(${review.comment}) filter (where ${review.comment} is not null), '{}')`,
-      firstSubmittedAt: sql<Date | null>`coalesce(
+      firstSubmittedAt: sql<string | Date | null>`coalesce(
         (select min(ae.at) from ${applicationEvent} ae
           where ae.application_id = "application"."id"
             and ae.kind in ('submitted', 'resubmitted')),
@@ -77,14 +77,16 @@ export async function getReviewResults() {
     .orderBy(sql`avg(${reviewScoreSql}) desc nulls last`, desc(application.submittedAt));
 
   const deadline = priorityDeadline();
-  return rows.map(({ dateOfBirth, firstSubmittedAt, revisions, ...r }) => {
+  return rows.map(({ dateOfBirth, firstSubmittedAt: rawFirstSubmittedAt, revisions, ...r }) => {
+    const firstSubmittedAt = normalizeTimestamp(rawFirstSubmittedAt);
+    const firstSubmittedMs = firstSubmittedAt?.getTime() ?? null;
     const age = ageAtEvent(dateOfBirth);
     return {
       ...r,
       firstSubmittedAt,
       revisions,
       priority: isPriority(
-        { firstSubmittedMs: firstSubmittedAt?.getTime() ?? null, revisions },
+        { firstSubmittedMs, revisions },
         deadline,
       ),
       age,
