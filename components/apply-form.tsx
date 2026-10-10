@@ -46,12 +46,14 @@ type SaveState =
   | "invalid"
   | "signed-out"
   | "closed"
+  | "locked"
   | "offline";
 
 function stateFromSaveError(error: string): SaveState {
   if (error === "invalid") return "invalid";
   if (error === "signed-out") return "signed-out";
   if (error === "closed") return "closed";
+  if (error === "locked") return "locked";
   return "offline";
 }
 
@@ -853,6 +855,7 @@ function SaveBadge({ state, preview }: { state: SaveState; preview: boolean }) {
     invalid: "Draft not saved, an answer is too long",
     "signed-out": "Signed out, sign in to keep saving",
     closed: "Applications closed",
+    locked: "Locked, your decision is out",
     offline: "Not saved, check your connection",
   };
   const label = LABELS[state];

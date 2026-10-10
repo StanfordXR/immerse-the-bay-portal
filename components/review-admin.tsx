@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { setReadsPerApplication } from "@/lib/actions/review";
-import { releaseDecisions } from "@/lib/actions/decision";
+import { applyCutoff, releaseDecisions } from "@/lib/actions/decision";
 import { MAX_READS_PER_APPLICATION, outcome, type Outcome } from "@/lib/review";
 
 /** Reads-per-application picker on /admin/review. Saves on change. */
@@ -62,6 +62,8 @@ export type ThresholdRow = {
   spread: number | null;
   reads: number;
   under18: boolean;
+  /** Decision already released, so "Apply this cutoff" leaves it alone. */
+  released: boolean;
 };
 
 const OUTCOME_STYLE: Record<Outcome, string> = {
@@ -72,9 +74,8 @@ const OUTCOME_STYLE: Record<Outcome, string> = {
 
 /**
  * Acceptance cutoff. Drag to see how many applications land on each side;
- * the export downloads exactly what's shown. Nothing is written to the
- * database: decisions are marked per application and published with the
- * release panel.
+ * the export downloads exactly what's shown. "Apply this cutoff" marks the
+ * decisions; the release panel publishes them.
  */
 export function ThresholdPanel({ rows, reads }: { rows: ThresholdRow[]; reads: number }) {
   const [threshold, setThreshold] = useState(3);
@@ -82,6 +83,12 @@ export function ThresholdPanel({ rows, reads }: { rows: ThresholdRow[]; reads: n
   const counts = useMemo(() => {
     const c: Record<Outcome, number> = { accepted: 0, rejected: 0, unscored: 0 };
     for (const r of rows) c[outcome(r, threshold)]++;
+    return c;
+  }, [rows, threshold]);
+
+  const markable = useMemo(() => {
+    const c: Record<Outcome, number> = { accepted: 0, rejected: 0, unscored: 0 };
+    for (const r of rows) if (!r.released) c[outcome(r, threshold)]++;
     return c;
   }, [rows, threshold]);
 
@@ -134,6 +141,7 @@ export function ThresholdPanel({ rows, reads }: { rows: ThresholdRow[]; reads: n
             </div>
           ))}
         </dl>
+        <ApplyCutoff threshold={threshold} counts={markable} />
         {partial > 0 && (
           <p className="text-[13px] text-muted">
             {partial} scored application{partial === 1 ? " has" : "s have"} fewer than{" "}
@@ -196,34 +204,29 @@ export function ThresholdPanel({ rows, reads }: { rows: ThresholdRow[]; reads: n
   );
 }
 
-export type UnreleasedCounts = { accepted: number; waitlisted: number; rejected: number };
+export type UnreleasedCounts = { accepted: number; rejected: number };
 
 /**
- * Publish marked decisions to hackers' dashboards and send each a
- * status-update email. Irreversible, so it takes a second click.
+ * Publish marked decisions to hackers' dashboards. Sends no email: organizers
+ * email hackers themselves. Irreversible, so it takes a second click.
  */
 export function ReleasePanel({ counts }: { counts: UnreleasedCounts }) {
   const [confirming, setConfirming] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
-  const total = counts.accepted + counts.waitlisted + counts.rejected;
+  const total = counts.accepted + counts.rejected;
 
   function release() {
     setMessage(null);
     startTransition(async () => {
       const result = await releaseDecisions().catch(() => ({
         ok: false as const,
-        error: "Lost the connection mid-release. Click again to finish the rest.",
+        error: "Network hiccup. Try again.",
       }));
       setConfirming(false);
       setMessage(
         result.ok
-          ? {
-              ok: result.emailFailures === 0,
-              text:
-                `Released ${result.released} decision${result.released === 1 ? "" : "s"}.` +
-                (result.emailFailures ? ` ${result.emailFailures} email(s) failed; see the logs.` : ""),
-            }
+          ? { ok: true, text: `Released ${result.released} decision${result.released === 1 ? "" : "s"}.` }
           : { ok: false, text: result.error },
       );
     });
@@ -235,16 +238,16 @@ export function ReleasePanel({ counts }: { counts: UnreleasedCounts }) {
         <div>
           <h2 className="font-display text-[15px] font-semibold">Release decisions</h2>
           <p className="mt-1 max-w-xl text-[13.5px] text-muted">
-            Publishes every decision marked on an application to that hacker&apos;s dashboard
-            and emails them a status update. Accepted hackers get a week to RSVP. Released
-            decisions are locked.
+            Shows every marked decision on that hacker&apos;s dashboard. No email is sent: point
+            hackers at portal.immersethebay.org/dashboard. Accepted hackers get a week to RSVP.
+            Released decisions are locked.
           </p>
         </div>
         {total > 0 &&
           (confirming ? (
             <div className="flex items-center gap-2">
               <button type="button" className="btn-primary !py-2 text-[14px]" disabled={pending} onClick={release}>
-                {pending ? "Releasing…" : `Yes, email ${total}`}
+                {pending ? "Releasing…" : `Yes, release ${total}`}
               </button>
               <button
                 type="button"
@@ -271,6 +274,57 @@ export function ReleasePanel({ counts }: { counts: UnreleasedCounts }) {
           </div>
         ))}
       </dl>
+      {message && (
+        <p className={`text-[13.5px] ${message.ok ? "text-ok" : "text-danger"}`} role="status">
+          {message.text}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** "Apply this cutoff": marks every scored, unreleased application. Two clicks. */
+function ApplyCutoff({ threshold, counts }: { threshold: number; counts: Record<Outcome, number> }) {
+  const [confirming, setConfirming] = useState(false);
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function apply() {
+    setMessage(null);
+    startTransition(async () => {
+      const result = await applyCutoff(threshold).catch(() => ({
+        ok: false as const,
+        error: "Network hiccup. Try again.",
+      }));
+      setConfirming(false);
+      setMessage(
+        result.ok
+          ? { ok: true, text: `Marked ${result.accepted} accepted and ${result.rejected} rejected. Release them from the panel above.` }
+          : { ok: false, text: result.error },
+      );
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {confirming ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-[13.5px] text-muted">
+            Mark {counts.accepted} accepted and {counts.rejected} rejected? This overwrites unreleased marks,
+            including hand edits.
+          </p>
+          <button type="button" className="btn-primary !py-2 text-[14px]" disabled={pending} onClick={apply}>
+            {pending ? "Marking…" : "Yes, mark them"}
+          </button>
+          <button type="button" className="btn-ghost !py-2 text-[14px]" disabled={pending} onClick={() => setConfirming(false)}>
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button type="button" className="btn-ghost self-start !py-2 text-[14px]" onClick={() => setConfirming(true)}>
+          Apply this cutoff
+        </button>
+      )}
       {message && (
         <p className={`text-[13.5px] ${message.ok ? "text-ok" : "text-danger"}`} role="status">
           {message.text}

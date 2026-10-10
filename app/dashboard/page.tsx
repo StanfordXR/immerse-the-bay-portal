@@ -5,7 +5,14 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application } from "@/lib/db/schema";
 import { getRole, requireUser } from "@/lib/dal";
-import { closeDateLabel, finalDecisionsLabel, priorityDeadlineLabel, priorityDecisionsLabel } from "@/lib/config";
+import {
+  ageAtEvent,
+  applicationsAreClosed,
+  closeDateLabel,
+  finalDecisionsLabel,
+  priorityDeadlineLabel,
+  priorityDecisionsLabel,
+} from "@/lib/config";
 import { draftSchema, STEPS, stepStatus } from "@/lib/form-schema";
 import { ensureReferralCode, getLeaderboard } from "@/lib/referral";
 import { ReferralCard } from "@/components/referral-card";
@@ -32,6 +39,7 @@ export default async function DashboardPage({
       decision: application.decision,
       rsvp: application.rsvp,
       rsvpDeadline: application.rsvpDeadline,
+      dateOfBirth: application.dateOfBirth,
     })
     .from(application)
     .where(eq(application.userId, user.id))
@@ -105,12 +113,15 @@ export default async function DashboardPage({
 
         {/* staff dashboards drop the application card entirely */}
         {!isStaff &&
-          (row?.stage === "decided" && row.decision ? (
+          (row?.stage === "decided" && (row.decision === "accepted" || row.decision === "rejected") ? (
           <DecisionCard
             firstName={firstName}
             decision={row.decision}
             rsvp={row.rsvp}
             rsvpDeadline={row.rsvpDeadline}
+            under18={(ageAtEvent(row.dateOfBirth) ?? 18) < 18}
+            canRevise={!applicationsAreClosed()}
+            closeLabel={closeDateLabel()}
           />
         ) : row?.submittedAt ? (
           <section className="card overflow-hidden">
@@ -299,8 +310,6 @@ export default async function DashboardPage({
             <dd className="text-moonlit/90">{closeDateLabel()}</dd>
             <dt className="text-faint">Final decisions</dt>
             <dd className="text-moonlit/90">By {finalDecisionsLabel()}</dd>
-            <dt className="text-faint">Decisions sent from</dt>
-            <dd className="text-moonlit/90">apply@immersethebay.org</dd>
             <dt className="text-faint">Questions</dt>
             <dd>
               <a

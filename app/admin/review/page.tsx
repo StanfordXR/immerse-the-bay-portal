@@ -11,9 +11,6 @@ import { unreleasedDecision } from "@/lib/db/applicant-filter";
 
 export const metadata: Metadata = { title: "Scores" };
 
-// Releasing decisions emails one hacker every ~half second.
-export const maxDuration = 300;
-
 /** Review results: queue settings, the acceptance cutoff, and the ranked list. */
 export default async function AdminReviewPage() {
   await requireAdmin();
@@ -26,8 +23,10 @@ export default async function AdminReviewPage() {
       .where(unreleasedDecision)
       .groupBy(application.decision),
   ]);
-  const unreleasedCounts: UnreleasedCounts = { accepted: 0, waitlisted: 0, rejected: 0 };
-  for (const { decision, n } of unreleased) if (decision) unreleasedCounts[decision] = n;
+  const unreleasedCounts: UnreleasedCounts = { accepted: 0, rejected: 0 };
+  for (const { decision, n } of unreleased) {
+    if (decision === "accepted" || decision === "rejected") unreleasedCounts[decision] = n;
+  }
 
   const complete = results.filter((r) => r.reads >= reads).length;
 
@@ -68,6 +67,7 @@ export default async function AdminReviewPage() {
             spread: r.spread,
             reads: r.reads,
             under18: r.under18,
+            released: r.released,
           }))}
         />
       </div>

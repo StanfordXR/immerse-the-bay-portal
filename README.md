@@ -54,8 +54,8 @@ lib/dal.ts               Data Access Layer — the ONLY place authz is decided
 lib/attribution.ts       UTM normalization + cookie shape
 lib/review.ts            Review rubric, weights and the accept/reject rule
 lib/actions/review.ts    Review queue: claim, score, release
-lib/actions/decision.ts  Release decisions (admin) and RSVP (hacker)
-lib/decisions.ts         Publishing a decision: dashboard, RSVP window, email
+lib/actions/decision.ts  Mark and release decisions (admin); RSVP and revise (hacker)
+lib/rsvp.ts              RSVP confirmation form: options, agreements, schema
 lib/db/
   index.ts               Drizzle client (pooled connection)
   auth-schema.ts         GENERATED — do not hand-edit

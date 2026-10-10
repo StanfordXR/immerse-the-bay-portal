@@ -9,7 +9,7 @@ import {
 } from "@/lib/attribution";
 
 /** Signed-out visitors get bounced to /sign-in from these. UX only — see below. */
-const PROTECTED_PREFIXES = ["/apply", "/dashboard", "/admin", "/feedback", "/review"];
+const PROTECTED_PREFIXES = ["/apply", "/dashboard", "/admin", "/feedback", "/review", "/rsvp"];
 
 /**
  * First-touch attribution capture.

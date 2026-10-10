@@ -2,7 +2,7 @@
 
 import { after } from "next/server";
 import { cookies } from "next/headers";
-import { eq } from "drizzle-orm";
+import { eq, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   application,
@@ -63,14 +63,18 @@ export async function saveDraft(raw: unknown): Promise<SaveResult> {
   const answers: Answers = parsed.data;
   const columns = answersToColumns(answers);
 
-  await db
+  const saved = await db
     .insert(application)
     .values({ userId: authz.user.id, answers, ...columns })
     .onConflictDoUpdate({
       target: application.userId,
       // Never touches `stage`: an edit after submitting stays submitted.
       set: { answers, ...columns },
-    });
+      // Locked once the decision is released.
+      setWhere: ne(application.stage, "decided"),
+    })
+    .returning({ id: application.id });
+  if (saved.length === 0) return { ok: false, error: "locked" };
 
   await recordUserAttribution(authz.user.id).catch(() => {});
 
@@ -104,10 +108,15 @@ export async function submitApplication(raw: unknown): Promise<SubmitResult> {
     .select({
       id: application.id,
       submittedAt: application.submittedAt,
+      stage: application.stage,
     })
     .from(application)
     .where(eq(application.userId, authz.user.id))
     .limit(1);
+  // Resubmitting would reset `stage` and un-release the decision.
+  if (existing?.stage === "decided") {
+    return { ok: false, error: "Your decision is out, so your application is locked. See your dashboard." };
+  }
 
   const firstSubmit = !existing?.submittedAt;
   const submittedAt = existing?.submittedAt ?? new Date();
