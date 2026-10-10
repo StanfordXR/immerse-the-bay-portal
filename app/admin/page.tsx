@@ -23,7 +23,7 @@ export default async function AdminPage() {
       total: sql<number>`count(*)::int`,
       submitted: sql<number>`count(*) filter (where ${application.submittedAt} is not null)::int`,
       last24h: sql<number>`count(*) filter (where ${application.submittedAt} > now() - interval '24 hours')::int`,
-      accepted: sql<number>`count(*) filter (where ${application.decision} = 'accepted')::int`,
+      accepted: sql<number>`count(*) filter (where ${application.decision} = 'accepted' and ${application.rsvp} is not null)::int`,
       confirmed: sql<number>`count(*) filter (where ${application.rsvp} = 'confirmed')::int`,
       pendingRsvp: sql<number>`count(*) filter (where ${application.rsvp} = 'pending')::int`,
       declined: sql<number>`count(*) filter (where ${application.rsvp} = 'declined')::int`,
