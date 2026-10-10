@@ -52,6 +52,9 @@ const LINKS: Record<string, string> = {
   // socials
   ig: "/apply?utm_source=ig&utm_content=bio",
   li: "/apply?utm_source=li",
+  // paid LinkedIn traffic is a cold audience, so introduce the event on the
+  // marketing site before asking anyone to begin an application.
+  liad: "https://immersethebay.org/?utm_source=li&utm_content=ad",
   dc: "/apply?utm_source=dc",
   // discord servers — one code per server (sxr = Stanford XR, itbNN = that
   // year's hackathon server). These land on the marketing site, not /apply:
