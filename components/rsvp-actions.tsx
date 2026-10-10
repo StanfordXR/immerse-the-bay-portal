@@ -46,7 +46,7 @@ export function DeclineSpot({ subtle = false }: { subtle?: boolean }) {
       ) : subtle ? (
         <button
           type="button"
-          className="self-start text-[13.5px] text-faint underline-offset-2 hover:text-muted hover:underline"
+          className="self-start text-[13.5px] text-cyan/75 underline underline-offset-2 hover:text-cyan"
           onClick={() => setConfirming(true)}
         >
           Plans changed? Give up your spot

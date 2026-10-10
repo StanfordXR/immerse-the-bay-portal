@@ -20,6 +20,8 @@ export default async function RsvpPage() {
       answers: application.answers,
       tshirtSize: application.tshirtSize,
       dietaryNeeds: application.dietaryNeeds,
+      firstName: application.firstName,
+      lastName: application.lastName,
       rsvp: application.rsvp,
       details: application.rsvpDetails,
     })
@@ -48,6 +50,7 @@ export default async function RsvpPage() {
 
   const details = row.details;
   const editing = row.rsvp === "confirmed";
+  const applicationName = [row.firstName, row.lastName].filter(Boolean).join(" ");
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-5 sm:px-6">
@@ -73,6 +76,7 @@ export default async function RsvpPage() {
         <ConfirmSpotForm
           editing={editing}
           initial={{
+            badgeName: (details?.badgeName ?? applicationName) || user.name || "",
             tshirtSize: row.tshirtSize ?? "",
             dietary: row.dietaryNeeds ?? "",
             pronouns: details ? (details.pronouns ?? "") : appPronouns,

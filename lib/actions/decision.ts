@@ -8,7 +8,7 @@ import { application, applicationEvent, review } from "@/lib/db/schema";
 import { unreleasedDecision } from "@/lib/db/applicant-filter";
 import { getReadsPerApplication, getReviewResults } from "@/lib/db/review-sql";
 import { getAuthorizedUser } from "@/lib/dal";
-import { ageAtEvent, applicationsAreClosed, RSVP_WINDOW_DAYS } from "@/lib/config";
+import { ageAtEvent, applicationsAreClosed, RSVP_DEADLINE } from "@/lib/config";
 import { isScope, planCutoff, planRelease, type Scope } from "@/lib/rounds";
 import { rsvpFormSchema, type RsvpDetails } from "@/lib/rsvp";
 
@@ -67,7 +67,7 @@ export async function applyCutoff(
 
 /**
  * Publish every marked decision to hackers' dashboards. Accepted hackers get
- * RSVP_WINDOW_DAYS to confirm. Sends no email: organizers email hackers
+ * the shared event RSVP deadline. Sends no email: organizers email hackers
  * themselves, pointing them at /dashboard. Released decisions are locked.
  */
 export async function releaseDecisions(scope: Scope): Promise<Result<{ released: number }>> {
@@ -91,7 +91,7 @@ export async function releaseDecisions(scope: Scope): Promise<Result<{ released:
     .set({
       stage: "decided",
       rsvp: sql`case when ${accepted} then 'pending'::rsvp_state end`,
-      rsvpDeadline: sql`case when ${accepted} then now() + make_interval(days => ${RSVP_WINDOW_DAYS}) end`,
+      rsvpDeadline: sql`case when ${accepted} then ${RSVP_DEADLINE} end`,
     })
     .where(and(unreleasedDecision, inArray(application.id, releaseIds)))
     .returning({ id: application.id, decision: application.decision });
@@ -156,6 +156,7 @@ export async function confirmSpot(raw: unknown): Promise<ConfirmResult> {
 
   const now = new Date().toISOString();
   const details: RsvpDetails = {
+    badgeName: form.badgeName,
     pronouns: form.pronouns || null,
     phone: form.phone || null,
     emergencyContact: { name: form.emergencyName, email: form.emergencyEmail, phone: form.emergencyPhone },

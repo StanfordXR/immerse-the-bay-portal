@@ -47,6 +47,7 @@ const phone = z
   .refine((v) => v === "" || (v.replace(/\D/g, "").length >= 7), "Enter a valid phone number");
 
 export const rsvpFormSchema = z.object({
+  badgeName: z.string().trim().min(1, "Required").max(120),
   tshirtSize: z.enum(TSHIRT_SIZES, { message: "Pick a shirt size" }),
   dietary: z.string().trim().min(1, "Pick an option").max(300),
   pronouns: z.string().trim().max(60),
@@ -65,6 +66,8 @@ export type RsvpForm = z.infer<typeof rsvpFormSchema>;
 
 /** What lands in `application.rsvp_details`. Shirt size and dietary go to their own columns. */
 export type RsvpDetails = {
+  /** Optional for records confirmed before badge names were collected. */
+  badgeName?: string;
   pronouns: string | null;
   phone: string | null;
   emergencyContact: { name: string; email: string; phone: string };

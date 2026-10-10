@@ -82,8 +82,22 @@ export function ageAtEvent(dob: string | null): number | null {
   return ey - by - (beforeBirthday ? 1 : 0);
 }
 
-/** Accepted hackers have this long after their decision is released to RSVP. */
-export const RSVP_WINDOW_DAYS = 7;
+/** One shared deadline for accepted hackers to confirm their spot. */
+export const RSVP_DEADLINE = new Date(
+  process.env.NEXT_PUBLIC_RSVP_DEADLINE ?? "2026-10-17T06:59:00.000Z",
+);
+
+export function rsvpDeadlineLabel(): string {
+  return RSVP_DEADLINE.toLocaleString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/Los_Angeles",
+    timeZoneName: "short",
+  });
+}
 
 /** Interest form for PICO, Immerse the Bay's Diamond sponsor. */
 export const VIBELAB_INTEREST_FORM_URL =
