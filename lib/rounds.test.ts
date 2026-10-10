@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { isPriority, planCutoff, planRelease } from "./rounds";
+import { isPriority, normalizeTimestamp, planCutoff, planRelease } from "./rounds";
 
 describe("decision rounds", () => {
   test("priority is based on first submission and excludes revisions", () => {
@@ -8,6 +8,13 @@ describe("decision rounds", () => {
     assert.equal(isPriority({ firstSubmittedMs: deadline.getTime(), revisions: 0 }, deadline), true);
     assert.equal(isPriority({ firstSubmittedMs: deadline.getTime() + 1, revisions: 0 }, deadline), false);
     assert.equal(isPriority({ firstSubmittedMs: deadline.getTime(), revisions: 1 }, deadline), false);
+  });
+
+  test("computed database timestamps normalize from strings", () => {
+    const iso = "2026-10-01T07:00:00.000Z";
+    assert.equal(normalizeTimestamp(iso)?.toISOString(), iso);
+    assert.equal(normalizeTimestamp(new Date(iso))?.toISOString(), iso);
+    assert.equal(normalizeTimestamp("not-a-date"), null);
   });
 
   test("cutoff skips incomplete reads, drafts, releases, and out-of-scope rows", () => {

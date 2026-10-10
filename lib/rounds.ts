@@ -27,6 +27,13 @@ export type RoundFacts = {
   revisions: number;
 };
 
+/** Normalize computed database timestamps, which Neon may return as strings. */
+export function normalizeTimestamp(value: Date | string | null | undefined): Date | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export function isPriority(f: RoundFacts, deadline: Date | null): boolean {
   if (!deadline || f.firstSubmittedMs === null) return false;
   return f.revisions === 0 && f.firstSubmittedMs <= deadline.getTime();

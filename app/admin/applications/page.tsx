@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { application, applicationEvent, applicationTag, tag } from "@/lib/db/schema";
 import { applicantOwnedOnly } from "@/lib/db/applicant-filter";
 import { requireAdmin } from "@/lib/dal";
+import { normalizeTimestamp } from "@/lib/rounds";
 
 export const metadata: Metadata = { title: "Applications" };
 
@@ -70,7 +71,7 @@ export default async function AdminApplicationsPage({
         primarySkill: application.primarySkill,
         utmSource: application.utmSource,
         submittedAt: application.submittedAt,
-        firstSubmittedAt: sql<Date | null>`coalesce(
+        firstSubmittedAt: sql<string | Date | null>`coalesce(
           (select min(ae.at) from ${applicationEvent} ae
             where ae.application_id = "application"."id"
               and ae.kind in ('submitted', 'resubmitted')),
@@ -234,8 +235,8 @@ export default async function AdminApplicationsPage({
                     {r.utmSource || "·"}
                   </td>
                   <td className="px-4 py-3 font-mono text-[12.5px] text-muted">
-                    {r.firstSubmittedAt
-                      ? r.firstSubmittedAt.toLocaleDateString("en-US", {
+                    {normalizeTimestamp(r.firstSubmittedAt)
+                      ? normalizeTimestamp(r.firstSubmittedAt)!.toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
                           timeZone: "America/Los_Angeles",
