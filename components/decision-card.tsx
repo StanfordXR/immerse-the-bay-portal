@@ -94,7 +94,7 @@ export function DecisionCard(props: DecisionCardProps) {
             <h2 className="font-display text-3xl font-bold sm:text-4xl">
               You&apos;re in, {firstName}.
             </h2>
-            <div className="mt-4 max-w-xl space-y-3 text-[15px] leading-relaxed text-moonlit/90">
+            <div className="mt-4 max-w-2xl space-y-3 text-[15px] leading-relaxed text-moonlit/90">
               <p>
                 Congratulations! You&apos;ve been accepted to <strong>Immerse the Bay 2026</strong>,
                 November 13–15 at Stanford University.
@@ -104,8 +104,10 @@ export function DecisionCard(props: DecisionCardProps) {
                 think you&apos;ll do great at Immerse the Bay.
               </p>
               <p>
-                Confirm your spot to let us know you&apos;re coming. Please respond by{" "}
-                <span className="font-semibold text-moonlit">{formatDeadline(rsvpDeadline)}</span>.
+                Confirm your spot to let us know you&apos;re coming by{" "}
+                <span className="whitespace-nowrap font-semibold text-moonlit">
+                  {formatDeadline(rsvpDeadline)}
+                </span>.
               </p>
             </div>
             <div className="mt-6 flex flex-wrap items-start gap-3">
