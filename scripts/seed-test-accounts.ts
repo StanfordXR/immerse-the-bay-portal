@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { chmodSync, writeFileSync } from "node:fs";
 
 const APPLY = process.argv.includes("--apply");
@@ -42,13 +42,13 @@ if (!APPLY) {
   process.exit(0);
 }
 
-const [{ and, eq }, { auth }, { db }, schema] = await Promise.all([
+const [{ and, eq }, { hashPassword }, { db }, schema] = await Promise.all([
   import("drizzle-orm"),
-  import("../lib/auth"),
+  import("@better-auth/utils/password"),
   import("../lib/db"),
   import("../lib/db/schema"),
 ]);
-const { application, applicationEvent, applicationTag, tag, user } = schema;
+const { account, application, applicationEvent, applicationTag, tag, user } = schema;
 
 const credentials: Array<{ email: string; password: string; state: string }> = [];
 
@@ -68,14 +68,22 @@ for (const fixture of fixtures) {
   }
 
   const password = randomBytes(18).toString("base64url");
-  const result = await auth.api.signUpEmail({
-    body: { email: fixture.email, password, name: fixture.name },
+  const userId = randomUUID();
+  const passwordHash = await hashPassword(password);
+  await db.insert(user).values({
+    id: userId,
+    email: fixture.email,
+    name: fixture.name,
+    emailVerified: true,
+    role: "applicant",
   });
-  const userId = result.user.id;
-  await db
-    .update(user)
-    .set({ emailVerified: true, role: "applicant" })
-    .where(eq(user.id, userId));
+  await db.insert(account).values({
+    id: randomUUID(),
+    accountId: userId,
+    providerId: "credential",
+    userId,
+    password: passwordHash,
+  });
 
   const now = new Date();
   const [created] = await db
