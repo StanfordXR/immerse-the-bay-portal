@@ -82,6 +82,12 @@ const OUTCOME_STYLE: Record<Outcome, string> = {
  */
 export type UnreleasedCounts = { accepted: number; rejected: number };
 
+const SCOPE_LABEL: Record<Scope, string> = {
+  priority: "priority-round",
+  regular: "regular-round",
+  all: "all",
+};
+
 export function DecisionRoundAdmin({
   rows,
   reads,
@@ -98,7 +104,11 @@ export function DecisionRoundAdmin({
         <div>
           <p className="font-display text-[15px] font-semibold">Decision round</p>
           <p className="mt-1 text-[13px] text-muted">
-            Priority includes on-time first submissions that have never been reopened for revision.
+            {scope === "priority"
+              ? "Priority includes on-time first submissions that have never been reopened for revision."
+              : scope === "regular"
+                ? "Regular includes later submissions and every application reopened for revision."
+                : "All applications combines the priority and regular rounds."}
           </p>
         </div>
         <select
@@ -108,6 +118,7 @@ export function DecisionRoundAdmin({
           aria-label="Decision round"
         >
           <option value="priority">Priority round</option>
+          <option value="regular">Regular round</option>
           <option value="all">All applications</option>
         </select>
       </div>
@@ -278,7 +289,7 @@ export function ReleasePanel({ counts, scope }: { counts: UnreleasedCounts; scop
     <div className="card flex flex-col gap-4 p-6 sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="font-display text-[15px] font-semibold">Release {scope === "priority" ? "priority-round" : "all"} decisions</h2>
+          <h2 className="font-display text-[15px] font-semibold">Release {SCOPE_LABEL[scope]} decisions</h2>
           <p className="mt-1 max-w-xl text-[13.5px] text-muted">
             Shows every marked decision on that hacker&apos;s dashboard. No email is sent: point
             hackers at portal.immersethebay.org/dashboard. Accepted hackers must RSVP by October

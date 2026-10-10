@@ -8,9 +8,10 @@ import { outcome } from "./review";
  *   priority  first submitted on or before NEXT_PUBLIC_PRIORITY_DEADLINE and
  *             never revised. A revised application is reviewed fresh in the
  *             regular round, however early it was first submitted.
+ *   regular   later submissions plus every reopened revision.
  *   all       every application, regardless of round.
  */
-export const SCOPES = ["priority", "all"] as const;
+export const SCOPES = ["priority", "regular", "all"] as const;
 export type Scope = (typeof SCOPES)[number];
 
 export function isScope(value: unknown): value is Scope {
@@ -40,7 +41,8 @@ export function isPriority(f: RoundFacts, deadline: Date | null): boolean {
 }
 
 export function inScope(priority: boolean, scope: Scope): boolean {
-  return scope === "all" || priority;
+  if (scope === "all") return true;
+  return scope === "priority" ? priority : !priority;
 }
 
 export type CutoffRow = {

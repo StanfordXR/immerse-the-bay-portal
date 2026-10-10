@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { isPriority, normalizeTimestamp, planCutoff, planRelease } from "./rounds";
+import { inScope, isPriority, normalizeTimestamp, planCutoff, planRelease } from "./rounds";
 
 describe("decision rounds", () => {
   test("priority is based on first submission and excludes revisions", () => {
@@ -15,6 +15,15 @@ describe("decision rounds", () => {
     assert.equal(normalizeTimestamp(iso)?.toISOString(), iso);
     assert.equal(normalizeTimestamp(new Date(iso))?.toISOString(), iso);
     assert.equal(normalizeTimestamp("not-a-date"), null);
+  });
+
+  test("regular scope is the complement of priority scope", () => {
+    assert.equal(inScope(true, "priority"), true);
+    assert.equal(inScope(false, "priority"), false);
+    assert.equal(inScope(true, "regular"), false);
+    assert.equal(inScope(false, "regular"), true);
+    assert.equal(inScope(true, "all"), true);
+    assert.equal(inScope(false, "all"), true);
   });
 
   test("cutoff skips incomplete reads, drafts, releases, and out-of-scope rows", () => {
@@ -37,5 +46,10 @@ describe("decision rounds", () => {
       { id: "b", decision: "rejected", priority: false },
       { id: "c", decision: null, priority: true },
     ], "priority"), { accepted: ["a"], rejected: [] });
+    assert.deepEqual(planRelease([
+      { id: "a", decision: "accepted", priority: true },
+      { id: "b", decision: "rejected", priority: false },
+      { id: "c", decision: null, priority: false },
+    ], "regular"), { accepted: [], rejected: ["b"] });
   });
 });

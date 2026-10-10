@@ -4,6 +4,7 @@ import { Brand } from "@/components/brand";
 import { DecisionRoundAdmin, ReadsPerApplication, type UnreleasedCounts } from "@/components/review-admin";
 import { getReadsPerApplication, getReviewResults } from "@/lib/db/review-sql";
 import { requireAdmin } from "@/lib/dal";
+import type { Scope } from "@/lib/rounds";
 
 export const metadata: Metadata = { title: "Scores" };
 
@@ -14,14 +15,15 @@ export default async function AdminReviewPage() {
     getReadsPerApplication(),
     getReviewResults(),
   ]);
-  const unreleasedCounts: Record<"priority" | "all", UnreleasedCounts> = {
+  const unreleasedCounts: Record<Scope, UnreleasedCounts> = {
     priority: { accepted: 0, rejected: 0 },
+    regular: { accepted: 0, rejected: 0 },
     all: { accepted: 0, rejected: 0 },
   };
   for (const row of results) {
     if (row.released || (row.decision !== "accepted" && row.decision !== "rejected")) continue;
     unreleasedCounts.all[row.decision]++;
-    if (row.priority) unreleasedCounts.priority[row.decision]++;
+    unreleasedCounts[row.priority ? "priority" : "regular"][row.decision]++;
   }
 
   const complete = results.filter((r) => r.reads >= reads).length;
