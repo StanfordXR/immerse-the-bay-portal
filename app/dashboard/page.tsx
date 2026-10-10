@@ -70,8 +70,7 @@ export default async function DashboardPage({
   const completeSteps = progress.filter(Boolean).length;
   const firstName =
     row?.firstName || user.name?.split(" ")[0] || "hacker";
-  const confirmed =
-    row?.stage === "decided" && row.decision === "accepted" && row.rsvp === "confirmed";
+  const accepted = row?.stage === "decided" && row.decision === "accepted";
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-5 sm:px-6">
@@ -295,7 +294,7 @@ export default async function DashboardPage({
           />
         )}
 
-        {!confirmed && (
+        {!accepted && (
           <section className="card p-6 sm:p-7">
             <h3 className="font-display mb-4 text-[15px] font-semibold">Details</h3>
             <dl className="grid gap-x-6 gap-y-3.5 text-[14px] sm:grid-cols-[11rem_1fr]">
