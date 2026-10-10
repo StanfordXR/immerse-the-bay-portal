@@ -5,6 +5,7 @@ import { useMemo, useState, useTransition } from "react";
 import { setReadsPerApplication } from "@/lib/actions/review";
 import { applyCutoff, releaseDecisions } from "@/lib/actions/decision";
 import { MAX_READS_PER_APPLICATION, outcome, type Outcome } from "@/lib/review";
+import { inScope, planCutoff, type Scope } from "@/lib/rounds";
 
 /** Reads-per-application picker on /admin/review. Saves on change. */
 export function ReadsPerApplication({ initial }: { initial: number }) {
@@ -64,6 +65,8 @@ export type ThresholdRow = {
   under18: boolean;
   /** Decision already released, so "Apply this cutoff" leaves it alone. */
   released: boolean;
+  stage: string;
+  priority: boolean;
 };
 
 const OUTCOME_STYLE: Record<Outcome, string> = {
@@ -77,23 +80,60 @@ const OUTCOME_STYLE: Record<Outcome, string> = {
  * the export downloads exactly what's shown. "Apply this cutoff" marks the
  * decisions; the release panel publishes them.
  */
-export function ThresholdPanel({ rows, reads }: { rows: ThresholdRow[]; reads: number }) {
+export type UnreleasedCounts = { accepted: number; rejected: number };
+
+export function DecisionRoundAdmin({
+  rows,
+  reads,
+  unreleasedCounts,
+}: {
+  rows: ThresholdRow[];
+  reads: number;
+  unreleasedCounts: Record<Scope, UnreleasedCounts>;
+}) {
+  const [scope, setScope] = useState<Scope>("priority");
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="card flex flex-wrap items-center justify-between gap-4 p-4 sm:px-6">
+        <div>
+          <p className="font-display text-[15px] font-semibold">Decision round</p>
+          <p className="mt-1 text-[13px] text-muted">
+            Priority includes on-time first submissions that have never been reopened for revision.
+          </p>
+        </div>
+        <select
+          className="field !w-auto !py-2 text-[14px]"
+          value={scope}
+          onChange={(event) => setScope(event.target.value as Scope)}
+          aria-label="Decision round"
+        >
+          <option value="priority">Priority round</option>
+          <option value="all">All applications</option>
+        </select>
+      </div>
+      <ReleasePanel counts={unreleasedCounts[scope]} scope={scope} />
+      <ThresholdPanel rows={rows} reads={reads} scope={scope} />
+    </div>
+  );
+}
+
+export function ThresholdPanel({ rows, reads, scope }: { rows: ThresholdRow[]; reads: number; scope: Scope }) {
   const [threshold, setThreshold] = useState(3);
+  const scopedRows = useMemo(() => rows.filter((r) => inScope(r.priority, scope)), [rows, scope]);
 
   const counts = useMemo(() => {
     const c: Record<Outcome, number> = { accepted: 0, rejected: 0, unscored: 0 };
-    for (const r of rows) c[outcome(r, threshold)]++;
+    for (const r of scopedRows) c[outcome(r, threshold)]++;
     return c;
-  }, [rows, threshold]);
+  }, [scopedRows, threshold]);
 
-  const markable = useMemo(() => {
-    const c: Record<Outcome, number> = { accepted: 0, rejected: 0, unscored: 0 };
-    for (const r of rows) if (!r.released) c[outcome(r, threshold)]++;
-    return c;
-  }, [rows, threshold]);
+  const markable = useMemo(
+    () => planCutoff(rows, { threshold, readsTarget: reads, scope }),
+    [rows, threshold, reads, scope],
+  );
 
   const scored = counts.accepted + counts.rejected;
-  const partial = rows.filter((r) => r.reads > 0 && r.reads < reads).length;
+  const partial = markable.tooFewReads.length;
 
   return (
     <div className="flex flex-col gap-5">
@@ -104,7 +144,7 @@ export function ThresholdPanel({ rows, reads }: { rows: ThresholdRow[]; reads: n
             <span className="font-mono text-cyan">{threshold.toFixed(2)}</span>
           </label>
           <a
-            href={`/admin/review/export?min=${threshold.toFixed(2)}`}
+            href={`/admin/review/export?min=${threshold.toFixed(2)}&scope=${scope}`}
             className="btn-ghost !py-2 text-[14px]"
           >
             Export decisions CSV ↓
@@ -141,7 +181,11 @@ export function ThresholdPanel({ rows, reads }: { rows: ThresholdRow[]; reads: n
             </div>
           ))}
         </dl>
-        <ApplyCutoff threshold={threshold} counts={markable} />
+        <ApplyCutoff
+          threshold={threshold}
+          scope={scope}
+          counts={{ accepted: markable.accepted.length, rejected: markable.rejected.length, unscored: markable.unscored.length }}
+        />
         {partial > 0 && (
           <p className="text-[13px] text-muted">
             {partial} scored application{partial === 1 ? " has" : "s have"} fewer than{" "}
@@ -162,14 +206,14 @@ export function ThresholdPanel({ rows, reads }: { rows: ThresholdRow[]; reads: n
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && (
+            {scopedRows.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-faint">
                   No submitted applications yet.
                 </td>
               </tr>
             )}
-            {rows.map((r) => {
+            {scopedRows.map((r) => {
               const o = outcome(r, threshold);
               return (
                 <tr key={r.id} className="border-b border-line/50 last:border-0">
@@ -204,13 +248,11 @@ export function ThresholdPanel({ rows, reads }: { rows: ThresholdRow[]; reads: n
   );
 }
 
-export type UnreleasedCounts = { accepted: number; rejected: number };
-
 /**
  * Publish marked decisions to hackers' dashboards. Sends no email: organizers
  * email hackers themselves. Irreversible, so it takes a second click.
  */
-export function ReleasePanel({ counts }: { counts: UnreleasedCounts }) {
+export function ReleasePanel({ counts, scope }: { counts: UnreleasedCounts; scope: Scope }) {
   const [confirming, setConfirming] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
@@ -219,7 +261,7 @@ export function ReleasePanel({ counts }: { counts: UnreleasedCounts }) {
   function release() {
     setMessage(null);
     startTransition(async () => {
-      const result = await releaseDecisions().catch(() => ({
+      const result = await releaseDecisions(scope).catch(() => ({
         ok: false as const,
         error: "Network hiccup. Try again.",
       }));
@@ -236,7 +278,7 @@ export function ReleasePanel({ counts }: { counts: UnreleasedCounts }) {
     <div className="card flex flex-col gap-4 p-6 sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="font-display text-[15px] font-semibold">Release decisions</h2>
+          <h2 className="font-display text-[15px] font-semibold">Release {scope === "priority" ? "priority-round" : "all"} decisions</h2>
           <p className="mt-1 max-w-xl text-[13.5px] text-muted">
             Shows every marked decision on that hacker&apos;s dashboard. No email is sent: point
             hackers at portal.immersethebay.org/dashboard. Accepted hackers get a week to RSVP.
@@ -284,7 +326,7 @@ export function ReleasePanel({ counts }: { counts: UnreleasedCounts }) {
 }
 
 /** "Apply this cutoff": marks every scored, unreleased application. Two clicks. */
-function ApplyCutoff({ threshold, counts }: { threshold: number; counts: Record<Outcome, number> }) {
+function ApplyCutoff({ threshold, counts, scope }: { threshold: number; counts: Record<Outcome, number>; scope: Scope }) {
   const [confirming, setConfirming] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
@@ -292,14 +334,14 @@ function ApplyCutoff({ threshold, counts }: { threshold: number; counts: Record<
   function apply() {
     setMessage(null);
     startTransition(async () => {
-      const result = await applyCutoff(threshold).catch(() => ({
+      const result = await applyCutoff(threshold, scope).catch(() => ({
         ok: false as const,
         error: "Network hiccup. Try again.",
       }));
       setConfirming(false);
       setMessage(
         result.ok
-          ? { ok: true, text: `Marked ${result.accepted} accepted and ${result.rejected} rejected. Release them from the panel above.` }
+          ? { ok: true, text: `Marked ${result.accepted} accepted and ${result.rejected} rejected.${result.skipped ? ` Left ${result.skipped} without enough completed reviews unchanged.` : ""} Release them from the panel above.` }
           : { ok: false, text: result.error },
       );
     });

@@ -1,7 +1,7 @@
-import { desc } from "drizzle-orm";
+import { and, desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application, user } from "@/lib/db/schema";
-import { applicantOwnedOnly } from "@/lib/db/applicant-filter";
+import { applicantOwnedOnly, excludesTestAccounts } from "@/lib/db/applicant-filter";
 import { getAuthorizedUser } from "@/lib/dal";
 import { toCsv } from "@/lib/csv";
 import { eq } from "drizzle-orm";
@@ -43,7 +43,7 @@ export async function GET(): Promise<Response> {
     })
     .from(application)
     .innerJoin(user, eq(application.userId, user.id))
-    .where(applicantOwnedOnly)
+    .where(and(applicantOwnedOnly, excludesTestAccounts))
     .orderBy(desc(application.submittedAt));
 
   const header = [

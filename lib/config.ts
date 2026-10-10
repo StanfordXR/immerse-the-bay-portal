@@ -84,3 +84,8 @@ export function ageAtEvent(dob: string | null): number | null {
 
 /** Accepted hackers have this long after their decision is released to RSVP. */
 export const RSVP_WINDOW_DAYS = 7;
+
+/** Interest form for PICO, Immerse the Bay's Diamond sponsor. */
+export const VIBELAB_INTEREST_FORM_URL =
+  process.env.NEXT_PUBLIC_VIBELAB_INTEREST_FORM_URL ??
+  "https://forms.gle/5QxFVQXd4ZJEPmje6";

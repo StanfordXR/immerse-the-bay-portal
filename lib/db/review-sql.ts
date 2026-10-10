@@ -1,8 +1,9 @@
 import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { application, review, reviewConfig, user } from "@/lib/db/schema";
-import { applicantOwnedOnly } from "@/lib/db/applicant-filter";
-import { ageAtEvent } from "@/lib/config";
+import { application, applicationEvent, review, reviewConfig, user } from "@/lib/db/schema";
+import { decisionPoolOnly } from "@/lib/db/applicant-filter";
+import { ageAtEvent, priorityDeadline } from "@/lib/config";
+import { isPriority } from "@/lib/rounds";
 import { DEFAULT_READS_PER_APPLICATION, RUBRIC } from "@/lib/review";
 
 /**
@@ -48,12 +49,22 @@ export async function getReviewResults() {
       schoolName: application.schoolName,
       dateOfBirth: application.dateOfBirth,
       submittedAt: application.submittedAt,
+      stage: application.stage,
       decision: application.decision,
       released: sql<boolean>`${application.stage} = 'decided'`,
       reads: sql<number>`count(${review.id})::int`,
       score: sql<number | null>`avg(${reviewScoreSql})::float8`,
       spread: sql<number | null>`(max(${reviewScoreSql}) - min(${reviewScoreSql}))::float8`,
       comments: sql<string[]>`coalesce(array_agg(${review.comment}) filter (where ${review.comment} is not null), '{}')`,
+      firstSubmittedAt: sql<Date | null>`coalesce(
+        (select min(ae.at) from ${applicationEvent} ae
+          where ae.application_id = "application"."id"
+            and ae.kind in ('submitted', 'resubmitted')),
+        ${application.submittedAt}
+      )`,
+      revisions: sql<number>`(select count(*)::int from ${applicationEvent} ae
+        where ae.application_id = "application"."id"
+          and ae.kind in ('revision_archived', 'reopened_after_rejection'))`,
     })
     .from(application)
     .innerJoin(user, eq(user.id, application.userId))
@@ -61,13 +72,24 @@ export async function getReviewResults() {
       review,
       and(eq(review.applicationId, application.id), isNotNull(review.submittedAt)),
     )
-    .where(and(isNotNull(application.submittedAt), applicantOwnedOnly))
+    .where(and(isNotNull(application.submittedAt), decisionPoolOnly))
     .groupBy(application.id, user.id)
     .orderBy(sql`avg(${reviewScoreSql}) desc nulls last`, desc(application.submittedAt));
 
-  return rows.map(({ dateOfBirth, ...r }) => {
+  const deadline = priorityDeadline();
+  return rows.map(({ dateOfBirth, firstSubmittedAt, revisions, ...r }) => {
     const age = ageAtEvent(dateOfBirth);
-    return { ...r, age, under18: age !== null && age < 18 };
+    return {
+      ...r,
+      firstSubmittedAt,
+      revisions,
+      priority: isPriority(
+        { firstSubmittedMs: firstSubmittedAt?.getTime() ?? null, revisions },
+        deadline,
+      ),
+      age,
+      under18: age !== null && age < 18,
+    };
   });
 }
 

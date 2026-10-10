@@ -3,6 +3,7 @@ import { getAuthorizedUser } from "@/lib/dal";
 import { toCsv } from "@/lib/csv";
 import { getReviewResults } from "@/lib/db/review-sql";
 import { outcome } from "@/lib/review";
+import { inScope, isScope } from "@/lib/rounds";
 
 /**
  * Decisions CSV at a score cutoff (`?min=3.25`), one row per submitted
@@ -18,8 +19,12 @@ export async function GET(req: NextRequest): Promise<Response> {
   if (!Number.isFinite(threshold) || threshold < 1 || threshold > 5) {
     return new Response("?min must be a score between 1 and 5", { status: 400 });
   }
+  const requestedScope = req.nextUrl.searchParams.get("scope") ?? "priority";
+  if (!isScope(requestedScope)) return new Response("?scope must be priority or all", { status: 400 });
 
-  const rows = (await getReviewResults()).map((r) => ({ ...r, outcome: outcome(r, threshold) }));
+  const rows = (await getReviewResults())
+    .filter((r) => inScope(r.priority, requestedScope))
+    .map((r) => ({ ...r, outcome: outcome(r, threshold) }));
   const order = { accepted: 0, rejected: 1, unscored: 2 } as const;
   rows.sort((a, b) => order[a.outcome] - order[b.outcome]);
 
@@ -42,7 +47,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   return new Response(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="itb-2026-decisions-min${threshold.toFixed(2)}-${new Date().toISOString().slice(0, 10)}.csv"`,
+      "Content-Disposition": `attachment; filename="itb-2026-${requestedScope}-decisions-min${threshold.toFixed(2)}-${new Date().toISOString().slice(0, 10)}.csv"`,
       "Cache-Control": "no-store",
     },
   });

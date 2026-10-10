@@ -141,3 +141,20 @@ export async function sendSubmissionConfirmation(
   });
 }
 
+export async function sendRevisionConfirmation(to: string, firstName: string): Promise<void> {
+  const portal = process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org";
+  await sendEmail({
+    to,
+    subject: "Revised application received: Immerse the Bay 2026",
+    text: [
+      `Hi ${firstName},`,
+      "",
+      "We received your revised Immerse the Bay 2026 application. It is back in the review queue for a fresh read.",
+      "",
+      `View your application: ${portal}/dashboard`,
+      "",
+      "Warmly,",
+      "The Stanford XR team",
+    ].join("\n"),
+  });
+}

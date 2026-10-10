@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { DeclineSpot } from "@/components/rsvp-actions";
-import { reviseApplication } from "@/lib/actions/decision";
+import { ReviseApplicationButton } from "@/components/revise-application-button";
+import { VIBELAB_INTEREST_FORM_URL } from "@/lib/config";
 
 type Rsvp = "pending" | "confirmed" | "declined" | "expired";
 
@@ -105,6 +106,7 @@ export function DecisionCard(props: DecisionCardProps) {
               </Link>
               <DeclineSpot />
             </div>
+            <VibeLabInvite confirmed={false} />
           </>
         )}
 
@@ -126,6 +128,7 @@ export function DecisionCard(props: DecisionCardProps) {
                 <DeclineSpot subtle />
               </div>
             )}
+            <VibeLabInvite confirmed />
           </>
         )}
 
@@ -163,11 +166,7 @@ export function DecisionCard(props: DecisionCardProps) {
                   <span className="font-semibold text-moonlit">{closeLabel}</span>. A resubmitted
                   application goes back into review as a fresh read.
                 </p>
-                <form action={reviseApplication} className="mt-6">
-                  <button type="submit" className="btn-primary">
-                    Revise my application
-                  </button>
-                </form>
+                <ReviseApplicationButton />
               </>
             ) : (
               <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted">
@@ -191,6 +190,30 @@ export function DecisionCard(props: DecisionCardProps) {
         )}
       </div>
     </section>
+  );
+}
+
+function VibeLabInvite({ confirmed }: { confirmed: boolean }) {
+  return (
+    <div className="mt-7 border-t border-line pt-6">
+      <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan">
+        Diamond sponsor opportunity
+      </p>
+      <h3 className="font-display mt-2 text-lg font-semibold">Build with PICO in VibeLab</h3>
+      <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-muted">
+        {confirmed
+          ? "Your hackathon spot is confirmed. You can also join PICO's month-long VibeLab program, get technical support, and earn up to $1,000 for a qualifying spatial app."
+          : "Confirm your hackathon spot first. Then explore PICO's month-long VibeLab program, where qualifying spatial apps can earn up to $1,000."}
+      </p>
+      <a
+        href={VIBELAB_INTEREST_FORM_URL}
+        target="_blank"
+        rel="noreferrer"
+        className="btn-ghost mt-4 inline-flex !py-2 text-[14px]"
+      >
+        Explore PICO VibeLab ↗
+      </a>
+    </div>
   );
 }
 
