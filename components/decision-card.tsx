@@ -94,14 +94,15 @@ export function DecisionCard(props: DecisionCardProps) {
             <h2 className="font-display text-3xl font-bold sm:text-4xl">
               You&apos;re in, {firstName}.
             </h2>
-            <div className="mt-4 max-w-2xl space-y-3 text-[15px] leading-relaxed text-moonlit/90">
+            <div className="mt-4 max-w-2xl space-y-4 text-[15px] leading-relaxed text-moonlit/90">
               <p>
-                Congratulations! You&apos;ve been accepted to <strong>Immerse the Bay 2026</strong>,
-                November 13–15 at Stanford University.
+                Congratulations! You&apos;ve been accepted to{" "}
+                <strong>Immerse the Bay 2026.</strong>
               </p>
               <p>
                 Every application was manually reviewed by at least two human reviewers, and we
-                think you&apos;ll do great at Immerse the Bay.
+                think you&apos;ll do great at Immerse the Bay. It will be held fully in-person from
+                November 13–15 at Stanford University.
               </p>
               <p>
                 Confirm your spot to let us know you&apos;re coming by{" "}
@@ -126,8 +127,7 @@ export function DecisionCard(props: DecisionCardProps) {
             </h2>
             <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-moonlit/90">
               Immerse the Bay takes place November 13–15, 2026 at Stanford University. Check-in
-              begins at noon on Friday, November 13th. If you have any questions, please contact{" "}
-              {mailto}.
+              begins at noon on Friday, November 13th.
             </p>
             <VibeLabInvite />
             {rsvpStillOpen && (
@@ -219,6 +219,11 @@ export function DecisionCard(props: DecisionCardProps) {
         )}
         </div>
       </section>
+      {props.decision === "accepted" && (
+        <p className="px-1 text-[14px] text-muted">
+          Questions? {mailto}
+        </p>
+      )}
     </>
   );
 }
