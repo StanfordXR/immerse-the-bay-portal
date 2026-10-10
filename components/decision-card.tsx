@@ -71,16 +71,17 @@ export function DecisionCard(props: DecisionCardProps) {
   const rsvpStillOpen = isAhead(rsvpDeadline);
 
   return (
-    <section className="card overflow-hidden">
-      {view === "invited" && <Confetti />}
-      <div
-        className="p-6 sm:p-8"
-        style={{
-          background: celebrate
-            ? "radial-gradient(42rem 18rem at 15% -40%, color-mix(in oklab, var(--color-cyan) 20%, transparent), transparent 70%), radial-gradient(36rem 16rem at 100% 0%, color-mix(in oklab, var(--color-magenta) 16%, transparent), transparent 70%)"
-            : `radial-gradient(40rem 14rem at 50% -60%, color-mix(in oklab, ${accent} 12%, transparent), transparent 70%)`,
-        }}
-      >
+    <>
+      <section className="card overflow-hidden">
+        {view === "invited" && <Confetti />}
+        <div
+          className="p-6 sm:p-8"
+          style={{
+            background: celebrate
+              ? "radial-gradient(42rem 18rem at 15% -40%, color-mix(in oklab, var(--color-cyan) 20%, transparent), transparent 70%), radial-gradient(36rem 16rem at 100% 0%, color-mix(in oklab, var(--color-magenta) 16%, transparent), transparent 70%)"
+              : `radial-gradient(40rem 14rem at 50% -60%, color-mix(in oklab, ${accent} 12%, transparent), transparent 70%)`,
+          }}
+        >
         <p
           className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em]"
           style={{ color: accent }}
@@ -106,19 +107,18 @@ export function DecisionCard(props: DecisionCardProps) {
               </Link>
               <DeclineSpot />
             </div>
-            <VibeLabInvite confirmed={false} />
           </>
         )}
 
         {view === "confirmed" && (
           <>
             <h2 className="font-display text-3xl font-bold sm:text-4xl">
-              You&apos;re confirmed. See you there!
+              You&apos;re confirmed, see you there.
             </h2>
             <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-moonlit/90">
-              Your spot at Immerse the Bay 2026 is locked in. Arrive before the opening ceremony
-              at 7pm on Friday, November 13. We&apos;ll email check-in details, the schedule,
-              and what to bring closer to the event.
+              Immerse the Bay takes place November 13–15, 2026 at Stanford University. Check-in
+              begins at noon on Friday, November 13th. If you have any questions, please contact{" "}
+              {mailto}.
             </p>
             {rsvpStillOpen && (
               <div className="mt-6 flex flex-col gap-3">
@@ -128,7 +128,6 @@ export function DecisionCard(props: DecisionCardProps) {
                 <DeclineSpot subtle />
               </div>
             )}
-            <VibeLabInvite confirmed />
           </>
         )}
 
@@ -191,22 +190,26 @@ export function DecisionCard(props: DecisionCardProps) {
             </p>
           </>
         )}
-      </div>
-    </section>
+        </div>
+      </section>
+      {view === "confirmed" && <VibeLabInvite />}
+    </>
   );
 }
 
-function VibeLabInvite({ confirmed }: { confirmed: boolean }) {
+function VibeLabInvite() {
   return (
-    <div className="mt-7 border-t border-line pt-6">
+    <section className="card p-6 sm:p-8">
       <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan">
         Diamond sponsor opportunity
       </p>
       <h3 className="font-display mt-2 text-lg font-semibold">Build with PICO in VibeLab</h3>
       <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-muted">
-        {confirmed
-          ? "Your hackathon spot is confirmed. You can also join PICO's month-long VibeLab program, get technical support, and earn up to $1,000 for a qualifying spatial app."
-          : "Confirm your hackathon spot first. Then explore PICO's month-long VibeLab program, where qualifying spatial apps can earn up to $1,000."}
+        Join PICO&apos;s month-long VibeLab program, get technical support, and earn up to $1,000
+        for a qualifying spatial app.
+      </p>
+      <p className="mt-3 text-[14px] font-semibold text-moonlit">
+        Apply by Friday, October 16 at 11:59 PM PDT.
       </p>
       <a
         href={VIBELAB_INTEREST_FORM_URL}
@@ -216,7 +219,7 @@ function VibeLabInvite({ confirmed }: { confirmed: boolean }) {
       >
         Explore PICO VibeLab ↗
       </a>
-    </div>
+    </section>
   );
 }
 

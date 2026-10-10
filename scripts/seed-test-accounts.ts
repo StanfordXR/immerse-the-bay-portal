@@ -42,11 +42,12 @@ if (!APPLY) {
   process.exit(0);
 }
 
-const [{ and, eq }, { hashPassword }, { db }, schema] = await Promise.all([
+const [{ and, eq }, { hashPassword }, { db }, schema, { RSVP_DEADLINE }] = await Promise.all([
   import("drizzle-orm"),
   import("@better-auth/utils/password"),
   import("../lib/db"),
   import("../lib/db/schema"),
+  import("../lib/config"),
 ]);
 const { account, application, applicationEvent, applicationTag, tag, user } = schema;
 
@@ -127,7 +128,7 @@ for (const fixture of fixtures) {
       decidedAt: now,
       submittedAt: now,
       rsvp: fixture.rsvp,
-      rsvpDeadline: fixture.rsvp ? new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) : null,
+      rsvpDeadline: fixture.rsvp ? RSVP_DEADLINE : null,
     })
     .returning({ id: application.id });
 

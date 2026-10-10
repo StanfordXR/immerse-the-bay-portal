@@ -63,6 +63,24 @@ export function ConfirmSpotForm({ initial, editing }: { initial: ConfirmSpotInit
     <form onSubmit={submit} noValidate className="flex flex-col gap-6">
       <section className="card flex flex-col gap-5 p-6 sm:p-7">
         <h2 className="font-display text-[15px] font-semibold">Event details</h2>
+        <Field
+          label="Name on badge"
+          hint="Use your full name or the name you'd like printed on your event badge."
+          error={errors.badgeName}
+        >
+          {({ id, describedBy, invalid }) => (
+            <input
+              id={id}
+              autoComplete="name"
+              className="field"
+              aria-describedby={describedBy}
+              aria-invalid={invalid}
+              maxLength={120}
+              value={form.badgeName}
+              onChange={(e) => set({ badgeName: e.target.value })}
+            />
+          )}
+        </Field>
         <Field label="T-shirt size" error={errors.tshirtSize}>
           {({ id, describedBy, invalid }) => (
             <select
@@ -127,7 +145,7 @@ export function ConfirmSpotForm({ initial, editing }: { initial: ConfirmSpotInit
               />
             )}
           </Field>
-          <Field label="Phone number" hint="For day-of contact" optional error={errors.phone}>
+          <Field label="Phone number" optional error={errors.phone}>
             {({ id, describedBy, invalid }) => (
               <input
                 id={id}

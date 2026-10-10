@@ -15,7 +15,8 @@
     "db:studio": "drizzle-kit studio",
     "preflight": "node --env-file=.env.local scripts/preflight.mjs",
     "test": "bun test",
-    "seed:test-accounts": "bun scripts/seed-test-accounts.ts"
+    "seed:test-accounts": "bun scripts/seed-test-accounts.ts",
+    "set:rsvp-deadline": "bun scripts/set-rsvp-deadline.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

@@ -70,6 +70,8 @@ export default async function DashboardPage({
   const completeSteps = progress.filter(Boolean).length;
   const firstName =
     row?.firstName || user.name?.split(" ")[0] || "hacker";
+  const confirmed =
+    row?.stage === "decided" && row.decision === "accepted" && row.rsvp === "confirmed";
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-5 sm:px-6">
@@ -293,34 +295,34 @@ export default async function DashboardPage({
           />
         )}
 
-        <section className="card p-6 sm:p-7">
-          <h3 className="font-display mb-4 text-[15px] font-semibold">
-            Details
-          </h3>
-          <dl className="grid gap-x-6 gap-y-3.5 text-[14px] sm:grid-cols-[11rem_1fr]">
-            <dt className="text-faint">Event</dt>
-            <dd className="text-moonlit/90">
-              November 13–15, 2026 · Stanford University
-            </dd>
-            <dt className="text-faint">Priority deadline</dt>
-            <dd className="text-moonlit/90">{priorityDeadlineLabel()}</dd>
-            <dt className="text-faint">Priority decisions</dt>
-            <dd className="text-moonlit/90">By {priorityDecisionsLabel()}</dd>
-            <dt className="text-faint">Final deadline</dt>
-            <dd className="text-moonlit/90">{closeDateLabel()}</dd>
-            <dt className="text-faint">Final decisions</dt>
-            <dd className="text-moonlit/90">By {finalDecisionsLabel()}</dd>
-            <dt className="text-faint">Questions</dt>
-            <dd>
-              <a
-                href="mailto:admin@stanfordxr.org"
-                className="text-cyan underline-offset-2 hover:underline"
-              >
-                admin@stanfordxr.org
-              </a>
-            </dd>
-          </dl>
-        </section>
+        {!confirmed && (
+          <section className="card p-6 sm:p-7">
+            <h3 className="font-display mb-4 text-[15px] font-semibold">Details</h3>
+            <dl className="grid gap-x-6 gap-y-3.5 text-[14px] sm:grid-cols-[11rem_1fr]">
+              <dt className="text-faint">Event</dt>
+              <dd className="text-moonlit/90">
+                November 13–15, 2026 · Stanford University
+              </dd>
+              <dt className="text-faint">Priority deadline</dt>
+              <dd className="text-moonlit/90">{priorityDeadlineLabel()}</dd>
+              <dt className="text-faint">Priority decisions</dt>
+              <dd className="text-moonlit/90">By {priorityDecisionsLabel()}</dd>
+              <dt className="text-faint">Final deadline</dt>
+              <dd className="text-moonlit/90">{closeDateLabel()}</dd>
+              <dt className="text-faint">Final decisions</dt>
+              <dd className="text-moonlit/90">By {finalDecisionsLabel()}</dd>
+              <dt className="text-faint">Questions</dt>
+              <dd>
+                <a
+                  href="mailto:admin@stanfordxr.org"
+                  className="text-cyan underline-offset-2 hover:underline"
+                >
+                  admin@stanfordxr.org
+                </a>
+              </dd>
+            </dl>
+          </section>
+        )}
       </div>
     </main>
   );

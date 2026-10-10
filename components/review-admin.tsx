@@ -281,8 +281,8 @@ export function ReleasePanel({ counts, scope }: { counts: UnreleasedCounts; scop
           <h2 className="font-display text-[15px] font-semibold">Release {scope === "priority" ? "priority-round" : "all"} decisions</h2>
           <p className="mt-1 max-w-xl text-[13.5px] text-muted">
             Shows every marked decision on that hacker&apos;s dashboard. No email is sent: point
-            hackers at portal.immersethebay.org/dashboard. Accepted hackers get a week to RSVP.
-            Released decisions are locked.
+            hackers at portal.immersethebay.org/dashboard. Accepted hackers must RSVP by October
+            16 at 11:59 PM PDT. Released decisions are locked.
           </p>
         </div>
         {total > 0 &&
