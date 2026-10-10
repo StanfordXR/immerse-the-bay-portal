@@ -1,10 +1,14 @@
 import Image from "next/image";
 import { Brand } from "@/components/brand";
+import { ApplicationTimeline, type TimelineItem } from "@/components/application-timeline";
 import { HeaderAuthLink } from "@/components/header-auth-link";
 import { HeroCta } from "@/components/hero-cta";
 import {
+  applicationsClose,
   closeDateLabel,
+  EVENT_START,
   finalDecisionsLabel,
+  priorityDeadline,
   priorityDeadlineLabel,
   priorityDecisionsLabel,
 } from "@/lib/config";
@@ -14,32 +18,34 @@ import {
  * marketing story. This page has two jobs — start an application, and show
  * the application timeline. Nothing else.
  */
+const INITIAL_TIMELINE_NOW = Date.now();
 
 export default function LandingPage() {
-  const timeline = [
+  const eventStart = new Date(`${EVENT_START.toISOString().slice(0, 10)}T00:00:00-08:00`);
+  const timeline: TimelineItem[] = [
     {
       date: "August 14",
       title: "Applications open",
       note: "Reviewed as they arrive",
-      state: "now" as const,
+      at: new Date("2026-08-14T00:00:00-07:00").getTime(),
     },
     {
       date: priorityDeadlineLabel(),
       title: "Priority round closes",
       note: `Decisions by ${priorityDecisionsLabel()}`,
-      state: "future" as const,
+      at: priorityDeadline()?.getTime() ?? eventStart.getTime(),
     },
     {
       date: closeDateLabel(),
       title: "Final round closes",
       note: `Decisions by ${finalDecisionsLabel()}`,
-      state: "future" as const,
+      at: applicationsClose()?.getTime() ?? eventStart.getTime(),
     },
     {
       date: "November 13–15",
       title: "Immerse the Bay",
       note: "Stanford University",
-      state: "future" as const,
+      at: eventStart.getTime(),
     },
   ];
 
@@ -126,49 +132,7 @@ export default function LandingPage() {
           </div>
 
           <div className="pb-16 sm:pb-24">
-            <ol className="relative flex flex-col gap-7 sm:flex-row sm:gap-0">
-              <span
-                aria-hidden
-                className="absolute left-[5px] top-1.5 h-[calc(100%-1rem)] w-px sm:left-0 sm:top-[5px] sm:h-px sm:w-full"
-                style={{
-                  background:
-                    "linear-gradient(to bottom, color-mix(in oklab, var(--color-cyan) 60%, transparent), color-mix(in oklab, var(--color-magenta) 45%, transparent))",
-                }}
-              />
-              {timeline.map((item) => (
-                <li
-                  key={item.title}
-                  className="relative flex-1 pl-7 sm:pl-0 sm:pr-4 sm:pt-4"
-                >
-                  <span
-                    aria-hidden
-                    className="absolute left-0 top-1.5 size-3 rounded-full sm:top-0"
-                    style={{
-                      background:
-                        item.state === "now" ? "var(--color-cyan)" : "rgba(30,22,64,0.9)",
-                      border: `2px solid ${
-                        item.state === "now" ? "var(--color-cyan)" : "var(--color-line-2)"
-                      }`,
-                      boxShadow:
-                        item.state === "now"
-                          ? "0 0 12px color-mix(in oklab, var(--color-cyan) 60%, transparent)"
-                          : undefined,
-                    }}
-                  />
-                  <p
-                    className={`font-mono text-[12px] uppercase tracking-[0.12em] ${
-                      item.state === "now" ? "text-cyan" : "text-moonlit/55"
-                    }`}
-                  >
-                    {item.date}
-                  </p>
-                  <p className="mt-0.5 text-[15.5px] font-semibold text-moonlit">
-                    {item.title}
-                  </p>
-                  <p className="text-[13.5px] text-moonlit/60">{item.note}</p>
-                </li>
-              ))}
-            </ol>
+            <ApplicationTimeline items={timeline} initialNow={INITIAL_TIMELINE_NOW} />
           </div>
         </div>
 

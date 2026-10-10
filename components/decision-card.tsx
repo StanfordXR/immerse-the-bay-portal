@@ -129,6 +129,7 @@ export function DecisionCard(props: DecisionCardProps) {
               begins at noon on Friday, November 13th. If you have any questions, please contact{" "}
               {mailto}.
             </p>
+            <VibeLabInvite />
             {rsvpStillOpen && (
               <div className="mt-6 flex flex-col gap-3">
                 <Link href="/rsvp" className="btn-ghost self-start !py-2 text-[14px]">
@@ -218,33 +219,42 @@ export function DecisionCard(props: DecisionCardProps) {
         )}
         </div>
       </section>
-      {view === "confirmed" && <VibeLabInvite />}
     </>
   );
 }
 
 function VibeLabInvite() {
   return (
-    <section className="card p-6 sm:p-8">
-      <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan">
-        Diamond sponsor opportunity
-      </p>
-      <h3 className="font-display mt-2 text-lg font-semibold">Build with PICO in VibeLab</h3>
-      <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-muted">
-        Join PICO&apos;s month-long VibeLab program, get technical support, and earn up to $1,000
-        for a qualifying spatial app.
-      </p>
-      <p className="mt-3 text-[14px] font-semibold text-moonlit">
-        Apply by Friday, October 16 at 11:59 PM PDT.
-      </p>
-      <a
-        href={VIBELAB_INTEREST_FORM_URL}
-        target="_blank"
-        rel="noreferrer"
-        className="btn-ghost mt-4 inline-flex !py-2 text-[14px]"
-      >
-        Explore PICO VibeLab ↗
-      </a>
+    <section
+      className="mt-6 rounded-xl border border-cyan/45 p-5 shadow-[0_0_28px_color-mix(in_oklab,var(--color-cyan)_10%,transparent)] sm:p-6"
+      style={{
+        background:
+          "linear-gradient(135deg, color-mix(in oklab, var(--color-cyan) 14%, var(--color-abyss)), color-mix(in oklab, var(--color-violet) 12%, var(--color-abyss)))",
+      }}
+    >
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan">
+            PICO · Diamond sponsor opportunity
+          </p>
+          <h3 className="font-display mt-2 text-xl font-semibold">Build with PICO in VibeLab</h3>
+          <p className="mt-2 max-w-lg text-[14px] leading-relaxed text-moonlit/80">
+            Join PICO&apos;s month-long VibeLab program, get technical support, and earn up to
+            $1,000 for a qualifying spatial app.
+          </p>
+          <p className="mt-3 text-[14px] font-semibold text-moonlit">
+            Apply by Friday, October 16 at 11:59 PM PDT.
+          </p>
+        </div>
+        <a
+          href={VIBELAB_INTEREST_FORM_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="btn-primary shrink-0 self-start whitespace-nowrap sm:self-center"
+        >
+          Explore PICO VibeLab ↗
+        </a>
+      </div>
     </section>
   );
 }

@@ -20,7 +20,9 @@ export async function GET(req: NextRequest): Promise<Response> {
     return new Response("?min must be a score between 1 and 5", { status: 400 });
   }
   const requestedScope = req.nextUrl.searchParams.get("scope") ?? "priority";
-  if (!isScope(requestedScope)) return new Response("?scope must be priority or all", { status: 400 });
+  if (!isScope(requestedScope)) {
+    return new Response("?scope must be priority, regular, or all", { status: 400 });
+  }
 
   const rows = (await getReviewResults())
     .filter((r) => inScope(r.priority, requestedScope))
