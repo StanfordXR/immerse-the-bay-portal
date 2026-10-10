@@ -2,14 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq, gt, inArray, ne, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application, applicationEvent, review } from "@/lib/db/schema";
 import { unreleasedDecision } from "@/lib/db/applicant-filter";
-import { getReviewResults } from "@/lib/db/review-sql";
+import { getReadsPerApplication, getReviewResults } from "@/lib/db/review-sql";
 import { getAuthorizedUser } from "@/lib/dal";
 import { ageAtEvent, applicationsAreClosed, RSVP_WINDOW_DAYS } from "@/lib/config";
-import { outcome } from "@/lib/review";
+import { isScope, planCutoff, planRelease, type Scope } from "@/lib/rounds";
 import { rsvpFormSchema, type RsvpDetails } from "@/lib/rsvp";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
@@ -21,19 +21,22 @@ type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
  * cutoff, exactly as the /admin/review slider shows it. Overwrites earlier
  * unreleased marks (including hand edits), so hand-adjust after this, not before.
  */
-export async function applyCutoff(threshold: number): Promise<Result<{ accepted: number; rejected: number }>> {
+export async function applyCutoff(
+  threshold: number,
+  scope: Scope,
+): Promise<Result<{ accepted: number; rejected: number; skipped: number }>> {
   const authz = await getAuthorizedUser("admin");
   if (!authz) return { ok: false, error: "Not authorized." };
   if (!Number.isFinite(threshold) || threshold < 1 || threshold > 5) {
     return { ok: false, error: "Cutoff must be between 1 and 5." };
   }
+  if (!isScope(scope)) return { ok: false, error: "Unknown decision round." };
 
-  const results = await getReviewResults();
-  const ids = { accepted: [] as string[], rejected: [] as string[] };
-  for (const r of results) {
-    const o = outcome(r, threshold);
-    if (o !== "unscored") ids[o].push(r.id);
-  }
+  const [results, readsTarget] = await Promise.all([
+    getReviewResults(),
+    getReadsPerApplication(),
+  ]);
+  const ids = planCutoff(results, { threshold, readsTarget, scope });
 
   const counts = { accepted: 0, rejected: 0 };
   for (const decision of ["accepted", "rejected"] as const) {
@@ -41,7 +44,7 @@ export async function applyCutoff(threshold: number): Promise<Result<{ accepted:
     const marked = await db
       .update(application)
       .set({ decision, decidedAt: new Date() })
-      .where(and(inArray(application.id, ids[decision]), ne(application.stage, "decided")))
+      .where(and(inArray(application.id, ids[decision]), eq(application.stage, "submitted")))
       .returning({ id: application.id });
     counts[decision] = marked.length;
     if (marked.length > 0) {
@@ -51,7 +54,7 @@ export async function applyCutoff(threshold: number): Promise<Result<{ accepted:
           actorId: authz.user.id,
           actorKind: "admin",
           kind: "decision_set",
-          payload: { decision, via: "cutoff", threshold },
+          payload: { decision, via: "cutoff", threshold, scope },
         })),
       );
     }
@@ -59,7 +62,7 @@ export async function applyCutoff(threshold: number): Promise<Result<{ accepted:
 
   revalidatePath("/admin/review");
   revalidatePath("/admin/applications");
-  return { ok: true, ...counts };
+  return { ok: true, ...counts, skipped: ids.tooFewReads.length + ids.unscored.length };
 }
 
 /**
@@ -67,9 +70,20 @@ export async function applyCutoff(threshold: number): Promise<Result<{ accepted:
  * RSVP_WINDOW_DAYS to confirm. Sends no email: organizers email hackers
  * themselves, pointing them at /dashboard. Released decisions are locked.
  */
-export async function releaseDecisions(): Promise<Result<{ released: number }>> {
+export async function releaseDecisions(scope: Scope): Promise<Result<{ released: number }>> {
   const authz = await getAuthorizedUser("admin");
   if (!authz) return { ok: false, error: "Not authorized." };
+  if (!isScope(scope)) return { ok: false, error: "Unknown decision round." };
+
+  const results = await getReviewResults();
+  const releasePlan = planRelease(
+    results
+      .filter((r) => !r.released)
+      .map((r) => ({ id: r.id, decision: r.decision, priority: r.priority })),
+    scope,
+  );
+  const releaseIds = [...releasePlan.accepted, ...releasePlan.rejected];
+  if (releaseIds.length === 0) return { ok: true, released: 0 };
 
   const accepted = sql`${application.decision} = 'accepted'`;
   const released = await db
@@ -79,7 +93,7 @@ export async function releaseDecisions(): Promise<Result<{ released: number }>> 
       rsvp: sql`case when ${accepted} then 'pending'::rsvp_state end`,
       rsvpDeadline: sql`case when ${accepted} then now() + make_interval(days => ${RSVP_WINDOW_DAYS}) end`,
     })
-    .where(unreleasedDecision)
+    .where(and(unreleasedDecision, inArray(application.id, releaseIds)))
     .returning({ id: application.id, decision: application.decision });
 
   if (released.length > 0) {
@@ -89,7 +103,7 @@ export async function releaseDecisions(): Promise<Result<{ released: number }>> 
         actorId: authz.user.id,
         actorKind: "admin",
         kind: "decision_released",
-        payload: { decision },
+        payload: { decision, scope },
       })),
     );
   }
@@ -209,7 +223,7 @@ export async function reviseApplication(): Promise<void> {
   if (!authz) redirect("/sign-in");
 
   const [app] = await db
-    .select({ id: application.id, dateOfBirth: application.dateOfBirth, note: application.decisionNote })
+    .select()
     .from(application)
     .where(
       and(
@@ -223,17 +237,70 @@ export async function reviseApplication(): Promise<void> {
   if (!app || applicationsAreClosed() || (age !== null && age < 18)) redirect("/dashboard");
 
   await db.transaction(async (tx) => {
-    const cleared = await tx.delete(review).where(eq(review.applicationId, app.id)).returning({ id: review.id });
-    await tx
+    const [priorVersions, archivedReviews] = await Promise.all([
+      tx
+        .select({ n: sql<number>`count(*)::int` })
+        .from(applicationEvent)
+        .where(
+          and(
+            eq(applicationEvent.applicationId, app.id),
+            inArray(applicationEvent.kind, ["revision_archived", "reopened_after_rejection"]),
+          ),
+        ),
+      tx
+        .select({
+          reviewerId: review.reviewerId,
+          skills: review.skills,
+          interest: review.interest,
+          personality: review.personality,
+          comment: review.comment,
+          claimedAt: review.claimedAt,
+          submittedAt: review.submittedAt,
+        })
+        .from(review)
+        .where(eq(review.applicationId, app.id)),
+    ]);
+    const [reopened] = await tx
       .update(application)
       .set({ stage: "draft", decision: null, decidedAt: null, decisionNote: null, submittedAt: null })
-      .where(eq(application.id, app.id));
+      .where(
+        and(
+          eq(application.id, app.id),
+          eq(application.stage, "decided"),
+          eq(application.decision, "rejected"),
+        ),
+      )
+      .returning({ id: application.id });
+    if (!reopened) return;
+    await tx.delete(review).where(eq(review.applicationId, app.id));
     await tx.insert(applicationEvent).values({
       applicationId: app.id,
       actorId: authz.user.id,
       actorKind: "applicant",
-      kind: "reopened_after_rejection",
-      payload: { reviewsCleared: cleared.length, decisionNote: app.note },
+      kind: "revision_archived",
+      payload: {
+        version: (priorVersions[0]?.n ?? 0) + 1,
+        submittedAt: app.submittedAt?.toISOString() ?? null,
+        answers: app.answers,
+        decision: app.decision,
+        decidedAt: app.decidedAt?.toISOString() ?? null,
+        decisionNote: app.decisionNote,
+        attribution: {
+          utmSource: app.utmSource,
+          utmMedium: app.utmMedium,
+          utmCampaign: app.utmCampaign,
+          utmContent: app.utmContent,
+          utmTerm: app.utmTerm,
+          referrer: app.referrer,
+          landingPath: app.landingPath,
+          firstTouchAt: app.firstTouchAt?.toISOString() ?? null,
+        },
+        reviews: archivedReviews.map((item) => ({
+          ...item,
+          claimedAt: item.claimedAt.toISOString(),
+          submittedAt: item.submittedAt?.toISOString() ?? null,
+        })),
+      },
     });
   });
 

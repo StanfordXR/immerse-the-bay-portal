@@ -1,31 +1,27 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Brand } from "@/components/brand";
-import { ReadsPerApplication, ReleasePanel, ThresholdPanel, type UnreleasedCounts } from "@/components/review-admin";
+import { DecisionRoundAdmin, ReadsPerApplication, type UnreleasedCounts } from "@/components/review-admin";
 import { getReadsPerApplication, getReviewResults } from "@/lib/db/review-sql";
 import { requireAdmin } from "@/lib/dal";
-import { sql } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { application } from "@/lib/db/schema";
-import { unreleasedDecision } from "@/lib/db/applicant-filter";
 
 export const metadata: Metadata = { title: "Scores" };
 
 /** Review results: queue settings, the acceptance cutoff, and the ranked list. */
 export default async function AdminReviewPage() {
   await requireAdmin();
-  const [reads, results, unreleased] = await Promise.all([
+  const [reads, results] = await Promise.all([
     getReadsPerApplication(),
     getReviewResults(),
-    db
-      .select({ decision: application.decision, n: sql<number>`count(*)::int` })
-      .from(application)
-      .where(unreleasedDecision)
-      .groupBy(application.decision),
   ]);
-  const unreleasedCounts: UnreleasedCounts = { accepted: 0, rejected: 0 };
-  for (const { decision, n } of unreleased) {
-    if (decision === "accepted" || decision === "rejected") unreleasedCounts[decision] = n;
+  const unreleasedCounts: Record<"priority" | "all", UnreleasedCounts> = {
+    priority: { accepted: 0, rejected: 0 },
+    all: { accepted: 0, rejected: 0 },
+  };
+  for (const row of results) {
+    if (row.released || (row.decision !== "accepted" && row.decision !== "rejected")) continue;
+    unreleasedCounts.all[row.decision]++;
+    if (row.priority) unreleasedCounts.priority[row.decision]++;
   }
 
   const complete = results.filter((r) => r.reads >= reads).length;
@@ -56,10 +52,9 @@ export default async function AdminReviewPage() {
           <ReadsPerApplication initial={reads} />
         </div>
 
-        <ReleasePanel counts={unreleasedCounts} />
-
-        <ThresholdPanel
+        <DecisionRoundAdmin
           reads={reads}
+          unreleasedCounts={unreleasedCounts}
           rows={results.map((r) => ({
             id: r.id,
             name: [r.firstName, r.lastName].filter(Boolean).join(" ") || "(no name)",
@@ -68,6 +63,8 @@ export default async function AdminReviewPage() {
             reads: r.reads,
             under18: r.under18,
             released: r.released,
+            stage: r.stage,
+            priority: r.priority,
           }))}
         />
       </div>

@@ -42,3 +42,6 @@ next-env.d.ts
 
 # ...but the documented template must be committed
 !.env.example
+
+# locally generated credentials for opt-in portal test accounts
+.test-accounts.local.json

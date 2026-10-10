@@ -2,7 +2,7 @@
 
 import { after } from "next/server";
 import { cookies } from "next/headers";
-import { eq, ne } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   application,
@@ -23,7 +23,7 @@ import {
   submitSchema,
   type Answers,
 } from "@/lib/form-schema";
-import { sendSubmissionConfirmation } from "@/lib/email";
+import { sendRevisionConfirmation, sendSubmissionConfirmation } from "@/lib/email";
 import { ensureReferralCode } from "@/lib/referral";
 
 export type SaveResult = { ok: true } | { ok: false; error: string };
@@ -118,7 +118,20 @@ export async function submitApplication(raw: unknown): Promise<SubmitResult> {
     return { ok: false, error: "Your decision is out, so your application is locked. See your dashboard." };
   }
 
-  const firstSubmit = !existing?.submittedAt;
+  const [revision] = existing
+    ? await db
+        .select({ id: applicationEvent.id })
+        .from(applicationEvent)
+        .where(
+          and(
+            eq(applicationEvent.applicationId, existing.id),
+            inArray(applicationEvent.kind, ["revision_archived", "reopened_after_rejection"]),
+          ),
+        )
+        .limit(1)
+    : [];
+  const firstSubmit = !existing?.submittedAt && !revision;
+  const revisedSubmit = !existing?.submittedAt && Boolean(revision);
   const submittedAt = existing?.submittedAt ?? new Date();
 
   // Attribution is stamped at submit so the application row itself can answer
@@ -155,6 +168,7 @@ export async function submitApplication(raw: unknown): Promise<SubmitResult> {
     actorId: authz.user.id,
     actorKind: "applicant",
     kind: firstSubmit ? "submitted" : "resubmitted",
+    payload: revisedSubmit ? { revision: true } : {},
   });
 
   // The static landing page reads this client-side to flip its CTA from
@@ -177,6 +191,16 @@ export async function submitApplication(raw: unknown): Promise<SubmitResult> {
         await sendSubmissionConfirmation(email, name, close);
       } catch (err) {
         console.error("[email] confirmation failed:", err);
+      }
+    });
+  } else if (revisedSubmit) {
+    const email = authz.user.email;
+    const name = answers.firstName || "there";
+    after(async () => {
+      try {
+        await sendRevisionConfirmation(email, name);
+      } catch (err) {
+        console.error("[email] revision confirmation failed:", err);
       }
     });
   }

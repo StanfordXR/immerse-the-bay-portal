@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { and, desc, eq, ilike, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
 import { Brand } from "@/components/brand";
 import { db } from "@/lib/db";
-import { application, applicationTag, tag } from "@/lib/db/schema";
+import { application, applicationEvent, applicationTag, tag } from "@/lib/db/schema";
 import { applicantOwnedOnly } from "@/lib/db/applicant-filter";
 import { requireAdmin } from "@/lib/dal";
 
@@ -70,6 +70,15 @@ export default async function AdminApplicationsPage({
         primarySkill: application.primarySkill,
         utmSource: application.utmSource,
         submittedAt: application.submittedAt,
+        firstSubmittedAt: sql<Date | null>`coalesce(
+          (select min(ae.at) from ${applicationEvent} ae
+            where ae.application_id = "application"."id"
+              and ae.kind in ('submitted', 'resubmitted')),
+          ${application.submittedAt}
+        )`,
+        revisions: sql<number>`(select count(*)::int from ${applicationEvent} ae
+          where ae.application_id = "application"."id"
+            and ae.kind in ('revision_archived', 'reopened_after_rejection'))`,
         decision: application.decision,
         // sql.raw qualification: inside a select projection Drizzle renders
         // ${application.id} as bare "id", which is ambiguous in the subquery.
@@ -77,7 +86,12 @@ export default async function AdminApplicationsPage({
       })
       .from(application)
       .where(and(...conditions))
-      .orderBy(desc(sql`coalesce(${application.submittedAt}, ${application.updatedAt})`))
+      .orderBy(desc(sql`coalesce(
+        (select min(ae.at) from ${applicationEvent} ae
+          where ae.application_id = "application"."id"
+            and ae.kind in ('submitted', 'resubmitted')),
+        ${application.submittedAt}, ${application.updatedAt}
+      )`))
       .limit(500),
     db
       .select({ id: tag.id, name: tag.name })
@@ -220,13 +234,18 @@ export default async function AdminApplicationsPage({
                     {r.utmSource || "·"}
                   </td>
                   <td className="px-4 py-3 font-mono text-[12.5px] text-muted">
-                    {r.submittedAt
-                      ? r.submittedAt.toLocaleDateString("en-US", {
+                    {r.firstSubmittedAt
+                      ? r.firstSubmittedAt.toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
                           timeZone: "America/Los_Angeles",
                         })
                       : "draft"}
+                    {r.revisions > 0 ? (
+                      <span className="ml-2 rounded-full border border-line-2 px-1.5 py-0.5 text-[10.5px] text-cyan">
+                        Revised v{r.revisions + 1}
+                      </span>
+                    ) : null}
                   </td>
                   <td className="px-4 py-3">
                     {r.decision ? (

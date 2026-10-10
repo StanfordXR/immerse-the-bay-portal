@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { Brand } from "@/components/brand";
 import { DecisionPanel, TagToggles } from "@/components/application-admin-panel";
 import { db } from "@/lib/db";
@@ -43,7 +43,7 @@ export default async function AdminApplicationDetail({
     .where(eq(user.id, row.userId))
     .limit(1);
 
-  const [allTags, appliedTags, events, reviews] = await Promise.all([
+  const [allTags, appliedTags, events, reviews, archivedVersions] = await Promise.all([
     db
       .select({ id: tag.id, name: tag.name })
       .from(tag)
@@ -78,6 +78,16 @@ export default async function AdminApplicationDetail({
       .leftJoin(user, eq(user.id, review.reviewerId))
       .where(eq(review.applicationId, id))
       .orderBy(asc(review.claimedAt)),
+    db
+      .select({ payload: applicationEvent.payload, at: applicationEvent.at })
+      .from(applicationEvent)
+      .where(
+        and(
+          eq(applicationEvent.applicationId, id),
+          eq(applicationEvent.kind, "revision_archived"),
+        ),
+      )
+      .orderBy(desc(applicationEvent.at)),
   ]);
 
   const parsed = draftSchema.safeParse(row.answers ?? {});
@@ -287,6 +297,46 @@ export default async function AdminApplicationDetail({
           </dl>
         </section>
 
+        {archivedVersions.length > 0 && (
+          <section className="card p-6 sm:p-7">
+            <h2 className="font-display mb-4 text-[15px] font-semibold">
+              Previous versions
+            </h2>
+            <div className="flex flex-col gap-3">
+              {archivedVersions.map((entry, index) => {
+                const payload = asRecord(entry.payload);
+                const answers = asRecord(payload.answers);
+                const version = typeof payload.version === "number" ? payload.version : archivedVersions.length - index;
+                const reviews = Array.isArray(payload.reviews) ? payload.reviews : [];
+                return (
+                  <details key={`${entry.at.toISOString()}-${index}`} className="rounded-lg border border-line p-4">
+                    <summary className="cursor-pointer text-[14px] font-medium">
+                      Version {version} · submitted {typeof payload.submittedAt === "string" ? payload.submittedAt.slice(0, 10) : fmt(entry.at)}
+                      {typeof payload.decision === "string" ? ` · ${payload.decision}` : ""}
+                    </summary>
+                    <dl className="mt-4 grid gap-x-5 gap-y-2 text-[13px] sm:grid-cols-[10rem_minmax(0,1fr)]">
+                      {Object.entries(answers).map(([key, value]) => (
+                        <div key={key} className="contents">
+                          <dt className="text-faint">{key.replaceAll(/([A-Z])/g, " $1")}</dt>
+                          <dd className="whitespace-pre-wrap break-words text-moonlit/90">
+                            {formatArchivedValue(value)}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <p className="mt-4 text-[12.5px] text-faint">
+                      {reviews.length} archived review{reviews.length === 1 ? "" : "s"}
+                      {typeof payload.decisionNote === "string" && payload.decisionNote
+                        ? ` · Internal note: ${payload.decisionNote}`
+                        : ""}
+                    </p>
+                  </details>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* audit trail */}
         <section className="card p-6 sm:p-7">
           <h2 className="font-display mb-4 text-[15px] font-semibold">
@@ -313,4 +363,17 @@ export default async function AdminApplicationDetail({
       </div>
     </main>
   );
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function formatArchivedValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "·";
+  if (Array.isArray(value)) return value.map(formatArchivedValue).join(", ");
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
 }

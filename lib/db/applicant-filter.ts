@@ -16,6 +16,17 @@ export const applicantOwnedOnly = sql`not exists (
     and coalesce(staff.role, 'applicant') <> 'applicant'
 )`;
 
+/** Keeps seeded login fixtures visible in admin browsing but out of real cohorts and exports. */
+export const excludesTestAccounts = sql`not exists (
+  select 1
+  from "application_tag" test_assignment
+  join "tag" test_tag on test_tag.id = test_assignment.tag_id
+  where test_assignment.application_id = "application"."id"
+    and test_tag.name = 'test-account'
+)`;
+
+export const decisionPoolOnly = and(applicantOwnedOnly, excludesTestAccounts);
+
 /** Decision marked but not yet released: what the next release will publish. */
 export const unreleasedDecision = and(
   isNotNull(application.decision),
