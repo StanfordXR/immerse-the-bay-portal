@@ -22,12 +22,12 @@ export type DecisionCardProps = {
 
 const isAhead = (d: Date | null) => d !== null && d.getTime() > Date.now();
 
-function viewFor({ decision, rsvp, rsvpDeadline, under18 }: DecisionCardProps): View {
+function viewFor({ decision, rsvp, under18 }: DecisionCardProps): View {
   if (decision === "rejected") return under18 ? "under-18" : "rejected";
   if (rsvp === "declined") return "declined";
-  // A confirmed spot stays confirmed past the deadline; only an unanswered invite closes.
   if (rsvp === "confirmed") return "confirmed";
-  return rsvp === "pending" && isAhead(rsvpDeadline) ? "invited" : "rsvp-closed";
+  // The deadline is soft: a pending invite stays open after it passes.
+  return rsvp === "pending" ? "invited" : "rsvp-closed";
 }
 
 const formatDeadline = (d: Date) =>
@@ -68,7 +68,6 @@ export function DecisionCard(props: DecisionCardProps) {
   const view = viewFor(props);
   const accent = ACCENT[view];
   const celebrate = view === "invited" || view === "confirmed";
-  const rsvpStillOpen = isAhead(rsvpDeadline);
 
   return (
     <>
@@ -104,12 +103,16 @@ export function DecisionCard(props: DecisionCardProps) {
                 think you&apos;ll do great at Immerse the Bay. It will be held fully in-person from
                 November 13–15 at Stanford University.
               </p>
-              <p>
-                Confirm your spot to let us know you&apos;re coming by{" "}
-                <span className="whitespace-nowrap font-semibold text-moonlit">
-                  {formatDeadline(rsvpDeadline)}
-                </span>.
-              </p>
+              {isAhead(rsvpDeadline) ? (
+                <p>
+                  Confirm your spot to let us know you&apos;re coming by{" "}
+                  <span className="whitespace-nowrap font-semibold text-moonlit">
+                    {formatDeadline(rsvpDeadline)}
+                  </span>.
+                </p>
+              ) : (
+                <p>Please confirm your spot as soon as possible to let us know you&apos;re coming.</p>
+              )}
             </div>
             <div className="mt-6 flex flex-wrap items-start gap-3">
               <Link href="/rsvp" className="btn-primary">
@@ -130,14 +133,12 @@ export function DecisionCard(props: DecisionCardProps) {
               begins at noon on Friday, November 13th.
             </p>
             <VibeLabInvite />
-            {rsvpStillOpen && (
-              <div className="mt-6 flex flex-col gap-3">
-                <Link href="/rsvp" className="btn-ghost self-start !py-2 text-[14px]">
-                  Edit my details
-                </Link>
-                <DeclineSpot subtle />
-              </div>
-            )}
+            <div className="mt-6 flex flex-col gap-3">
+              <Link href="/rsvp" className="btn-ghost self-start !py-2 text-[14px]">
+                Edit my details
+              </Link>
+              <DeclineSpot subtle />
+            </div>
           </>
         )}
 
