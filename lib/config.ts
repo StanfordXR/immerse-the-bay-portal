@@ -84,7 +84,7 @@ export function ageAtEvent(dob: string | null): number | null {
 
 /** One shared deadline for accepted hackers to confirm their spot. */
 export const RSVP_DEADLINE = new Date(
-  process.env.NEXT_PUBLIC_RSVP_DEADLINE ?? "2026-10-17T06:59:00.000Z",
+  process.env.NEXT_PUBLIC_RSVP_DEADLINE ?? "2026-10-18T06:59:00.000Z",
 );
 
 export function rsvpDeadlineLabel(): string {
