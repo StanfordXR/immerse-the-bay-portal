@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { and, eq, gt, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { Brand } from "@/components/brand";
 import { ConfirmSpotForm } from "@/components/confirm-spot-form";
 import { db } from "@/lib/db";
@@ -32,7 +32,6 @@ export default async function RsvpPage() {
         eq(application.stage, "decided"),
         eq(application.decision, "accepted"),
         inArray(application.rsvp, ["pending", "confirmed"]),
-        gt(application.rsvpDeadline, new Date()),
       ),
     )
     .limit(1);

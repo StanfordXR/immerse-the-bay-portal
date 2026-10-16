@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq, gt, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application, applicationEvent, review } from "@/lib/db/schema";
 import { unreleasedDecision } from "@/lib/db/applicant-filter";
@@ -115,21 +115,20 @@ export async function releaseDecisions(scope: Scope): Promise<Result<{ released:
 
 /* ── hacker ────────────────────────────────────────────────────────────── */
 
-/** An accepted hacker's application while their RSVP window is open. */
+/** An accepted hacker's application they can still RSVP on (the deadline is soft). */
 const rsvpOpen = (userId: string) =>
   and(
     eq(application.userId, userId),
     eq(application.stage, "decided"),
     eq(application.decision, "accepted"),
     inArray(application.rsvp, ["pending", "confirmed"]),
-    gt(application.rsvpDeadline, new Date()),
   );
 
 export type ConfirmResult = { ok: true } | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
 /**
  * Confirm a spot from /rsvp, or update the details of an existing
- * confirmation until the deadline. Agreement timestamps keep the first time
+ * confirmation (also after the soft deadline). Agreement timestamps keep the first time
  * each box was ticked.
  */
 export async function confirmSpot(raw: unknown): Promise<ConfirmResult> {
@@ -190,7 +189,7 @@ export async function confirmSpot(raw: unknown): Promise<ConfirmResult> {
   return { ok: true };
 }
 
-/** Give up a spot, pending or confirmed, until the deadline. Final. */
+/** Give up a spot, pending or confirmed. Final. */
 export async function declineSpot(): Promise<Result> {
   const authz = await getAuthorizedUser();
   if (!authz) return { ok: false, error: "Sign in again to RSVP." };
