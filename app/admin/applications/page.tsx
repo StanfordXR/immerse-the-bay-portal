@@ -12,6 +12,7 @@ export const metadata: Metadata = { title: "Applications" };
 
 const STATUS_OPTIONS = ["all", "submitted", "draft"] as const;
 const DECISION_OPTIONS = ["any", "undecided", "accepted", "rejected"] as const;
+const RSVP_OPTIONS = ["any", "pending", "confirmed", "declined", "expired"] as const;
 
 export default async function AdminApplicationsPage({
   searchParams,
@@ -20,6 +21,7 @@ export default async function AdminApplicationsPage({
     q?: string;
     status?: string;
     decision?: string;
+    rsvp?: string;
     source?: string;
     tag?: string;
   }>;
@@ -33,6 +35,9 @@ export default async function AdminApplicationsPage({
   const decision = DECISION_OPTIONS.includes(params.decision as never)
     ? (params.decision as (typeof DECISION_OPTIONS)[number])
     : "any";
+  const rsvp = RSVP_OPTIONS.includes(params.rsvp as never)
+    ? (params.rsvp as (typeof RSVP_OPTIONS)[number])
+    : "any";
   const source = (params.source ?? "").trim();
   const tagFilter = (params.tag ?? "").trim();
 
@@ -43,6 +48,7 @@ export default async function AdminApplicationsPage({
   if (decision === "undecided") conditions.push(isNull(application.decision));
   if (decision !== "any" && decision !== "undecided")
     conditions.push(eq(application.decision, decision));
+  if (rsvp !== "any") conditions.push(eq(application.rsvp, rsvp));
   if (source) conditions.push(eq(application.utmSource, source));
   if (q) {
     const needle = `%${q}%`;
@@ -81,6 +87,7 @@ export default async function AdminApplicationsPage({
           where ae.application_id = "application"."id"
             and ae.kind in ('revision_archived', 'reopened_after_rejection'))`,
         decision: application.decision,
+        rsvp: application.rsvp,
         // sql.raw qualification: inside a select projection Drizzle renders
         // ${application.id} as bare "id", which is ambiguous in the subquery.
         tags: sql<string[]>`coalesce((select array_agg(t.name order by t.name) from ${applicationTag} at3 join ${tag} t on t.id = at3.tag_id where at3.application_id = ${sql.raw('"application"."id"')}), '{}')`,
@@ -164,6 +171,16 @@ export default async function AdminApplicationsPage({
             </select>
           </label>
           <label className="flex flex-col gap-1 text-[12.5px] text-faint">
+            RSVP
+            <select name="rsvp" defaultValue={rsvp} className="field !w-36 !py-2 !text-[14px]">
+              {RSVP_OPTIONS.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-[12.5px] text-faint">
             Source
             <select name="source" defaultValue={source} className="field !w-32 !py-2 !text-[14px]">
               <option value="">any</option>
@@ -193,10 +210,10 @@ export default async function AdminApplicationsPage({
         </form>
 
         <div className="card overflow-x-auto">
-          <table className="w-full min-w-180 text-[14px]">
+          <table className="w-full min-w-200 text-[14px]">
             <thead>
               <tr className="border-b border-line text-left">
-                {["Applicant", "School", "Skill", "Source", "Submitted", "Decision", "Tags"].map(
+                {["Applicant", "School", "Skill", "Source", "Submitted", "Decision", "RSVP", "Tags"].map(
                   (h) => (
                     <th
                       key={h}
@@ -211,7 +228,7 @@ export default async function AdminApplicationsPage({
             <tbody>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-faint">
+                  <td colSpan={8} className="px-4 py-10 text-center text-faint">
                     Nothing matches these filters.
                   </td>
                 </tr>
@@ -260,6 +277,25 @@ export default async function AdminApplicationsPage({
                         }
                       >
                         {r.decision}
+                      </span>
+                    ) : (
+                      <span className="text-faint">·</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {r.rsvp ? (
+                      <span
+                        className={
+                          r.rsvp === "confirmed"
+                            ? "text-ok"
+                            : r.rsvp === "declined"
+                              ? "text-danger"
+                              : r.rsvp === "pending"
+                                ? "text-cyan"
+                                : "text-muted"
+                        }
+                      >
+                        {r.rsvp}
                       </span>
                     ) : (
                       <span className="text-faint">·</span>
