@@ -40,8 +40,7 @@ export function priorityRoundOpen(): boolean {
   return cutoff !== null && Date.now() < cutoff.getTime();
 }
 
-export function closeDateLabel(): string {
-  const close = applicationsClose();
+export function closeDateLabel(close: Date | null = applicationsClose()): string {
   if (!close) return "TBA";
   return close.toLocaleDateString("en-US", {
     month: "long",
@@ -65,8 +64,8 @@ export function priorityDecisionsLabel(): string {
   return plusOneWeekLabel(priorityDeadline());
 }
 
-export function finalDecisionsLabel(): string {
-  return plusOneWeekLabel(applicationsClose());
+export function finalDecisionsLabel(close: Date | null = applicationsClose()): string {
+  return plusOneWeekLabel(close);
 }
 
 /**

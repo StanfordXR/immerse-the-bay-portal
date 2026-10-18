@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Brand } from "@/components/brand";
+import { ApplicationWindowAdmin } from "@/components/application-window-admin";
 import type { Metadata } from "next";
 import { desc, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -12,11 +13,14 @@ import {
 } from "@/lib/db/schema";
 import { applicantOwnedOnly } from "@/lib/db/applicant-filter";
 import { requireAdmin } from "@/lib/dal";
+import { getApplicationWindow } from "@/lib/application-window";
+import { formatPacificDateTimeInput } from "@/lib/pacific-time";
 
 export const metadata: Metadata = { title: "Admin" };
 
 export default async function AdminPage() {
   await requireAdmin();
+  const applicationWindow = await getApplicationWindow();
 
   const [counts] = await db
     .select({
@@ -142,6 +146,13 @@ export default async function AdminPage() {
       </header>
 
       <div className="flex flex-col gap-8 pb-20 pt-2">
+        <ApplicationWindowAdmin
+          initialEnabled={applicationWindow.enabled}
+          initialAccepting={applicationWindow.accepting}
+          initialDeadline={formatPacificDateTimeInput(applicationWindow.deadline)}
+          source={applicationWindow.source}
+        />
+
         {/* attendance response — distinct from the admission decision */}
         <section>
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">

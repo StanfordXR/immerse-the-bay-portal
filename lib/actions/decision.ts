@@ -8,7 +8,8 @@ import { application, applicationEvent, review } from "@/lib/db/schema";
 import { unreleasedDecision } from "@/lib/db/applicant-filter";
 import { getReadsPerApplication, getReviewResults } from "@/lib/db/review-sql";
 import { getAuthorizedUser } from "@/lib/dal";
-import { ageAtEvent, applicationsAreClosed, RSVP_DEADLINE } from "@/lib/config";
+import { getApplicationWindow } from "@/lib/application-window";
+import { ageAtEvent, RSVP_DEADLINE } from "@/lib/config";
 import { isScope, planCutoff, planRelease, type Scope } from "@/lib/rounds";
 import { rsvpFormSchema, type RsvpDetails } from "@/lib/rsvp";
 
@@ -234,7 +235,10 @@ export async function reviseApplication(): Promise<void> {
     )
     .limit(1);
   const age = ageAtEvent(app?.dateOfBirth ?? null);
-  if (!app || applicationsAreClosed() || (age !== null && age < 18)) redirect("/dashboard");
+  const applicationWindow = await getApplicationWindow();
+  if (!app || !applicationWindow.accepting || (age !== null && age < 18)) {
+    redirect("/dashboard");
+  }
 
   await db.transaction(async (tx) => {
     const [priorVersions, archivedReviews] = await Promise.all([

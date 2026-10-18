@@ -339,3 +339,21 @@ export const reviewConfig = pgTable(
   },
   (t) => [check("review_config_singleton", sql`${t.id} = 1`)],
 );
+
+/** Application intake settings, edited from /admin. Exactly one row (id = 1). */
+export const applicationConfig = pgTable(
+  "application_config",
+  {
+    id: smallint("id").primaryKey().default(1),
+    applicationsOpen: boolean("applications_open").notNull().default(true),
+    applicationsClose: timestamp("applications_close", { withTimezone: true }),
+    updatedBy: text("updated_by").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [check("application_config_singleton", sql`${t.id} = 1`)],
+);

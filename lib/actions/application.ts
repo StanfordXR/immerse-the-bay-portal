@@ -15,7 +15,8 @@ import {
   parseAttribution,
   toAttributionColumns,
 } from "@/lib/attribution";
-import { applicationsAreClosed, closeDateLabel } from "@/lib/config";
+import { getApplicationWindow } from "@/lib/application-window";
+import { closeDateLabel, finalDecisionsLabel } from "@/lib/config";
 import {
   answersToColumns,
   draftSchema,
@@ -50,7 +51,9 @@ const MAX_PAYLOAD_CHARS = 64_000;
 export async function saveDraft(raw: unknown): Promise<SaveResult> {
   const authz = await getAuthorizedUser();
   if (!authz) return { ok: false, error: "signed-out" };
-  if (applicationsAreClosed()) return { ok: false, error: "closed" };
+  if (!(await getApplicationWindow()).accepting) {
+    return { ok: false, error: "closed" };
+  }
   // JSON.stringify(undefined) is undefined; a crafted call must degrade to
   // "invalid", not throw.
   if ((JSON.stringify(raw) ?? "").length > MAX_PAYLOAD_CHARS) {
@@ -84,7 +87,8 @@ export async function saveDraft(raw: unknown): Promise<SaveResult> {
 export async function submitApplication(raw: unknown): Promise<SubmitResult> {
   const authz = await getAuthorizedUser();
   if (!authz) return { ok: false, error: "Your session expired — sign in again." };
-  if (applicationsAreClosed()) {
+  const applicationWindow = await getApplicationWindow();
+  if (!applicationWindow.accepting) {
     return { ok: false, error: "Applications have closed." };
   }
   if ((JSON.stringify(raw) ?? "").length > MAX_PAYLOAD_CHARS) {
@@ -185,10 +189,11 @@ export async function submitApplication(raw: unknown): Promise<SubmitResult> {
     await ensureReferralCode(authz.user.id).catch(() => {});
     const email = authz.user.email;
     const name = answers.firstName || "there";
-    const close = closeDateLabel();
+    const close = closeDateLabel(applicationWindow.deadline);
+    const finalDecisions = finalDecisionsLabel(applicationWindow.deadline);
     after(async () => {
       try {
-        await sendSubmissionConfirmation(email, name, close);
+        await sendSubmissionConfirmation(email, name, close, finalDecisions);
       } catch (err) {
         console.error("[email] confirmation failed:", err);
       }
