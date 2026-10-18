@@ -5,11 +5,75 @@ import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { application, applicationEvent, applicationTag, tag } from "@/lib/db/schema";
+import {
+  application,
+  applicationConfig,
+  applicationEvent,
+  applicationTag,
+  tag,
+} from "@/lib/db/schema";
 import { getAuthorizedUser } from "@/lib/dal";
 import { isRole } from "@/lib/permissions";
+import { parsePacificDateTimeInput } from "@/lib/pacific-time";
 
 type Result = { ok: boolean; error?: string };
+
+/* ── application intake ───────────────────────────────────────────────── */
+
+export async function setApplicationWindow(
+  enabled: boolean,
+  deadlineLocal: string,
+): Promise<Result & { accepting?: boolean; deadlineIso?: string }> {
+  const authz = await getAuthorizedUser("admin");
+  if (!authz) return { ok: false, error: "Not authorized." };
+  if (typeof enabled !== "boolean") {
+    return { ok: false, error: "Choose whether applications are open or closed." };
+  }
+
+  const deadline = parsePacificDateTimeInput(deadlineLocal);
+  if (!deadline) {
+    return { ok: false, error: "Enter a valid deadline in Pacific Time." };
+  }
+  if (enabled && deadline.getTime() <= Date.now()) {
+    return { ok: false, error: "Choose a future deadline before reopening applications." };
+  }
+
+  await db
+    .insert(applicationConfig)
+    .values({
+      id: 1,
+      applicationsOpen: enabled,
+      applicationsClose: deadline,
+      updatedBy: authz.user.id,
+    })
+    .onConflictDoUpdate({
+      target: applicationConfig.id,
+      set: {
+        applicationsOpen: enabled,
+        applicationsClose: deadline,
+        updatedBy: authz.user.id,
+        updatedAt: new Date(),
+      },
+    });
+
+  await db.insert(applicationEvent).values({
+    actorId: authz.user.id,
+    actorKind: "admin",
+    kind: "application_window_updated",
+    payload: { enabled, deadline: deadline.toISOString() },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/apply");
+  revalidatePath("/dashboard");
+  revalidatePath("/admin");
+
+  return {
+    ok: true,
+    accepting: enabled,
+    deadlineIso: deadline.toISOString(),
+  };
+}
 
 /**
  * Change another user's role. Goes through Better Auth's admin plugin

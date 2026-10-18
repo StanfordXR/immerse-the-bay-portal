@@ -1,5 +1,5 @@
 import "server-only";
-import { finalDecisionsLabel, priorityDecisionsLabel } from "@/lib/config";
+import { priorityDecisionsLabel } from "@/lib/config";
 
 /**
  * Transactional email via Resend's REST API — plain fetch, no SDK dependency.
@@ -66,6 +66,7 @@ function escapeHtml(s: string): string {
 export function submissionConfirmationHtml(
   firstName: string,
   closeLabel: string,
+  finalDecisionLabel: string,
 ): string {
   const portal = process.env.BETTER_AUTH_URL ?? "https://portal.immersethebay.org";
   const name = escapeHtml(firstName);
@@ -86,7 +87,7 @@ export function submissionConfirmationHtml(
     <p style="margin: 0 0 4px 0;">1. Our review team will read each and every application.</p>
     <p style="margin: 0 0 2px 0;">2. Decisions go out by email:</p>
     <p style="margin: 0 0 2px 18px;">• Priority round by ${escapeHtml(priorityDecisionsLabel())}</p>
-    <p style="margin: 0 0 4px 18px;">• Final round by ${escapeHtml(finalDecisionsLabel())}</p>
+    <p style="margin: 0 0 4px 18px;">• Final round by ${escapeHtml(finalDecisionLabel)}</p>
     <p style="margin: 0;">3. The hackathon runs November 13 to 15, 2026 at Stanford.</p>
   </div>
 
@@ -110,11 +111,12 @@ export async function sendSubmissionConfirmation(
   to: string,
   firstName: string,
   closeLabel: string,
+  finalDecisionLabel: string,
 ): Promise<void> {
   await sendEmail({
     to,
     subject: "Application received: Immerse the Bay 2026",
-    html: submissionConfirmationHtml(firstName, closeLabel),
+    html: submissionConfirmationHtml(firstName, closeLabel, finalDecisionLabel),
     text: [
       `Hi ${firstName},`,
       "",
@@ -124,7 +126,7 @@ export async function sendSubmissionConfirmation(
       "  1. Our review team will read each and every application.",
       "  2. Decisions go out by email:",
       `     - Priority round by ${priorityDecisionsLabel()}`,
-      `     - Final round by ${finalDecisionsLabel()}`,
+      `     - Final round by ${finalDecisionLabel}`,
       "  3. The hackathon runs November 13 to 15, 2026 at Stanford.",
       "",
       "View your application:",

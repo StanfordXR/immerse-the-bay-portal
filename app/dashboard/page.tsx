@@ -5,9 +5,9 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application } from "@/lib/db/schema";
 import { getRole, requireUser } from "@/lib/dal";
+import { getApplicationWindow } from "@/lib/application-window";
 import {
   ageAtEvent,
-  applicationsAreClosed,
   closeDateLabel,
   finalDecisionsLabel,
   priorityDeadlineLabel,
@@ -28,6 +28,9 @@ export default async function DashboardPage({
   const user = await requireUser();
   const role = await getRole();
   const { submitted: justSubmitted } = await searchParams;
+  const applicationWindow = await getApplicationWindow();
+  const applicationCloseLabel = closeDateLabel(applicationWindow.deadline);
+  const finalDecisionLabel = finalDecisionsLabel(applicationWindow.deadline);
 
   const [row] = await db
     .select({
@@ -123,8 +126,8 @@ export default async function DashboardPage({
             rsvp={row.rsvp}
             rsvpDeadline={row.rsvpDeadline}
             under18={(ageAtEvent(row.dateOfBirth) ?? 18) < 18}
-            canRevise={!applicationsAreClosed()}
-            closeLabel={closeDateLabel()}
+            canRevise={applicationWindow.accepting}
+            closeLabel={applicationCloseLabel}
           />
         ) : row?.submittedAt ? (
           <section className="card overflow-hidden">
@@ -159,7 +162,7 @@ export default async function DashboardPage({
                     timeZone: "America/Los_Angeles",
                   })}
                   . You can edit your answers until applications close (
-                  {closeDateLabel()}).
+                  {applicationCloseLabel}).
                 </p>
               </div>
               <Link
@@ -177,7 +180,7 @@ export default async function DashboardPage({
                   [
                     ["Submitted", "Done ✓", "done"],
                     ["In review", "Through October", "future"],
-                    ["Decision", `By ${finalDecisionsLabel()}, by email`, "future"],
+                    ["Decision", `By ${finalDecisionLabel}, by email`, "future"],
                   ] as const
                 ).map(([title, when, state], i, all) => (
                   <li key={title} className="relative flex-1">
@@ -252,7 +255,7 @@ export default async function DashboardPage({
                 <p className="mt-1 text-[14px] text-muted">
                   {row
                     ? `${completeSteps} of 4 stages complete. Your draft is saved.`
-                    : `About ten minutes, autosaved as you go. Closes ${closeDateLabel()}.`}
+                    : `About ten minutes, autosaved as you go. Closes ${applicationCloseLabel}.`}
                 </p>
               </div>
               <Link href="/apply" className="btn-primary">
@@ -309,9 +312,9 @@ export default async function DashboardPage({
               <dt className="text-faint">Priority decisions</dt>
               <dd className="text-moonlit/90">By {priorityDecisionsLabel()}</dd>
               <dt className="text-faint">Final deadline</dt>
-              <dd className="text-moonlit/90">{closeDateLabel()}</dd>
+              <dd className="text-moonlit/90">{applicationCloseLabel}</dd>
               <dt className="text-faint">Final decisions</dt>
-              <dd className="text-moonlit/90">By {finalDecisionsLabel()}</dd>
+              <dd className="text-moonlit/90">By {finalDecisionLabel}</dd>
               <dt className="text-faint">Questions</dt>
               <dd>
                 <a

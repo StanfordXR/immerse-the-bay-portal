@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { getAuthorizedUser } from "@/lib/dal";
 import { sendSubmissionConfirmation } from "@/lib/email";
-import { closeDateLabel } from "@/lib/config";
+import { getApplicationWindow } from "@/lib/application-window";
+import { closeDateLabel, finalDecisionsLabel } from "@/lib/config";
 
 /**
  * Admin-only: send a sample submission-confirmation email, for previewing
@@ -17,6 +18,12 @@ export async function POST(request: NextRequest): Promise<Response> {
     return new Response("Bad recipient", { status: 400 });
   }
 
-  await sendSubmissionConfirmation(to, "Victor", closeDateLabel());
+  const applicationWindow = await getApplicationWindow();
+  await sendSubmissionConfirmation(
+    to,
+    "Victor",
+    closeDateLabel(applicationWindow.deadline),
+    finalDecisionsLabel(applicationWindow.deadline),
+  );
   return Response.json({ ok: true, to });
 }

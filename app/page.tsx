@@ -3,8 +3,8 @@ import { Brand } from "@/components/brand";
 import { ApplicationTimeline, type TimelineItem } from "@/components/application-timeline";
 import { HeaderAuthLink } from "@/components/header-auth-link";
 import { HeroCta } from "@/components/hero-cta";
+import { getApplicationWindow } from "@/lib/application-window";
 import {
-  applicationsClose,
   closeDateLabel,
   EVENT_START,
   finalDecisionsLabel,
@@ -13,6 +13,10 @@ import {
   priorityDecisionsLabel,
 } from "@/lib/config";
 
+// The application deadline is admin-managed at runtime, so this page must not
+// freeze it into a static build artifact.
+export const dynamic = "force-dynamic";
+
 /**
  * Deliberately minimal: the event site (immersethebay.org) carries the
  * marketing story. This page has two jobs — start an application, and show
@@ -20,7 +24,8 @@ import {
  */
 const INITIAL_TIMELINE_NOW = Date.now();
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const applicationWindow = await getApplicationWindow();
   const eventStart = new Date(`${EVENT_START.toISOString().slice(0, 10)}T00:00:00-08:00`);
   const timeline: TimelineItem[] = [
     {
@@ -36,10 +41,10 @@ export default function LandingPage() {
       at: priorityDeadline()?.getTime() ?? eventStart.getTime(),
     },
     {
-      date: closeDateLabel(),
+      date: closeDateLabel(applicationWindow.deadline),
       title: "Final round closes",
-      note: `Decisions by ${finalDecisionsLabel()}`,
-      at: applicationsClose()?.getTime() ?? eventStart.getTime(),
+      note: `Decisions by ${finalDecisionsLabel(applicationWindow.deadline)}`,
+      at: applicationWindow.deadline?.getTime() ?? eventStart.getTime(),
     },
     {
       date: "November 13–15",

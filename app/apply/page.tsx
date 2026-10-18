@@ -5,8 +5,8 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application } from "@/lib/db/schema";
 import { requireUser } from "@/lib/dal";
+import { getApplicationWindow } from "@/lib/application-window";
 import {
-  applicationsAreClosed,
   closeDateLabel,
   priorityDeadlineLabel,
   priorityRoundOpen,
@@ -53,7 +53,9 @@ export default async function ApplyPage({
     }
   }
 
-  const closed = applicationsAreClosed();
+  const applicationWindow = await getApplicationWindow();
+  const closed = !applicationWindow.accepting;
+  const deadlineLabel = closeDateLabel(applicationWindow.deadline);
   // The banner and footer talk about the priority round only while it exists.
   const priorityOpen = priorityRoundOpen();
 
@@ -81,7 +83,7 @@ export default async function ApplyPage({
               {priorityOpen
                 ? `Priority round closes ${priorityDeadlineLabel()}. `
                 : ""}
-              Final deadline {closeDateLabel()}.
+              Final deadline {deadlineLabel}.
             </p>
           )}
         </div>
@@ -114,7 +116,7 @@ export default async function ApplyPage({
             deadlineNote={
               priorityOpen
                 ? `Priority round closes ${priorityDeadlineLabel()}.`
-                : `Applications close ${closeDateLabel()}.`
+                : `Applications close ${deadlineLabel}.`
             }
           />
         )}
