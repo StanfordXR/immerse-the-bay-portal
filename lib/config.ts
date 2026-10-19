@@ -97,8 +97,3 @@ export function rsvpDeadlineLabel(): string {
     timeZoneName: "short",
   });
 }
-
-/** Interest form for PICO, Immerse the Bay's Diamond sponsor. */
-export const VIBELAB_INTEREST_FORM_URL =
-  process.env.NEXT_PUBLIC_VIBELAB_INTEREST_FORM_URL ??
-  "https://forms.gle/5QxFVQXd4ZJEPmje6";

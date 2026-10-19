@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { DeclineSpot } from "@/components/rsvp-actions";
 import { ReviseApplicationButton } from "@/components/revise-application-button";
-import { VIBELAB_INTEREST_FORM_URL } from "@/lib/config";
 
 type Rsvp = "pending" | "confirmed" | "declined" | "expired";
 
@@ -132,7 +131,6 @@ export function DecisionCard(props: DecisionCardProps) {
               Immerse the Bay takes place November 13–15, 2026 at Stanford University. Check-in
               begins at noon on Friday, November 13th.
             </p>
-            <VibeLabInvite />
             <div className="mt-6 flex flex-col gap-3">
               <Link href="/rsvp" className="btn-ghost self-start !py-2 text-[14px]">
                 Edit my details
@@ -226,42 +224,6 @@ export function DecisionCard(props: DecisionCardProps) {
         </p>
       )}
     </>
-  );
-}
-
-function VibeLabInvite() {
-  return (
-    <section
-      className="mt-6 rounded-xl border border-cyan/45 p-5 shadow-[0_0_28px_color-mix(in_oklab,var(--color-cyan)_10%,transparent)] sm:p-6"
-      style={{
-        background:
-          "linear-gradient(135deg, color-mix(in oklab, var(--color-cyan) 14%, var(--color-abyss)), color-mix(in oklab, var(--color-violet) 12%, var(--color-abyss)))",
-      }}
-    >
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan">
-            Diamond sponsor opportunity
-          </p>
-          <h3 className="font-display mt-2 text-xl font-semibold">Build with PICO in VibeLab</h3>
-          <p className="mt-2 max-w-lg text-[14px] leading-relaxed text-moonlit/80">
-            Get exclusive early access to working with the upcoming PICO Space Pro (Project
-            Swan), receive technical support, and earn up to $1,000 for a qualifying spatial app.
-          </p>
-          <p className="mt-3 text-[14px] font-semibold text-moonlit">
-            Apply by Friday, October 16 at 11:59 PM PDT.
-          </p>
-        </div>
-        <a
-          href={VIBELAB_INTEREST_FORM_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="btn-primary shrink-0 self-start whitespace-nowrap sm:self-center"
-        >
-          Explore PICO VibeLab ↗
-        </a>
-      </div>
-    </section>
   );
 }
 
