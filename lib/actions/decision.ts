@@ -92,7 +92,7 @@ export async function releaseDecisions(scope: Scope): Promise<Result<{ released:
     .set({
       stage: "decided",
       rsvp: sql`case when ${accepted} then 'pending'::rsvp_state end`,
-      rsvpDeadline: sql`case when ${accepted} then ${RSVP_DEADLINE} end`,
+      rsvpDeadline: sql`case when ${accepted} then ${RSVP_DEADLINE.toISOString()}::timestamptz end`,
     })
     .where(and(unreleasedDecision, inArray(application.id, releaseIds)))
     .returning({ id: application.id, decision: application.decision });
