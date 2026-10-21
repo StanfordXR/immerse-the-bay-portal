@@ -7,7 +7,7 @@ import { application } from "@/lib/db/schema";
 import { getRole, requireUser } from "@/lib/dal";
 import { getApplicationWindow } from "@/lib/application-window";
 import {
-  ageAtEvent,
+  blockedByAgeRule,
   closeDateLabel,
   finalDecisionsLabel,
   priorityDeadlineLabel,
@@ -43,6 +43,7 @@ export default async function DashboardPage({
       rsvp: application.rsvp,
       rsvpDeadline: application.rsvpDeadline,
       dateOfBirth: application.dateOfBirth,
+      schoolName: application.schoolName,
     })
     .from(application)
     .where(eq(application.userId, user.id))
@@ -125,7 +126,7 @@ export default async function DashboardPage({
             decision={row.decision}
             rsvp={row.rsvp}
             rsvpDeadline={row.rsvpDeadline}
-            under18={(ageAtEvent(row.dateOfBirth) ?? 18) < 18}
+            under18={blockedByAgeRule(row.dateOfBirth, { email: user.email, school: row.schoolName })}
             canRevise={applicationWindow.accepting}
             closeLabel={applicationCloseLabel}
           />

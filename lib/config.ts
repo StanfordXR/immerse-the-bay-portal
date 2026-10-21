@@ -81,6 +81,26 @@ export function ageAtEvent(dob: string | null): number | null {
   return ey - by - (beforeBirthday ? 1 : 0);
 }
 
+/**
+ * Stanford students are exempt from the 18+ rule. A stanford.edu account or a
+ * self-reported Stanford school counts.
+ */
+export function isStanfordAffiliated(email?: string | null, school?: string | null): boolean {
+  return (
+    /@stanford\.edu$/i.test(email?.trim() ?? "") ||
+    /^stanford(\s+university)?$/i.test(school?.trim() ?? "")
+  );
+}
+
+/** Under 18 on the event's first day and not exempt as a Stanford student. */
+export function blockedByAgeRule(
+  dob: string | null,
+  who: { email?: string | null; school?: string | null },
+): boolean {
+  const age = ageAtEvent(dob);
+  return age !== null && age < 18 && !isStanfordAffiliated(who.email, who.school);
+}
+
 /** One shared deadline for accepted hackers to confirm their spot. */
 export const RSVP_DEADLINE = new Date(
   process.env.NEXT_PUBLIC_RSVP_DEADLINE ?? "2026-10-28T06:59:00.000Z",

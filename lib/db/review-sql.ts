@@ -2,7 +2,7 @@ import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application, applicationEvent, review, reviewConfig, user } from "@/lib/db/schema";
 import { decisionPoolOnly } from "@/lib/db/applicant-filter";
-import { ageAtEvent, priorityDeadline } from "@/lib/config";
+import { ageAtEvent, blockedByAgeRule, priorityDeadline } from "@/lib/config";
 import { isPriority, normalizeTimestamp } from "@/lib/rounds";
 import { DEFAULT_READS_PER_APPLICATION, RUBRIC } from "@/lib/review";
 
@@ -90,7 +90,7 @@ export async function getReviewResults() {
         deadline,
       ),
       age,
-      under18: age !== null && age < 18,
+      under18: blockedByAgeRule(dateOfBirth, { email: r.email, school: r.schoolName }),
     };
   });
 }

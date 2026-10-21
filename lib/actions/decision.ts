@@ -9,7 +9,7 @@ import { unreleasedDecision } from "@/lib/db/applicant-filter";
 import { getReadsPerApplication, getReviewResults } from "@/lib/db/review-sql";
 import { getAuthorizedUser } from "@/lib/dal";
 import { getApplicationWindow } from "@/lib/application-window";
-import { ageAtEvent, RSVP_DEADLINE } from "@/lib/config";
+import { blockedByAgeRule, RSVP_DEADLINE } from "@/lib/config";
 import { isScope, planCutoff, planRelease, type Scope } from "@/lib/rounds";
 import { rsvpFormSchema, type RsvpDetails } from "@/lib/rsvp";
 
@@ -217,7 +217,7 @@ export async function declineSpot(): Promise<Result> {
  * A rejected hacker reopens their application to revise it. It becomes a
  * draft again: decision cleared, old reviews discarded (counted in the event
  * log), and it only re-enters the review queue once they resubmit before
- * applications close. Not offered to under-18s, who are ineligible regardless.
+ * applications close. Not offered to under-18s (Stanford students excepted).
  */
 export async function reviseApplication(): Promise<void> {
   const authz = await getAuthorizedUser();
@@ -234,9 +234,12 @@ export async function reviseApplication(): Promise<void> {
       ),
     )
     .limit(1);
-  const age = ageAtEvent(app?.dateOfBirth ?? null);
   const applicationWindow = await getApplicationWindow();
-  if (!app || !applicationWindow.accepting || (age !== null && age < 18)) {
+  if (
+    !app ||
+    !applicationWindow.accepting ||
+    blockedByAgeRule(app.dateOfBirth, { email: authz.user.email, school: app.schoolName })
+  ) {
     redirect("/dashboard");
   }
 
