@@ -20,9 +20,9 @@ const validRsvp = {
 };
 
 describe("RSVP confirmation", () => {
-  test("uses the shared October 17 deadline", () => {
-    assert.equal(RSVP_DEADLINE.toISOString(), "2026-10-18T06:59:00.000Z");
-    assert.equal(rsvpDeadlineLabel(), "Saturday, October 17 at 11:59 PM PDT");
+  test("uses the regular-round October 27 deadline", () => {
+    assert.equal(RSVP_DEADLINE.toISOString(), "2026-10-28T06:59:00.000Z");
+    assert.equal(rsvpDeadlineLabel(), "Tuesday, October 27 at 11:59 PM PDT");
   });
 
   test("requires a printable badge name", () => {
