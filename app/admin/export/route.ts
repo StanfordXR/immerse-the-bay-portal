@@ -1,6 +1,6 @@
 import { and, desc } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { application, user } from "@/lib/db/schema";
+import { application, referralClaim, user } from "@/lib/db/schema";
 import { applicantOwnedOnly, excludesTestAccounts } from "@/lib/db/applicant-filter";
 import { getAuthorizedUser } from "@/lib/dal";
 import { toCsv } from "@/lib/csv";
@@ -44,10 +44,14 @@ export async function GET(): Promise<Response> {
       utmCampaign: application.utmCampaign,
       utmContent: application.utmContent,
       referrer: application.referrer,
+      referralCode: application.referralCode,
+      referredByCode: referralClaim.referralCode,
+      referralEntryPoint: referralClaim.entryPoint,
       answers: application.answers,
     })
     .from(application)
     .innerJoin(user, eq(application.userId, user.id))
+    .leftJoin(referralClaim, eq(referralClaim.referredUserId, application.userId))
     .where(and(applicantOwnedOnly, excludesTestAccounts))
     .orderBy(desc(application.submittedAt));
 
@@ -58,6 +62,7 @@ export async function GET(): Promise<Response> {
     "accessibility", "resume_url", "sponsor_share_ok", "heard_about_us",
     "heard_name", "utm_source",
     "utm_medium", "utm_campaign", "utm_content", "referrer",
+    "own_referral_code", "referred_by_code", "referral_entry_point",
     "decision", "decided_at", "rsvp", "rsvp_deadline", "rsvp_at",
     "why_participate", "ceo_question", "skills",
   ];
@@ -78,6 +83,7 @@ export async function GET(): Promise<Response> {
         r.heardAboutUs, r.heardAboutUsName,
         r.utmSource, r.utmMedium, r.utmCampaign, r.utmContent,
         r.referrer,
+        r.referralCode, r.referredByCode, r.referralEntryPoint,
         r.decision, r.decidedAt?.toISOString(), r.rsvp,
         r.rsvpDeadline?.toISOString(), r.rsvpAt?.toISOString(),
         answers.whyParticipate, answers.ceoQuestion,

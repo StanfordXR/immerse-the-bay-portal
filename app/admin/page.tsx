@@ -74,6 +74,9 @@ export default async function AdminPage() {
     .select({
       code: clickCode,
       clicks: sql<number>`count(*)::int`,
+      siteClicks: sql<number>`count(*) filter (where ${linkClick.entryPoint} = 'site')::int`,
+      portalClicks: sql<number>`count(*) filter (where ${linkClick.entryPoint} = 'portal')::int`,
+      unknownClicks: sql<number>`count(*) filter (where ${linkClick.entryPoint} is null)::int`,
       last7d: sql<number>`count(*) filter (where ${linkClick.at} > now() - interval '7 days')::int`,
     })
     .from(linkClick)
@@ -281,18 +284,21 @@ export default async function AdminPage() {
             </span>
           </div>
           <div className="card overflow-x-auto">
-            <table className="w-full min-w-120 text-[14px]">
+            <table className="w-full min-w-180 text-[14px]">
               <thead>
                 <tr className="border-b border-line text-left">
                   <Th>Code</Th>
                   <Th right>Clicks</Th>
+                  <Th right>Main site</Th>
+                  <Th right>Direct portal</Th>
+                  <Th right>Legacy / unknown</Th>
                   <Th right>Last 7 days</Th>
                 </tr>
               </thead>
               <tbody>
                 {clicks.length === 0 && (
                   <tr>
-                    <td colSpan={3} className="px-4 py-8 text-center text-faint">
+                    <td colSpan={6} className="px-4 py-8 text-center text-faint">
                       No short-link clicks yet.
                     </td>
                   </tr>
@@ -306,6 +312,9 @@ export default async function AdminPage() {
                       <span className="font-mono text-[13px]">{c.code}</span>
                     </Td>
                     <Td right>{c.clicks}</Td>
+                    <Td right>{c.siteClicks}</Td>
+                    <Td right>{c.portalClicks}</Td>
+                    <Td right>{c.unknownClicks}</Td>
                     <Td right>{c.last7d}</Td>
                   </tr>
                 ))}

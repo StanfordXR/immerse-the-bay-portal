@@ -59,9 +59,10 @@ export function ReferralCard({
           Bring your friends
         </h2>
         <p className="mt-1 text-[14px] leading-relaxed text-muted">
-          Share your link. Every friend who arrives through it and{" "}
-          <em>submits</em> an application counts. Top referrers get shoutouts
-          at the opening ceremony.
+          Share your link. Every friend who uses it before their first
+          submission and <em>submits</em> an application counts. If they use more
+          than one friend&apos;s link, the first one gets credit. Top referrers get
+          shoutouts at the opening ceremony.
         </p>
 
         <div className="mt-4 flex flex-wrap items-center gap-2.5">

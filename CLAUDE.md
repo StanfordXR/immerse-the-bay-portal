@@ -53,8 +53,8 @@ Verified: `immersethebay.org/r/f-treefest` (never deployed) currently ends at
 `https://portal.immersethebay.org/` with no cookie.
 
 **So: add and deploy the code, curl it, and test-scan the real printed proof
-before any print run.** Listserv codes (`l-<slug>`) resolve by pattern and need
-no deploy; flyer codes do not have a pattern yet and are hardcoded.
+before any print run.** Listserv codes (`l-<slug>`) and flyer codes
+(`f-<slug>`) resolve by pattern and need no deploy.
 
 ## Attribution generally
 
@@ -62,3 +62,17 @@ no deploy; flyer codes do not have a pattern yet and are hardcoded.
 stored server-side in the `itb_attr` cookie on `.immersethebay.org`, and it is
 first-party precisely because no hosted analytics tool knows the admissions
 outcome.
+
+## Personal referrals are not marketing attribution
+
+The dashboard shares `immersethebay.org/r/<personal-code>`. The marketing site
+forwards that path to the portal with `via=site`; old direct
+`portal.immersethebay.org/r/<personal-code>` links remain valid and are recorded
+as `via=portal`.
+
+The portal writes a separate `itb_ref` cookie for a valid personal code. On the
+first draft save, that becomes a durable `referral_claim` tied to the signed-in
+user. The first valid referral before first submission wins, and the leaderboard
+counts claims whose referred application was submitted. Do not rebuild the
+leaderboard from `utm_source='ref'`: acquisition first touch and a referring
+friend are different facts and may both be present.

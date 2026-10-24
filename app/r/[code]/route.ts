@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { NextResponse, after } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application, linkClick } from "@/lib/db/schema";
@@ -8,8 +8,16 @@ import {
   ATTRIBUTION_MAX_AGE,
   UTM_PARAMS,
   normalizeUtm,
+  parseAttribution,
   type Attribution,
 } from "@/lib/attribution";
+import {
+  parseReferralCookie,
+  REFERRAL_COOKIE,
+  REFERRAL_COOKIE_MAX_AGE,
+  serializeReferralCookie,
+  type ReferralEntryPoint,
+} from "@/lib/referral-cookie";
 
 /**
  * Self-hosted short links for QR codes and campaign posts. Clicks land in our
@@ -32,8 +40,9 @@ import {
  *   utm_content = placement within the source, when there's more than one
  *   no utm_campaign / utm_medium — one event, and the source implies the medium
  *
- * Personal referral codes: utm_source=ref, utm_content=<handle>. Add a row here
- * and in the Notion master list; performance is visible in PostHog and /admin.
+ * Personal referral codes are minted in the database. They still emit
+ * utm_source=ref for acquisition reporting, but leaderboard ownership comes
+ * from the separate itb_ref cookie and referral_claim table.
  *
  * Master list of codes lives in Notion (owner: Victor). Add codes BEFORE
  * anything ships — printed QR codes are unfixable.
@@ -118,12 +127,15 @@ const PATTERN_SOURCES: Record<string, string> = {
 };
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ code: string }> },
 ) {
   const { code } = await params;
   const normalized = code.toLowerCase();
+  const entryPoint: ReferralEntryPoint =
+    request.nextUrl.searchParams.get("via") === "site" ? "site" : "portal";
   let destination = LINKS[normalized];
+  let personalReferralCode: string | null = null;
 
   // Pattern-resolved campaigns: listservs (l-) and flyer locations (f-).
   // Both are cold audiences — someone else's mailing list, or a stranger at a
@@ -152,34 +164,41 @@ export async function GET(
       .limit(1);
     if (row) {
       // Referred friends land on the marketing site like every other
-      // campaign; the external-redirect branch below stamps first touch so
-      // the referral still counts when they eventually submit.
-      destination = `https://immersethebay.org/?utm_source=ref&utm_content=${normalized}`;
+      // campaign; the external-redirect branch below stamps both marketing
+      // first touch (when empty) and the independent personal-referral cookie.
+      // Keep the visible landing URL clean. Referral attribution was already
+      // established on this hop, so exposing a raw UTM URL only creates a
+      // second, broken-looking link for people to copy and reshare.
+      destination = "https://immersethebay.org/";
+      personalReferralCode = normalized;
     }
   }
 
   if (!destination) redirect("/");
 
-  // External destinations (the marketing site) can't set the first-touch
-  // cookie themselves — the marketing repo has no middleware — so the hop sets
-  // it here from the destination's own UTM params. This is different from the
-  // hop-must-not-set rule in proxy.ts: that rule guards against a *referrer*
-  // captured on the hop beating the destination's UTMs; here the cookie IS the
-  // destination's UTMs. First touch still wins: an existing cookie is kept.
+  // External destinations (the marketing site) can't set the acquisition
+  // cookie themselves, so this hop writes it from the destination's UTMs. A
+  // personal referral uses its validated code directly and keeps the visible
+  // landing URL clean. Acquisition remains first-touch: an existing valid
+  // cookie is kept. Personal referral ownership is handled separately below.
   if (destination.startsWith("http")) {
     const dest = new URL(destination);
     const response = NextResponse.redirect(dest, 307);
 
-    const hasCookie = (request.headers.get("cookie") ?? "").includes(
-      `${ATTRIBUTION_COOKIE}=`,
+    const existingAttribution = parseAttribution(
+      request.cookies.get(ATTRIBUTION_COOKIE)?.value,
     );
-    if (!hasCookie) {
-      const attribution: Attribution = {};
-      for (const param of UTM_PARAMS) {
-        const value = normalizeUtm(dest.searchParams.get(param));
-        if (value) {
-          attribution[param.replace("utm_", "") as keyof Attribution] =
-            value as never;
+    if (Object.keys(existingAttribution).length === 0) {
+      const attribution: Attribution = personalReferralCode
+        ? { source: "ref", content: personalReferralCode }
+        : {};
+      if (!personalReferralCode) {
+        for (const param of UTM_PARAMS) {
+          const value = normalizeUtm(dest.searchParams.get(param));
+          if (value) {
+            attribution[param.replace("utm_", "") as keyof Attribution] =
+              value as never;
+          }
         }
       }
       if (Object.keys(attribution).length > 0) {
@@ -200,10 +219,36 @@ export async function GET(
       }
     }
 
+    // A personal referral is a relationship, not a marketing source. Keep it
+    // in its own cookie so an earlier event-site/Instagram/etc. first touch does
+    // not erase the friend's credit. The first valid referral link wins.
+    if (
+      personalReferralCode &&
+      !parseReferralCookie(request.cookies.get(REFERRAL_COOKIE)?.value)
+    ) {
+      response.cookies.set({
+        name: REFERRAL_COOKIE,
+        value: serializeReferralCookie({
+          code: personalReferralCode,
+          entryPoint,
+          clickedAt: Date.now(),
+        }),
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: REFERRAL_COOKIE_MAX_AGE,
+        ...(process.env.COOKIE_DOMAIN
+          ? { domain: process.env.COOKIE_DOMAIN }
+          : {}),
+      });
+    }
+
     after(async () => {
       try {
         await db.insert(linkClick).values({
           code: normalized,
+          entryPoint,
           referrer: request.headers.get("referer"),
           userAgent: request.headers.get("user-agent")?.slice(0, 300) ?? null,
         });
@@ -219,6 +264,7 @@ export async function GET(
     try {
       await db.insert(linkClick).values({
         code: normalized,
+        entryPoint,
         referrer: request.headers.get("referer"),
         userAgent: request.headers.get("user-agent")?.slice(0, 300) ?? null,
       });
