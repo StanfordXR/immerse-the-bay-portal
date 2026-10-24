@@ -131,6 +131,14 @@ GROUP BY 1 ORDER BY applicants DESC;
 No hosted analytics tool can produce that `accepted` column, because none of
 them know the admissions outcome. That's why attribution is first-party.
 
+Personal referrals are intentionally separate from those marketing fields.
+`/r/<personal-code>` writes an `itb_ref` cookie, and the first draft save binds
+that code to the signed-in user in `referral_claim`. The first valid referral
+before the person's first submission wins. The leaderboard joins those claims
+to submitted applications; it does not infer referral ownership from
+`application.utm_*`. This lets an applicant truthfully have both an original
+acquisition source (for example `es` or `ig`) and a referring friend.
+
 ## Context worth carrying
 
 Last year's Typeform: **1,813 views → 956 starts → 436 submissions** (45.6%

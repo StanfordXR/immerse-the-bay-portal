@@ -101,9 +101,8 @@ export const application = pgTable(
     heardAboutUsName: text("heard_about_us_name"),
 
     // ── referrals ─────────────────────────────────────────────────────────
-    // Minted on first submit. A referred application carries
-    // utm_source='ref' + utm_content=<code>; only completed (submitted)
-    // applications count toward the leaderboard.
+    // Minted on first submit. Inbound ownership lives in referral_claim rather
+    // than these outbound-code fields or the marketing UTM columns.
     referralCode: text("referral_code").unique(),
     referralAnonymous: boolean("referral_anonymous").notNull().default(false),
 
@@ -194,6 +193,43 @@ export const userAttribution = pgTable("user_attribution", {
 });
 
 /**
+ * Personal-referral ownership, deliberately separate from marketing UTMs.
+ *
+ * Acquisition attribution answers "where did this applicant first hear about
+ * the event?" A referral answers "which submitted applicant brought them?"
+ * Those can both be true, so overloading utm_source made the leaderboard depend
+ * on whichever browser cookie happened to be present at submit time.
+ *
+ * One referred user can have one claim. The first valid referral recorded
+ * before their first submission wins; later links cannot poach the credit.
+ */
+export const referralClaim = pgTable(
+  "referral_claim",
+  {
+    referredUserId: text("referred_user_id")
+      .primaryKey()
+      .references(() => user.id, { onDelete: "cascade" }),
+    referrerApplicationId: uuid("referrer_application_id")
+      .notNull()
+      .references(() => application.id, { onDelete: "cascade" }),
+    // Snapshot retained for audits even though the relationship is keyed by id.
+    referralCode: text("referral_code").notNull(),
+    entryPoint: text("entry_point").notNull(),
+    clickedAt: timestamp("clicked_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("referral_claim_referrer_idx").on(t.referrerApplicationId),
+    check(
+      "referral_claim_entry_point_check",
+      sql`${t.entryPoint} in ('site', 'portal', 'legacy')`,
+    ),
+  ],
+);
+
+/**
  * Short-link clicks for printed QR codes and campaign links.
  *
  * Self-hosted rather than Dub or Bitly: Dub's free tier is ~1,000 tracked events
@@ -206,6 +242,9 @@ export const linkClick = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     code: text("code").notNull(),
+    // Whether the public marketing-domain alias or the portal URL was used.
+    // Historical rows are null because the old route did not retain this.
+    entryPoint: text("entry_point"),
     referrer: text("referrer"),
     userAgent: text("user_agent"),
     at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),

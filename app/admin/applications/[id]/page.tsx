@@ -9,6 +9,7 @@ import {
   application,
   applicationEvent,
   applicationTag,
+  referralClaim,
   review,
   tag,
   user,
@@ -41,6 +42,17 @@ export default async function AdminApplicationDetail({
     .select({ email: user.email, name: user.name })
     .from(user)
     .where(eq(user.id, row.userId))
+    .limit(1);
+
+  const [inboundReferral] = await db
+    .select({
+      code: referralClaim.referralCode,
+      entryPoint: referralClaim.entryPoint,
+      clickedAt: referralClaim.clickedAt,
+      referrerApplicationId: referralClaim.referrerApplicationId,
+    })
+    .from(referralClaim)
+    .where(eq(referralClaim.referredUserId, row.userId))
     .limit(1);
 
   const [allTags, appliedTags, events, reviews, archivedVersions] = await Promise.all([
@@ -322,10 +334,26 @@ export default async function AdminApplicationDetail({
                 : "direct or unknown"}
               {row.landingPath ? ` → ${row.landingPath}` : ""}
             </dd>
-            <dt className="text-faint">Referral code</dt>
+            <dt className="text-faint">Personal referral code</dt>
             <dd className="font-mono text-[13px] text-moonlit/90">
               {row.referralCode ?? "·"}
               {row.referralAnonymous ? " (anonymous)" : ""}
+            </dd>
+            <dt className="text-faint">Referred by</dt>
+            <dd className="font-mono text-[13px] text-moonlit/90">
+              {inboundReferral ? (
+                <>
+                  <Link
+                    href={`/admin/applications/${inboundReferral.referrerApplicationId}`}
+                    className="text-cyan underline-offset-2 hover:underline"
+                  >
+                    {inboundReferral.code}
+                  </Link>
+                  {` · ${inboundReferral.entryPoint} · ${fmt(inboundReferral.clickedAt)}`}
+                </>
+              ) : (
+                "·"
+              )}
             </dd>
           </dl>
         </section>

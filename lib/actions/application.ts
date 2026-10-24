@@ -15,6 +15,7 @@ import {
   parseAttribution,
   toAttributionColumns,
 } from "@/lib/attribution";
+import { REFERRAL_COOKIE } from "@/lib/referral-cookie";
 import { getApplicationWindow } from "@/lib/application-window";
 import { closeDateLabel, finalDecisionsLabel } from "@/lib/config";
 import {
@@ -25,7 +26,7 @@ import {
   type Answers,
 } from "@/lib/form-schema";
 import { sendRevisionConfirmation, sendSubmissionConfirmation } from "@/lib/email";
-import { ensureReferralCode } from "@/lib/referral";
+import { ensureReferralCode, recordReferralClaim } from "@/lib/referral";
 
 export type SaveResult = { ok: true } | { ok: false; error: string };
 
@@ -42,6 +43,36 @@ async function recordUserAttribution(userId: string): Promise<void> {
     .insert(userAttribution)
     .values({ userId, ...toAttributionColumns(attr) })
     .onConflictDoNothing();
+}
+
+/** Bind a browser referral to this account, then remove the browser handoff. */
+async function recordReferralFromCookies(
+  userId: string,
+  jar: Awaited<ReturnType<typeof cookies>>,
+): Promise<void> {
+  const raw = jar.get(REFERRAL_COOKIE)?.value;
+  if (!raw) return;
+
+  // Leave the cookie in place after a transient failure so the next autosave
+  // can retry. Once processed (including invalid/self/ineligible claims), clear
+  // it so another person using the same browser cannot inherit the referral.
+  try {
+    await recordReferralClaim(userId, raw);
+    jar.set({
+      name: REFERRAL_COOKIE,
+      value: "",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+      ...(process.env.COOKIE_DOMAIN
+        ? { domain: process.env.COOKIE_DOMAIN }
+        : {}),
+    });
+  } catch (error) {
+    console.error("[referral] claim persistence failed:", error);
+  }
 }
 
 // Generous ceiling on the serialized answers object; individual fields are
@@ -79,7 +110,11 @@ export async function saveDraft(raw: unknown): Promise<SaveResult> {
     .returning({ id: application.id });
   if (saved.length === 0) return { ok: false, error: "locked" };
 
-  await recordUserAttribution(authz.user.id).catch(() => {});
+  const jar = await cookies();
+  await Promise.all([
+    recordUserAttribution(authz.user.id).catch(() => {}),
+    recordReferralFromCookies(authz.user.id, jar),
+  ]);
 
   return { ok: true };
 }
@@ -144,6 +179,14 @@ export async function submitApplication(raw: unknown): Promise<SubmitResult> {
   const jar = await cookies();
   const attr = parseAttribution(jar.get(ATTRIBUTION_COOKIE)?.value);
   const attrColumns = firstSubmit ? toAttributionColumns(attr) : {};
+
+  // Referral ownership is independent of acquisition attribution. Persist it
+  // before the first submission flips this application out of the eligible
+  // draft state. A failure must never block the application itself; normal
+  // autosave has already attempted the same durable write.
+  if (firstSubmit) {
+    await recordReferralFromCookies(authz.user.id, jar);
+  }
 
   const [row] = await db
     .insert(application)
