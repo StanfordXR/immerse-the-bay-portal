@@ -163,7 +163,7 @@ export function DecisionCard(props: DecisionCardProps) {
         {view === "rejected" && (
           <>
             <h2 className="font-display text-2xl font-semibold">
-              We&apos;d like to consider your application again
+              {canRevise ? "We'd like to consider your application again" : "Thank you for applying"}
             </h2>
             {canRevise ? (
               <>
@@ -188,7 +188,11 @@ export function DecisionCard(props: DecisionCardProps) {
               </>
             ) : (
               <div className="mt-4 max-w-xl space-y-3 text-[15px] leading-relaxed text-muted">
-                <p>Hi {firstName}, we were unable to offer you a spot in our priority round.</p>
+                <p>
+                  Hi {firstName}, unfortunately, we were unable to offer you a spot at Immerse the
+                  Bay 2026. Every application was manually reviewed by at least two human reviewers,
+                  and we received many strong applications.
+                </p>
                 <p>
                   Please don&apos;t let this stop you: we&apos;d love to see you at other Stanford XR
                   events, and to read your application next year.
