@@ -8,10 +8,14 @@ import { outcome } from "./review";
  *   priority  first submitted on or before NEXT_PUBLIC_PRIORITY_DEADLINE and
  *             never revised. A revised application is reviewed fresh in the
  *             regular round, however early it was first submitted.
- *   regular   later submissions plus every reopened revision.
+ *   regular   submissions through the original final deadline plus every
+ *             reopened early application.
+ *   late      first submitted after the original final deadline.
  *   all       every application, regardless of round.
  */
-export const SCOPES = ["priority", "regular", "all"] as const;
+export const DECISION_ROUNDS = ["priority", "regular", "late"] as const;
+export type DecisionRound = (typeof DECISION_ROUNDS)[number];
+export const SCOPES = [...DECISION_ROUNDS, "all"] as const;
 export type Scope = (typeof SCOPES)[number];
 
 export function isScope(value: unknown): value is Scope {
@@ -40,9 +44,24 @@ export function isPriority(f: RoundFacts, deadline: Date | null): boolean {
   return f.revisions === 0 && f.firstSubmittedMs <= deadline.getTime();
 }
 
-export function inScope(priority: boolean, scope: Scope): boolean {
+export function isLate(f: RoundFacts, deadline: Date | null): boolean {
+  if (!deadline || f.firstSubmittedMs === null) return false;
+  return f.firstSubmittedMs > deadline.getTime();
+}
+
+export function decisionRound(
+  facts: RoundFacts,
+  priorityDeadline: Date | null,
+  regularDeadline: Date | null,
+): DecisionRound {
+  if (isPriority(facts, priorityDeadline)) return "priority";
+  if (isLate(facts, regularDeadline)) return "late";
+  return "regular";
+}
+
+export function inScope(round: DecisionRound, scope: Scope): boolean {
   if (scope === "all") return true;
-  return scope === "priority" ? priority : !priority;
+  return round === scope;
 }
 
 export type CutoffRow = {
@@ -51,7 +70,7 @@ export type CutoffRow = {
   score: number | null;
   reads: number;
   under18: boolean;
-  priority: boolean;
+  round: DecisionRound;
 };
 
 export type CutoffPlan = {
@@ -78,7 +97,7 @@ export function planCutoff(
 ): CutoffPlan {
   const plan: CutoffPlan = { accepted: [], rejected: [], tooFewReads: [], unscored: [] };
   for (const r of rows) {
-    if (r.stage !== "submitted" || !inScope(r.priority, scope)) continue;
+    if (r.stage !== "submitted" || !inScope(r.round, scope)) continue;
     const o = outcome(r, threshold);
     if (r.under18) plan.rejected.push(r.id);
     else if (o === "unscored") plan.unscored.push(r.id);
@@ -88,13 +107,13 @@ export function planCutoff(
   return plan;
 }
 
-export type ReleaseRow = { id: string; decision: string | null; priority: boolean };
+export type ReleaseRow = { id: string; decision: string | null; round: DecisionRound };
 
 /** Unreleased decisions a release in this scope publishes (rows are already unreleased). */
 export function planRelease(rows: ReleaseRow[], scope: Scope): { accepted: string[]; rejected: string[] } {
   const plan = { accepted: [] as string[], rejected: [] as string[] };
   for (const r of rows) {
-    if (!inScope(r.priority, scope)) continue;
+    if (!inScope(r.round, scope)) continue;
     if (r.decision === "accepted" || r.decision === "rejected") plan[r.decision].push(r.id);
   }
   return plan;

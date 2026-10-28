@@ -5,7 +5,7 @@ import { useMemo, useState, useTransition } from "react";
 import { setReadsPerApplication } from "@/lib/actions/review";
 import { applyCutoff, releaseDecisions } from "@/lib/actions/decision";
 import { MAX_READS_PER_APPLICATION, outcome, type Outcome } from "@/lib/review";
-import { inScope, planCutoff, type Scope } from "@/lib/rounds";
+import { inScope, planCutoff, type DecisionRound, type Scope } from "@/lib/rounds";
 
 /** Reads-per-application picker on /admin/review. Saves on change. */
 export function ReadsPerApplication({ initial }: { initial: number }) {
@@ -66,7 +66,7 @@ export type ThresholdRow = {
   /** Decision already released, so "Apply this cutoff" leaves it alone. */
   released: boolean;
   stage: string;
-  priority: boolean;
+  round: DecisionRound;
 };
 
 const OUTCOME_STYLE: Record<Outcome, string> = {
@@ -85,6 +85,7 @@ export type UnreleasedCounts = { accepted: number; rejected: number };
 const SCOPE_LABEL: Record<Scope, string> = {
   priority: "priority-round",
   regular: "regular-round",
+  late: "late-round",
   all: "all",
 };
 
@@ -97,7 +98,9 @@ export function DecisionRoundAdmin({
   reads: number;
   unreleasedCounts: Record<Scope, UnreleasedCounts>;
 }) {
-  const [scope, setScope] = useState<Scope>("priority");
+  const [scope, setScope] = useState<Scope>(() =>
+    rows.some((row) => row.round === "late") ? "late" : "priority",
+  );
   return (
     <div className="flex flex-col gap-6">
       <div className="card flex flex-wrap items-center justify-between gap-4 p-4 sm:px-6">
@@ -107,8 +110,10 @@ export function DecisionRoundAdmin({
             {scope === "priority"
               ? "Priority includes on-time first submissions that have never been reopened for revision."
               : scope === "regular"
-                ? "Regular includes later submissions and every application reopened for revision."
-                : "All applications combines the priority and regular rounds."}
+                ? "Regular includes submissions through the original final deadline and reopened early applications."
+                : scope === "late"
+                  ? "Late includes first submissions after the original final deadline. Incomplete reads are listed first."
+                  : "All applications combines the priority, regular, and late rounds."}
           </p>
         </div>
         <select
@@ -119,6 +124,7 @@ export function DecisionRoundAdmin({
         >
           <option value="priority">Priority round</option>
           <option value="regular">Regular round</option>
+          <option value="late">Late round</option>
           <option value="all">All applications</option>
         </select>
       </div>
@@ -130,7 +136,13 @@ export function DecisionRoundAdmin({
 
 export function ThresholdPanel({ rows, reads, scope }: { rows: ThresholdRow[]; reads: number; scope: Scope }) {
   const [threshold, setThreshold] = useState(3);
-  const scopedRows = useMemo(() => rows.filter((r) => inScope(r.priority, scope)), [rows, scope]);
+  const scopedRows = useMemo(() => {
+    const filtered = rows.filter((r) => inScope(r.round, scope));
+    if (scope !== "late") return filtered;
+    return [...filtered].sort(
+      (a, b) => Number(a.reads >= reads) - Number(b.reads >= reads),
+    );
+  }, [rows, reads, scope]);
 
   const counts = useMemo(() => {
     const c: Record<Outcome, number> = { accepted: 0, rejected: 0, unscored: 0 };
@@ -145,6 +157,7 @@ export function ThresholdPanel({ rows, reads, scope }: { rows: ThresholdRow[]; r
 
   const scored = counts.accepted + counts.rejected;
   const partial = markable.tooFewReads.length;
+  const needsReview = scopedRows.filter((row) => row.reads < reads).length;
 
   return (
     <div className="flex flex-col gap-5">
@@ -201,6 +214,12 @@ export function ThresholdPanel({ rows, reads, scope }: { rows: ThresholdRow[]; r
           <p className="text-[13px] text-muted">
             {partial} scored application{partial === 1 ? " has" : "s have"} fewer than{" "}
             {reads} reads, so {partial === 1 ? "its" : "their"} score may still move.
+          </p>
+        )}
+        {scope === "late" && needsReview > 0 && (
+          <p className="text-[13px] text-cyan">
+            {needsReview} late application{needsReview === 1 ? " still needs" : "s still need"}{" "}
+            review. {needsReview === 1 ? "It is" : "They are"} listed first below.
           </p>
         )}
       </div>

@@ -21,11 +21,11 @@ export async function GET(req: NextRequest): Promise<Response> {
   }
   const requestedScope = req.nextUrl.searchParams.get("scope") ?? "priority";
   if (!isScope(requestedScope)) {
-    return new Response("?scope must be priority, regular, or all", { status: 400 });
+    return new Response("?scope must be priority, regular, late, or all", { status: 400 });
   }
 
   const rows = (await getReviewResults())
-    .filter((r) => inScope(r.priority, requestedScope))
+    .filter((r) => inScope(r.round, requestedScope))
     .map((r) => ({ ...r, outcome: outcome(r, threshold) }));
   const order = { accepted: 0, rejected: 1, unscored: 2 } as const;
   rows.sort((a, b) => order[a.outcome] - order[b.outcome]);
@@ -33,14 +33,14 @@ export async function GET(req: NextRequest): Promise<Response> {
   // `outcome` is the score at this cutoff; `decision` is what's actually
   // marked (hand edits included) and whether hackers can see it yet.
   const header = [
-    "outcome", "decision", "released", "score", "reads", "spread", "first_name",
+    "round", "outcome", "decision", "released", "score", "reads", "spread", "first_name",
     "last_name", "email", "school", "age_at_event", "under_18", "submitted_at",
     "reviewer_comments",
   ];
   const csv = toCsv(
     header,
     rows.map((r) => [
-      r.outcome, r.decision, r.released ? "yes" : "no", r.score?.toFixed(3), r.reads,
+      r.round, r.outcome, r.decision, r.released ? "yes" : "no", r.score?.toFixed(3), r.reads,
       r.spread?.toFixed(3), r.firstName, r.lastName, r.email, r.schoolName, r.age,
       r.under18 ? "yes" : "no", r.submittedAt?.toISOString(), r.comments.join(" | "),
     ]),
