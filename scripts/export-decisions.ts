@@ -11,23 +11,24 @@ const output = process.argv[4];
 if (!Number.isFinite(threshold) || threshold < 1 || threshold > 5) {
   throw new Error("Threshold must be a score between 1 and 5.");
 }
-if (!isScope(requestedScope)) throw new Error("Scope must be priority or all.");
+if (!isScope(requestedScope)) throw new Error("Scope must be priority, regular, late, or all.");
 if (!output) throw new Error("Usage: bun scripts/export-decisions.ts <threshold> <scope> <output.csv>");
 
 const rows = (await getReviewResults())
-  .filter((row) => inScope(row.priority, requestedScope))
+  .filter((row) => inScope(row.round, requestedScope))
   .map((row) => ({ ...row, outcome: outcome(row, threshold) }));
 const order = { accepted: 0, rejected: 1, unscored: 2 } as const;
 rows.sort((a, b) => order[a.outcome] - order[b.outcome]);
 
 const header = [
-  "outcome", "decision", "released", "score", "reads", "spread", "first_name",
+  "round", "outcome", "decision", "released", "score", "reads", "spread", "first_name",
   "last_name", "email", "school", "age_at_event", "under_18", "submitted_at",
   "reviewer_comments",
 ];
 const csv = toCsv(
   header,
   rows.map((row) => [
+    row.round,
     row.outcome,
     row.decision,
     row.released ? "yes" : "no",

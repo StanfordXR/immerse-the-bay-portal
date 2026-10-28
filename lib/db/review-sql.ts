@@ -2,8 +2,8 @@ import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { application, applicationEvent, review, reviewConfig, user } from "@/lib/db/schema";
 import { decisionPoolOnly } from "@/lib/db/applicant-filter";
-import { ageAtEvent, blockedByAgeRule, priorityDeadline } from "@/lib/config";
-import { isPriority, normalizeTimestamp } from "@/lib/rounds";
+import { ageAtEvent, blockedByAgeRule, priorityDeadline, regularDeadline } from "@/lib/config";
+import { decisionRound, normalizeTimestamp } from "@/lib/rounds";
 import { DEFAULT_READS_PER_APPLICATION, RUBRIC } from "@/lib/review";
 
 /**
@@ -77,6 +77,7 @@ export async function getReviewResults() {
     .orderBy(sql`avg(${reviewScoreSql}) desc nulls last`, desc(application.submittedAt));
 
   const deadline = priorityDeadline();
+  const finalDeadline = regularDeadline();
   return rows.map(({ dateOfBirth, firstSubmittedAt: rawFirstSubmittedAt, revisions, ...r }) => {
     const firstSubmittedAt = normalizeTimestamp(rawFirstSubmittedAt);
     const firstSubmittedMs = firstSubmittedAt?.getTime() ?? null;
@@ -85,9 +86,10 @@ export async function getReviewResults() {
       ...r,
       firstSubmittedAt,
       revisions,
-      priority: isPriority(
+      round: decisionRound(
         { firstSubmittedMs, revisions },
         deadline,
+        finalDeadline,
       ),
       age,
       under18: blockedByAgeRule(dateOfBirth, { email: r.email, school: r.schoolName }),

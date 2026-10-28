@@ -18,12 +18,13 @@ export default async function AdminReviewPage() {
   const unreleasedCounts: Record<Scope, UnreleasedCounts> = {
     priority: { accepted: 0, rejected: 0 },
     regular: { accepted: 0, rejected: 0 },
+    late: { accepted: 0, rejected: 0 },
     all: { accepted: 0, rejected: 0 },
   };
   for (const row of results) {
     if (row.released || (row.decision !== "accepted" && row.decision !== "rejected")) continue;
     unreleasedCounts.all[row.decision]++;
-    unreleasedCounts[row.priority ? "priority" : "regular"][row.decision]++;
+    unreleasedCounts[row.round][row.decision]++;
   }
 
   const complete = results.filter((r) => r.reads >= reads).length;
@@ -66,7 +67,7 @@ export default async function AdminReviewPage() {
             under18: r.under18,
             released: r.released,
             stage: r.stage,
-            priority: r.priority,
+            round: r.round,
           }))}
         />
       </div>

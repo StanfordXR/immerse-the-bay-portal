@@ -80,7 +80,7 @@ export async function releaseDecisions(scope: Scope): Promise<Result<{ released:
   const releasePlan = planRelease(
     results
       .filter((r) => !r.released)
-      .map((r) => ({ id: r.id, decision: r.decision, priority: r.priority })),
+      .map((r) => ({ id: r.id, decision: r.decision, round: r.round })),
     scope,
   );
   const releaseIds = [...releasePlan.accepted, ...releasePlan.rejected];

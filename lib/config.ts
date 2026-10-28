@@ -22,6 +22,19 @@ export function priorityDeadlineLabel(): string {
   });
 }
 
+/**
+ * Original public final deadline. Unlike the admin-managed application window,
+ * this never moves when organizers reopen intake for a late round.
+ */
+export function regularDeadline(): Date | null {
+  const raw =
+    process.env.NEXT_PUBLIC_REGULAR_DEADLINE ??
+    process.env.NEXT_PUBLIC_APPLICATIONS_CLOSE ??
+    "2026-10-16T23:59:59-07:00";
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 export function applicationsClose(): Date | null {
   const raw = process.env.NEXT_PUBLIC_APPLICATIONS_CLOSE;
   if (!raw) return null;
