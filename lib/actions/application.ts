@@ -27,6 +27,7 @@ import {
 } from "@/lib/form-schema";
 import { sendRevisionConfirmation, sendSubmissionConfirmation } from "@/lib/email";
 import { ensureReferralCode, recordReferralClaim } from "@/lib/referral";
+import { canFinishAcceptedDraft } from "@/lib/application-access";
 
 export type SaveResult = { ok: true } | { ok: false; error: string };
 
@@ -83,7 +84,18 @@ export async function saveDraft(raw: unknown): Promise<SaveResult> {
   const authz = await getAuthorizedUser();
   if (!authz) return { ok: false, error: "signed-out" };
   if (!(await getApplicationWindow()).accepting) {
-    return { ok: false, error: "closed" };
+    const [existing] = await db
+      .select({
+        decision: application.decision,
+        stage: application.stage,
+        submittedAt: application.submittedAt,
+      })
+      .from(application)
+      .where(eq(application.userId, authz.user.id))
+      .limit(1);
+    if (!canFinishAcceptedDraft(existing)) {
+      return { ok: false, error: "closed" };
+    }
   }
   // JSON.stringify(undefined) is undefined; a crafted call must degrade to
   // "invalid", not throw.
@@ -122,8 +134,18 @@ export async function saveDraft(raw: unknown): Promise<SaveResult> {
 export async function submitApplication(raw: unknown): Promise<SubmitResult> {
   const authz = await getAuthorizedUser();
   if (!authz) return { ok: false, error: "Your session expired — sign in again." };
+  const [existing] = await db
+    .select({
+      id: application.id,
+      decision: application.decision,
+      submittedAt: application.submittedAt,
+      stage: application.stage,
+    })
+    .from(application)
+    .where(eq(application.userId, authz.user.id))
+    .limit(1);
   const applicationWindow = await getApplicationWindow();
-  if (!applicationWindow.accepting) {
+  if (!applicationWindow.accepting && !canFinishAcceptedDraft(existing)) {
     return { ok: false, error: "Applications have closed." };
   }
   if ((JSON.stringify(raw) ?? "").length > MAX_PAYLOAD_CHARS) {
@@ -143,15 +165,6 @@ export async function submitApplication(raw: unknown): Promise<SubmitResult> {
   const answers = parsed.data;
   const columns = answersToColumns(answers);
 
-  const [existing] = await db
-    .select({
-      id: application.id,
-      submittedAt: application.submittedAt,
-      stage: application.stage,
-    })
-    .from(application)
-    .where(eq(application.userId, authz.user.id))
-    .limit(1);
   // Resubmitting would reset `stage` and un-release the decision.
   if (existing?.stage === "decided") {
     return { ok: false, error: "Your decision is out, so your application is locked. See your dashboard." };

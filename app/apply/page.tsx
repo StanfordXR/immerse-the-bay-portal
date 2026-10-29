@@ -13,6 +13,7 @@ import {
 } from "@/lib/config";
 import { draftSchema, type Answers } from "@/lib/form-schema";
 import { ApplyForm } from "@/components/apply-form";
+import { canFinishAcceptedDraft } from "@/lib/application-access";
 
 export const metadata: Metadata = { title: "Apply" };
 
@@ -30,6 +31,7 @@ export default async function ApplyPage({
       answers: application.answers,
       submittedAt: application.submittedAt,
       stage: application.stage,
+      decision: application.decision,
     })
     .from(application)
     .where(eq(application.userId, user.id))
@@ -54,7 +56,8 @@ export default async function ApplyPage({
   }
 
   const applicationWindow = await getApplicationWindow();
-  const closed = !applicationWindow.accepting;
+  const acceptedDraftException = canFinishAcceptedDraft(row);
+  const closed = !applicationWindow.accepting && !acceptedDraftException;
   const deadlineLabel = closeDateLabel(applicationWindow.deadline);
   // The banner and footer talk about the priority round only while it exists.
   const priorityOpen = priorityRoundOpen();
@@ -80,10 +83,13 @@ export default async function ApplyPage({
           </h1>
           {!closed && (
             <p className="mt-2 text-[13.5px] text-faint">
-              {priorityOpen
-                ? `Priority round closes ${priorityDeadlineLabel()}. `
-                : ""}
-              Final deadline {deadlineLabel}.
+              {acceptedDraftException
+                ? "Your accepted late application is open for completion."
+                : `${
+                    priorityOpen
+                      ? `Priority round closes ${priorityDeadlineLabel()}. `
+                      : ""
+                  }Final deadline ${deadlineLabel}.`}
             </p>
           )}
         </div>
@@ -114,9 +120,11 @@ export default async function ApplyPage({
             initialAnswers={initial}
             alreadySubmitted={Boolean(row?.submittedAt)}
             deadlineNote={
-              priorityOpen
-                ? `Priority round closes ${priorityDeadlineLabel()}.`
-                : `Applications close ${deadlineLabel}.`
+              acceptedDraftException
+                ? "Your accepted late application is open for completion."
+                : priorityOpen
+                  ? `Priority round closes ${priorityDeadlineLabel()}.`
+                  : `Applications close ${deadlineLabel}.`
             }
           />
         )}
