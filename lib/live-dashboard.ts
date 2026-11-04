@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { application } from "@/lib/db/schema";
+import { isRole } from "@/lib/permissions";
 
 /**
  * Gate for the marketing site's Live Dashboard (immersethebay.org/dashboard).
@@ -19,13 +20,16 @@ export const SHARED_SESSION_COOKIE = "itb_session";
 export const MARKETING_URL =
   process.env.MARKETING_URL ?? "https://immersethebay.org";
 
-/** Response body of /api/attendee. Mirrored in the marketing repo's lib/attendee.ts. */
+/**
+ * Response body of /api/attendee. Mirrored in the marketing repo's lib/attendee.ts.
+ * "confirmed" means allowed in: a confirmed hacker, or staff (admin/reviewer).
+ */
 export type AttendeeStatus =
   | { status: "signed-out" }
   | { status: "not-confirmed" }
   | { status: "confirmed"; name: string };
 
-/** Resolves a shared session token to the holder's attendance status. */
+/** Resolves a shared session token to whether its holder may see the dashboard. */
 export async function attendeeStatus(
   token: string | undefined,
 ): Promise<AttendeeStatus> {
@@ -38,6 +42,11 @@ export async function attendeeStatus(
     }),
   });
   if (!session) return { status: "signed-out" };
+
+  const { role } = session.user;
+  if (isRole(role) && role !== "applicant") {
+    return { status: "confirmed", name: session.user.name };
+  }
 
   const [confirmed] = await db
     .select({ id: application.id })
