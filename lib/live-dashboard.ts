@@ -1,7 +1,10 @@
 import "server-only";
 import { and, eq } from "drizzle-orm";
+import { toDataURL } from "qrcode";
 import { auth } from "@/lib/auth";
+import { createCheckInCode } from "@/lib/check-in-badge";
 import { db } from "@/lib/db";
+import { createCheckInStore } from "@/lib/db/check-in";
 import { application } from "@/lib/db/schema";
 import { isRole } from "@/lib/permissions";
 
@@ -16,6 +19,7 @@ import { isRole } from "@/lib/permissions";
  * out (or a revoked session) closes the dashboard too.
  */
 export const SHARED_SESSION_COOKIE = "itb_session";
+const BADGE_OPENS_AT = Date.parse("2026-11-11T00:00:00-08:00");
 
 export const MARKETING_URL =
   process.env.MARKETING_URL ?? "https://immersethebay.org";
@@ -27,11 +31,12 @@ export const MARKETING_URL =
 export type AttendeeStatus =
   | { status: "signed-out" }
   | { status: "not-confirmed" }
-  | { status: "confirmed"; name: string };
+  | { status: "confirmed"; name: string; audience: "staff" | "hacker"; badgeQr?: string };
 
 /** Resolves a shared session token to whether its holder may see the dashboard. */
 export async function attendeeStatus(
   token: string | undefined,
+  includeBadge = false,
 ): Promise<AttendeeStatus> {
   if (!token) return { status: "signed-out" };
 
@@ -45,7 +50,7 @@ export async function attendeeStatus(
 
   const { role } = session.user;
   if (isRole(role) && role !== "applicant") {
-    return { status: "confirmed", name: session.user.name };
+    return { status: "confirmed", name: session.user.name, audience: "staff" };
   }
 
   const [confirmed] = await db
@@ -61,7 +66,19 @@ export async function attendeeStatus(
     )
     .limit(1);
 
-  return confirmed
-    ? { status: "confirmed", name: session.user.name }
-    : { status: "not-confirmed" };
+  if (!confirmed) return { status: "not-confirmed" };
+
+  const result: AttendeeStatus = { status: "confirmed", name: session.user.name, audience: "hacker" };
+  if (includeBadge && Date.now() >= BADGE_OPENS_AT) {
+    const badge = await createCheckInStore(db).badgeForUser(session.user.id);
+    if (badge) {
+      result.name = badge.name;
+      result.badgeQr = await toDataURL(createCheckInCode(badge.id, process.env.BETTER_AUTH_SECRET ?? ""), {
+        errorCorrectionLevel: "M",
+        margin: 4,
+        scale: 6,
+      });
+    }
+  }
+  return result;
 }

@@ -9,6 +9,7 @@ import { attendeeStatus, SHARED_SESSION_COOKIE } from "@/lib/live-dashboard";
 export async function GET(request: NextRequest) {
   const status = await attendeeStatus(
     request.cookies.get(SHARED_SESSION_COOKIE)?.value,
+    request.nextUrl.searchParams.get("badge") === "1",
   );
   return Response.json(status, { headers: { "Cache-Control": "private, no-store" } });
 }

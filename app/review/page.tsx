@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { and, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { Brand } from "@/components/brand";
+import { ReviewerTabs } from "@/components/reviewer-tabs";
 import { db } from "@/lib/db";
 import { application, review } from "@/lib/db/schema";
 import { applicantOwnedOnly } from "@/lib/db/applicant-filter";
@@ -69,6 +70,7 @@ export default async function ReviewPage({
           </Link>
         </div>
       </header>
+      <ReviewerTabs current="review" />
 
       <div className="flex flex-1 flex-col gap-6 pb-20 pt-4">
         <div>
