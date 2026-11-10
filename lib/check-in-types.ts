@@ -1,3 +1,7 @@
+export type CheckInTarget =
+  | { kind: "hacker"; id: string }
+  | { kind: "staff"; id: string };
+
 export type CheckInPerson = {
   id: string;
   name: string;

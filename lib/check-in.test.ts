@@ -3,11 +3,11 @@ import { randomUUID } from "node:crypto";
 import { test } from "node:test";
 import { PGlite } from "@electric-sql/pglite";
 import { generateDrizzleJson, generateMigration } from "drizzle-kit/api";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
 import decodeQr from "jsqr";
 import { create } from "qrcode";
-import { createCheckInCode, verifyCheckInCode } from "./check-in-badge";
+import { createCheckInCode, createStaffCheckInCode, verifyBadgeCode, verifyCheckInCode } from "./check-in-badge";
 import { createCheckInHandler } from "./check-in-handler";
 import type { Db } from "./db";
 import { createCheckInStore } from "./db/check-in";
@@ -25,6 +25,12 @@ test("a generated badge decodes from pixels and rejects wrong-event, tampered an
   assert.equal(verifyCheckInCode(code.slice(0, -1), secret), null);
   assert.equal(verifyCheckInCode(code + "\n", secret), null);
   assert.equal(verifyCheckInCode("https://example.test/", secret), null);
+  assert.deepEqual(verifyBadgeCode(code, secret), { kind: "hacker", id });
+  const staffId = "synthetic-opaque-staff-account";
+  const staffCode = createStaffCheckInCode(staffId, secret);
+  assert.deepEqual(verifyBadgeCode(staffCode, secret), { kind: "staff", id: staffId });
+  assert.equal(verifyBadgeCode(staffCode, "other-key"), null);
+  assert.equal(verifyBadgeCode(staffCode.replace(".staff.", "."), secret), null);
 
   const { modules } = create(code, { errorCorrectionLevel: "M" });
   const scale = 6;
@@ -62,8 +68,11 @@ test("reviewer desk searches the confirmed roster and persists exactly one check
     const scanId = randomUUID();
     const declinedId = randomUUID();
     const taggedId = randomUUID();
+    const staffId = "fixture-admin";
     await db.insert(user).values([
       { id: staff.id, name: "Fixture Reviewer", email: "staff@example.test", role: staff.role },
+      { id: staffId, name: "Fixture Organizer", email: "organizer@example.test", role: "admin" },
+      { id: "fixture-banned", name: "Banned Reviewer", email: "banned@example.test", role: "reviewer", banned: true },
       { id: "manual", name: "Avery Example", email: "avery@example.test", role: "applicant" },
       { id: "scan", name: "Robin Example", email: "robin@example.test", role: "applicant" },
       { id: "declined", name: "Declined Example", email: "declined@example.test", role: "applicant" },
@@ -85,7 +94,8 @@ test("reviewer desk searches the confirmed roster and persists exactly one check
         authorize: async () => authorized ? staff : null,
         search: store.search,
         checkIn: store.checkIn,
-        verifyCode: (code) => verifyCheckInCode(code, secret),
+        checkInStaff: store.checkInStaff,
+        verifyCode: (code) => verifyBadgeCode(code, secret),
       });
     }
     const api = handler();
@@ -133,6 +143,31 @@ test("reviewer desk searches the confirmed roster and persists exactly one check
     assert.deepEqual(readings.map((row) => row.alreadyCheckedIn).sort(), [false, true]);
     assert.equal(readings[0].person.checkedInAt, readings[1].person.checkedInAt);
     assert.equal((await store.search("Avery"))[0].checkedInAt, first.person.checkedInAt);
+
+    // The desk preserves preferred RSVP names, but the private badge shows the full name.
+    await db.update(application)
+      .set({ rsvpDetails: sql`jsonb_build_object('badgeName', 'Fixture Nickname')` })
+      .where(eq(application.id, scanId));
+    assert.equal((await store.search("Fixture Nickname"))[0].name, "Fixture Nickname");
+    assert.equal((await store.badgeForUser("scan"))?.name, "Robin Example");
+
+    const scanStaff = { action: "scan", code: createStaffCheckInCode(staffId, secret) };
+    assert.equal((await handler(false)(req(scanStaff))).status, 403);
+    assert.equal((await api(req({ action: "scan", code: createStaffCheckInCode("manual", secret) }))).status, 404);
+    assert.equal((await api(req({ action: "scan", code: createStaffCheckInCode("fixture-banned", secret) }))).status, 404);
+    const [staffScan, staffRepeat] = await Promise.all([api(req(scanStaff)), api(req(scanStaff))]);
+    assert.equal(staffScan.status, 200);
+    assert.equal(staffRepeat.status, 200);
+    const staffResults = await Promise.all([staffScan.json(), staffRepeat.json()]);
+    assert.deepEqual(staffResults.map((row) => row.alreadyCheckedIn).sort(), [false, true]);
+    assert.equal(staffResults[0].person.name, "Fixture Organizer");
+    assert.equal(staffResults[0].person.checkedInAt, staffResults[1].person.checkedInAt);
+    const staffAudit = await db.select().from(applicationEvent).where(eq(applicationEvent.kind, "event_staff_checked_in"));
+    assert.equal(staffAudit.length, 1);
+    assert.equal(staffAudit[0].applicationId, null);
+    assert.deepEqual(staffAudit[0].payload, { userId: staffId, method: "qr" });
+    await db.update(user).set({ role: "applicant" }).where(eq(user.id, staffId));
+    assert.equal((await api(req(scanStaff))).status, 404);
 
     const audit = await db.select().from(applicationEvent).where(eq(applicationEvent.kind, "event_checked_in"));
     assert.equal(audit.length, 2);

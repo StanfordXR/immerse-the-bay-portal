@@ -2,11 +2,11 @@ import "server-only";
 import { and, eq } from "drizzle-orm";
 import { toDataURL } from "qrcode";
 import { auth } from "@/lib/auth";
-import { createCheckInCode } from "@/lib/check-in-badge";
+import { createCheckInCode, createStaffCheckInCode } from "@/lib/check-in-badge";
 import { db } from "@/lib/db";
 import { createCheckInStore } from "@/lib/db/check-in";
 import { application } from "@/lib/db/schema";
-import { isRole } from "@/lib/permissions";
+import { isStaffRole, type StaffRole } from "@/lib/permissions";
 
 /**
  * Gate for the marketing site's Live Dashboard (immersethebay.org/dashboard).
@@ -31,7 +31,12 @@ export const MARKETING_URL =
 export type AttendeeStatus =
   | { status: "signed-out" }
   | { status: "not-confirmed" }
-  | { status: "confirmed"; name: string; audience: "staff" | "hacker"; badgeQr?: string };
+  | { status: "confirmed"; name: string; audience: "staff"; staffRole: StaffRole; badgeQr?: string }
+  | { status: "confirmed"; name: string; audience: "hacker"; badgeQr?: string };
+
+function renderBadge(code: string) {
+  return toDataURL(code, { errorCorrectionLevel: "M", margin: 4, scale: 6 });
+}
 
 /** Resolves a shared session token to whether its holder may see the dashboard. */
 export async function attendeeStatus(
@@ -49,8 +54,13 @@ export async function attendeeStatus(
   if (!session) return { status: "signed-out" };
 
   const { role } = session.user;
-  if (isRole(role) && role !== "applicant") {
-    return { status: "confirmed", name: session.user.name, audience: "staff" };
+  if (isStaffRole(role)) {
+    return {
+      status: "confirmed", name: session.user.name, audience: "staff", staffRole: role,
+      ...(includeBadge ? {
+        badgeQr: await renderBadge(createStaffCheckInCode(session.user.id, process.env.BETTER_AUTH_SECRET ?? "")),
+      } : {}),
+    };
   }
 
   const [confirmed] = await db
@@ -73,11 +83,7 @@ export async function attendeeStatus(
     const badge = await createCheckInStore(db).badgeForUser(session.user.id);
     if (badge) {
       result.name = badge.name;
-      result.badgeQr = await toDataURL(createCheckInCode(badge.id, process.env.BETTER_AUTH_SECRET ?? ""), {
-        errorCorrectionLevel: "M",
-        margin: 4,
-        scale: 6,
-      });
+      result.badgeQr = await renderBadge(createCheckInCode(badge.id, process.env.BETTER_AUTH_SECRET ?? ""));
     }
   }
   return result;

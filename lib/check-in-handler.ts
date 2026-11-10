@@ -1,11 +1,13 @@
 import { z } from "zod";
-import type { CheckInPerson, CheckInResult } from "@/lib/check-in-types";
+import { MAX_CHECK_IN_CODE_LENGTH } from "@/lib/check-in-badge";
+import type { CheckInPerson, CheckInResult, CheckInTarget } from "@/lib/check-in-types";
+import type { StaffRole } from "@/lib/permissions";
 
-type Staff = { id: string; role: "reviewer" | "admin" };
+type Staff = { id: string; role: StaffRole };
 const requestSchema = z.discriminatedUnion("action", [
   z.strictObject({ action: z.literal("search"), query: z.string().trim().min(2).max(100) }),
   z.strictObject({ action: z.literal("manual"), id: z.uuid() }),
-  z.strictObject({ action: z.literal("scan"), code: z.string().min(1).max(120) }),
+  z.strictObject({ action: z.literal("scan"), code: z.string().min(1).max(MAX_CHECK_IN_CODE_LENGTH) }),
 ]);
 
 function respond(body: unknown, status = 200) {
@@ -17,7 +19,8 @@ export function createCheckInHandler(deps: {
   authorize: () => Promise<Staff | null>;
   search: (query: string) => Promise<CheckInPerson[]>;
   checkIn: (id: string, actor: Staff, method: "search" | "qr") => Promise<CheckInResult | null>;
-  verifyCode: (code: string) => string | null;
+  checkInStaff: (id: string, actor: Staff) => Promise<CheckInResult | null>;
+  verifyCode: (code: string) => CheckInTarget | null;
 }) {
   return async (request: Request) => {
     const origin = request.headers.get("origin");
@@ -43,9 +46,13 @@ export function createCheckInHandler(deps: {
       const action = parsed.data;
       if (action.action === "search") return respond({ people: await deps.search(action.query) });
 
-      const id = action.action === "scan" ? deps.verifyCode(action.code) : action.id;
-      if (!id) return respond({ error: "This isn’t a valid Immerse the Bay badge. Try a name search." }, 400);
-      const result = await deps.checkIn(id, staff, action.action === "scan" ? "qr" : "search");
+      const target: CheckInTarget | null = action.action === "scan"
+        ? deps.verifyCode(action.code)
+        : { kind: "hacker", id: action.id };
+      if (!target) return respond({ error: "This isn’t a valid Immerse the Bay badge. Try a name search or ask an organizer." }, 400);
+      const result = target.kind === "staff"
+        ? await deps.checkInStaff(target.id, staff)
+        : await deps.checkIn(target.id, staff, action.action === "scan" ? "qr" : "search");
       if (!result) return respond({ error: "No confirmed attendee matches. Check the name or ask an organizer." }, 404);
       return respond(result);
     } catch {

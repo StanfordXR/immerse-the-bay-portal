@@ -68,13 +68,14 @@ scripts/preflight.mjs    Deploy gate
 
 Reviewers and admins can open **Review → Check-in** (`/review/check-in`). The
 desk searches submitted, accepted, RSVP-confirmed hacker applications by name
-or exact sign-up email. The camera scans the signed QR code on a hacker’s live
-dashboard badge. If the camera is unavailable, use the search form.
+or exact sign-up email. The camera accepts signed QR codes from hacker and staff
+badges. If the camera is unavailable, use the search form for hackers.
 
 Both paths set the same `application.checked_in_at` field and append one audit
 event in the same transaction; a second check-in preserves the original time.
-No new database migration, environment variables, or reviewer role grants
-are required. The badge uses the existing server-side authentication secret.
+Staff arrivals are deduplicated in the audit log without changing hacker
+attendance. Staff badges are available immediately; hacker badges follow the
+live dashboard opening time. No database migration or new role grants are required.
 
 ## Things that will bite you
 

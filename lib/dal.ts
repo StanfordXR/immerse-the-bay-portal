@@ -3,7 +3,7 @@ import { cache } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { isRole, type Role } from "@/lib/permissions";
+import { isRole, STAFF_ROLES, type Role } from "@/lib/permissions";
 
 /**
  * Data Access Layer — the *only* place authorization is decided.
@@ -54,7 +54,7 @@ export async function requireRole(...allowed: Role[]) {
 
 /** Stanford XR members and admins. */
 export async function requireReviewer() {
-  return requireRole("reviewer", "admin");
+  return requireRole(...STAFF_ROLES);
 }
 
 export async function requireAdmin() {

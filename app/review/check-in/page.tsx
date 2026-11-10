@@ -24,7 +24,7 @@ export default async function CheckInPage() {
         <div>
           <p className="eyebrow mb-2">Event staff</p>
           <h1 className="font-display text-3xl font-semibold">Attendee check-in</h1>
-          <p className="mt-2 text-sm text-muted">Find a confirmed hacker by name, or scan the QR code in their live dashboard under My Badge.</p>
+          <p className="mt-2 text-sm text-muted">Find a confirmed hacker by name, or scan a hacker or staff member’s QR code from My Badge.</p>
         </div>
         <CheckInDesk />
       </div>

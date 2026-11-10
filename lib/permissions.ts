@@ -48,6 +48,12 @@ export const roles = { applicant, reviewer, admin };
 
 export const ROLE_VALUES = ["applicant", "reviewer", "admin"] as const;
 export type Role = (typeof ROLE_VALUES)[number];
+export const STAFF_ROLES = ["reviewer", "admin"] as const;
+export type StaffRole = (typeof STAFF_ROLES)[number];
+
+export function isStaffRole(value: unknown): value is StaffRole {
+  return value === "reviewer" || value === "admin";
+}
 
 export function isRole(value: unknown): value is Role {
   return (
