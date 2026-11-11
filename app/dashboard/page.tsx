@@ -75,6 +75,7 @@ export default async function DashboardPage({
   const firstName =
     row?.firstName || user.name?.split(" ")[0] || "hacker";
   const accepted = row?.stage === "decided" && row.decision === "accepted";
+  const hasConfirmedSpot = accepted && row?.rsvp === "confirmed";
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-5 sm:px-6">
@@ -117,6 +118,17 @@ export default async function DashboardPage({
             </h1>
           )}
         </div>
+
+        {!isStaff && hasConfirmedSpot && (
+          <section aria-labelledby="event-dashboard-heading" className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div>
+              <h2 id="event-dashboard-heading" className="font-display text-lg font-semibold">Event schedule and check-in</h2>
+              <p className="mt-1 text-sm text-muted">See the latest schedule and save your check-in badge to your phone.</p>
+            </div>
+            {/* A full navigation lets the handoff set the shared session cookie before redirecting. */}
+            <a href="/live-dashboard" className="btn-primary shrink-0">Open live dashboard</a>
+          </section>
+        )}
 
         {/* staff dashboards drop the application card entirely */}
         {!isStaff &&
