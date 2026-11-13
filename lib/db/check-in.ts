@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
-import { and, asc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNotNull, isNull, max, sql } from "drizzle-orm";
 import type { Db } from "@/lib/db";
 import { application, applicationEvent, user } from "@/lib/db/schema";
 import { decisionPoolOnly } from "@/lib/db/applicant-filter";
-import type { CheckInPerson } from "@/lib/check-in-types";
+import type { CheckInPerson, CheckInStats } from "@/lib/check-in-types";
 import { STAFF_ROLES, type StaffRole } from "@/lib/permissions";
 
 type Actor = { id: string; role: StaffRole };
@@ -57,6 +57,25 @@ function forDesk(row: {
 
 export function createCheckInStore(db: Pick<Db, "select" | "transaction">) {
   return {
+    async stats(): Promise<CheckInStats> {
+      // Match the desk's eligible roster; count staff from the deduplicated badge audit.
+      // Use one statement so all counts reflect the same database snapshot.
+      const [row] = await db.select({
+        confirmedHackers: count(),
+        checkedInHackers: count(application.checkedInAt),
+        checkedInStaff: sql<number>`(
+          select count(*) from ${applicationEvent} where ${applicationEvent.kind} = ${staffArrivalKind}
+        )`.mapWith(Number),
+        latestHackerCheckInAt: max(application.checkedInAt),
+      }).from(application).where(eligibility);
+      return {
+        confirmedHackers: row.confirmedHackers,
+        checkedInHackers: row.checkedInHackers,
+        checkedInStaff: row.checkedInStaff,
+        latestHackerCheckInAt: row.latestHackerCheckInAt?.toISOString() ?? null,
+      };
+    },
+
     async search(rawQuery: string) {
       const query = rawQuery.trim().toLowerCase();
       if (query.length < 2 || query.length > 100) return [];

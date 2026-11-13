@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { MAX_CHECK_IN_CODE_LENGTH } from "@/lib/check-in-badge";
-import type { CheckInPerson, CheckInResult, CheckInTarget } from "@/lib/check-in-types";
+import type { CheckInPerson, CheckInResult, CheckInStats, CheckInTarget } from "@/lib/check-in-types";
 import type { StaffRole } from "@/lib/permissions";
 
 type Staff = { id: string; role: StaffRole };
@@ -12,6 +12,20 @@ const requestSchema = z.discriminatedUnion("action", [
 
 function respond(body: unknown, status = 200) {
   return Response.json(body, { status, headers: { "Cache-Control": "private, no-store" } });
+}
+
+export function createCheckInStatsHandler(deps: {
+  authorize: () => Promise<Staff | null>;
+  stats: () => Promise<CheckInStats>;
+}) {
+  return async () => {
+    try {
+      if (!await deps.authorize()) return respond({ error: "Sign in to the portal as a reviewer or admin." }, 403);
+      return respond(await deps.stats());
+    } catch {
+      return respond({ error: "Attendance totals are temporarily unavailable." }, 503);
+    }
+  };
 }
 
 export function createCheckInHandler(deps: {

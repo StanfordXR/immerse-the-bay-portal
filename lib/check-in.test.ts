@@ -8,7 +8,7 @@ import { drizzle } from "drizzle-orm/pglite";
 import decodeQr from "jsqr";
 import { create } from "qrcode";
 import { createCheckInCode, createStaffCheckInCode, verifyBadgeCode, verifyCheckInCode } from "./check-in-badge";
-import { createCheckInHandler } from "./check-in-handler";
+import { createCheckInHandler, createCheckInStatsHandler } from "./check-in-handler";
 import type { Db } from "./db";
 import { createCheckInStore } from "./db/check-in";
 import * as schema from "./db/schema";
@@ -69,6 +69,9 @@ test("reviewer desk searches the confirmed roster and persists exactly one check
     const declinedId = randomUUID();
     const taggedId = randomUUID();
     const staffId = "fixture-admin";
+    assert.deepEqual(await store.stats(), {
+      confirmedHackers: 0, checkedInHackers: 0, checkedInStaff: 0, latestHackerCheckInAt: null,
+    });
     await db.insert(user).values([
       { id: staff.id, name: "Fixture Reviewer", email: "staff@example.test", role: staff.role },
       { id: staffId, name: "Fixture Organizer", email: "organizer@example.test", role: "admin" },
@@ -82,9 +85,9 @@ test("reviewer desk searches the confirmed roster and persists exactly one check
     await db.insert(application).values([
       { ...accepted, id: manualId, userId: "manual", firstName: "Avery", lastName: "Example" },
       { ...accepted, id: scanId, userId: "scan", firstName: "Robin", lastName: "Example" },
-      { ...accepted, id: declinedId, userId: "declined", rsvp: "declined" },
-      { ...accepted, id: taggedId, userId: "tagged" },
-      { ...accepted, userId: staff.id },
+      { ...accepted, id: declinedId, userId: "declined", rsvp: "declined", checkedInAt: new Date() },
+      { ...accepted, id: taggedId, userId: "tagged", checkedInAt: new Date() },
+      { ...accepted, userId: staff.id, checkedInAt: new Date() },
     ]);
     const [fixtureTag] = await db.insert(tag).values({ name: "test-account" }).returning({ id: tag.id });
     await db.insert(applicationTag).values({ applicationId: taggedId, tagId: fixtureTag.id });
@@ -99,6 +102,15 @@ test("reviewer desk searches the confirmed roster and persists exactly one check
       });
     }
     const api = handler();
+    let statsReads = 0;
+    const statsApi = (authorized = true, fail = false) => createCheckInStatsHandler({
+      authorize: async () => authorized ? staff : null,
+      stats: async () => {
+        statsReads++;
+        if (fail) throw new Error("do not expose database details");
+        return store.stats();
+      },
+    })();
     function req(body: Record<string, unknown>, origin = new URL(url).origin) {
       return new Request(url, {
         method: "POST",
@@ -109,6 +121,17 @@ test("reviewer desk searches the confirmed roster and persists exactly one check
 
     const anonymous = await handler(false)(req({ action: "search", query: "Example" }));
     assert.equal(anonymous.status, 403);
+    assert.equal((await statsApi(false)).status, 403);
+    assert.equal(statsReads, 0);
+    const statsFailure = await statsApi(true, true);
+    assert.equal(statsFailure.status, 503);
+    assert.doesNotMatch(await statsFailure.text(), /database details/);
+    const initialStats = await statsApi();
+    assert.equal(initialStats.status, 200);
+    assert.equal(initialStats.headers.get("cache-control"), "private, no-store");
+    assert.deepEqual(await initialStats.json(), {
+      confirmedHackers: 2, checkedInHackers: 0, checkedInStaff: 0, latestHackerCheckInAt: null,
+    });
     const foreignOrigin = await api(req({ action: "manual", id: manualId }, "https://other.example.test"));
     assert.equal(foreignOrigin.status, 403);
     assert.equal((await api(req({ action: "scan", code: "invalid" }))).status, 400);
@@ -166,6 +189,13 @@ test("reviewer desk searches the confirmed roster and persists exactly one check
     assert.equal(staffAudit.length, 1);
     assert.equal(staffAudit[0].applicationId, null);
     assert.deepEqual(staffAudit[0].payload, { userId: staffId, method: "qr" });
+    const finalStats = await (await statsApi()).json();
+    assert.deepEqual(finalStats, {
+      confirmedHackers: 2,
+      checkedInHackers: 2,
+      checkedInStaff: 1,
+      latestHackerCheckInAt: [first.person.checkedInAt, readings[0].person.checkedInAt].sort().at(-1),
+    });
     await db.update(user).set({ role: "applicant" }).where(eq(user.id, staffId));
     assert.equal((await api(req(scanStaff))).status, 404);
 

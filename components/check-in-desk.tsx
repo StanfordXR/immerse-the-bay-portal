@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { CheckInPerson, CheckInResult } from "@/lib/check-in-types";
 import { CheckInScanner } from "@/components/check-in-scanner";
+import { CheckInStatsPanel } from "@/components/check-in-stats";
 
 type CheckInRequest =
   | { action: "search"; query: string }
@@ -22,6 +23,7 @@ export function CheckInDesk() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [statsRevision, setStatsRevision] = useState(0);
   const pending = useRef(false);
 
   const send = useCallback(async (request: CheckInRequest) => {
@@ -49,6 +51,7 @@ export function CheckInDesk() {
       } else {
         const data: CheckInResult = await response.json();
         setResult(data);
+        setStatsRevision((revision) => revision + 1);
         setPeople((current) => current?.map((person) => person.id === data.person.id ? data.person : person) ?? null);
       }
     } catch (cause) {
@@ -77,6 +80,7 @@ export function CheckInDesk() {
         )}
       </div>
       {error && <p className="card border-danger/50 p-4 text-sm text-danger" role="alert">{error}</p>}
+      <CheckInStatsPanel revision={statsRevision} />
       <div className="grid gap-4 md:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
         <section className="card h-fit space-y-4 p-5" aria-labelledby="search-title">
           <h2 className="font-display text-lg font-semibold" id="search-title">Find an attendee</h2>

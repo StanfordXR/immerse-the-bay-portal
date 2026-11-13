@@ -13,3 +13,10 @@ export type CheckInResult = {
   person: CheckInPerson;
   alreadyCheckedIn: boolean;
 };
+
+export type CheckInStats = {
+  confirmedHackers: number;
+  checkedInHackers: number;
+  checkedInStaff: number;
+  latestHackerCheckInAt: string | null;
+};
